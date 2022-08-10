@@ -6,6 +6,9 @@ To evaluate the local planner, use metrics calculator build on top of the [MRPB 
 cd <ROS_WORKSPACE_DIRECTORY>
 source devel/setup.bash
 cd $(rospack find move_base_benchmark)/postprocessing
-g++ metrics.cpp -o metrics_evaluator
-./metrics_evaluator <PATH_TO_LOG_FILE> <SAFETY_DISTANCE>
+mkdir build
+cd build
+cmake ..
+make
+./metric_evaluation <PATH_TO_LOG_FILE> <SAFETY_DISTANCE>
 ```
