@@ -9,23 +9,26 @@ public:
         nh.param("log_filename", log_filename_, std::string("log.txt"));
     }
 
-    void start() {
+protected:
+    BenchmarkLogger() = default;
+
+    void start(FILE** log_file, std::string log_filename) {
         //open the file to record the navigation data
-        log_file_ = fopen(log_filename_.c_str(), "w+");
-        if (log_file_ == NULL) {
-            ROS_ERROR("Failed to open the log file for benchmarking `move_base`");
+        *log_file = fopen(log_filename.c_str(), "w+");
+        if (*log_file == NULL) {
+            ROS_ERROR("Failed to open the log file `%s` for benchmarking `move_base`", log_filename.c_str());
             return;
         }
     }
 
-    void finish() {
-        //close the file
-        fclose(log_file_);
+    void finish(FILE** log_file) {
+        if (*log_file == NULL) {
+            ROS_ERROR("Failed to close the log file for benchmarking `move_base`");
+            return;
+        }
+        // close the file
+        fclose(*log_file);
     }
 
-protected:
-    BenchmarkLogger() = default;
-
-    FILE* log_file_;
     std::string log_filename_;
 };

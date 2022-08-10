@@ -7,6 +7,10 @@ class RobotLogger: public BenchmarkLogger {
 public:
     RobotLogger() = default;
 
+    void start() {
+        BenchmarkLogger::start(&log_file_, log_filename_);
+    }
+
     /// Must be called prior to @ref update that takes 1 argument
     void update(
         double timestamp,
@@ -30,4 +34,11 @@ public:
     void update(double exec_time) {
         fprintf(log_file_, "%.3f\n", exec_time);
     }
+
+    void finish() {
+        BenchmarkLogger::finish(&log_file_);
+    }
+
+protected:
+    FILE* log_file_;
 };
