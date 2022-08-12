@@ -151,16 +151,14 @@ std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::fu
   return data_log;
 }
 
-int main(int argc, char* argv[])
-{
-  if (argc != 5)
-  {
+int main(int argc, char* argv[]) {
+  if (argc != 5) {
     printf(
       "Please input\r\n"
       "\t* the path to the log file of the robot\r\n"
       "\t* the path to the log file of the people\r\n"
       "\t* the path to the log file of the people groups\r\n"
-      "\t* and value of the safety distance [m].\n"
+      "\t* and value of the safety distance [m].\r\n"
     );
     return 1;
   }
@@ -168,12 +166,11 @@ int main(int argc, char* argv[])
   auto file_robot = std::string(argv[1]);
   auto file_people = std::string(argv[2]);
   auto file_groups = std::string(argv[3]);
+  auto safety_distance = std::atof(argv[4]);
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
   auto timed_groups_data = parseFile<people_msgs_utils::Group>(file_groups, &PeopleLogger::groupFromString);
-
-  double safety_distance = std::atof(argv[4]);
 
   double safety = computeSafety(timed_robot_data, safety_distance);
   printf("Safety = %.2f[%%]\n", safety * 1e2);
