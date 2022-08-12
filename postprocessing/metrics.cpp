@@ -85,7 +85,6 @@ double computeSafety(const std::vector<std::pair<double, RobotData>>& data_log, 
 }
 
 double computePathLinearLength(const std::vector<std::pair<double, RobotData>>& data_log) {
-  double N = static_cast<double>(data_log.size());
   double path_length = 0.0;
 
   for (auto it = data_log.cbegin() + 1; it < data_log.cend(); it++) {
@@ -95,21 +94,17 @@ double computePathLinearLength(const std::vector<std::pair<double, RobotData>>& 
     path_length += std::sqrt(dx * dx + dy * dy);
   }
 
-  path_length /= (N - 1);
   return path_length;
 }
 
 double computePathRotationalLength(const std::vector<std::pair<double, RobotData>>& data_log) {
-  double N = static_cast<double>(data_log.size());
   double path_length = 0.0;
 
   for (auto it = data_log.cbegin() + 1; it < data_log.cend(); it++) {
     auto prev = std::prev(it);
-    double dth = std::abs(it->second.getOrientationYaw() - prev->second.getOrientationYaw());
-    path_length += std::sqrt(dth * dth);
+    path_length += std::abs(it->second.getOrientationYaw() - prev->second.getOrientationYaw());
   }
 
-  path_length /= (N - 1);
   return path_length;
 }
 
