@@ -108,6 +108,65 @@ double computePathRotationalLength(const std::vector<std::pair<double, RobotData
   return path_length;
 }
 
+double computeCumulativeHeadingChanges(const std::vector<std::pair<double, RobotData>>& data_log) {
+  double chc = 0.0;
+
+  for (auto it = data_log.cbegin() + 1; it < data_log.cend(); it++) {
+    auto prev = std::prev(it);
+    double dt = it->first - prev->first;
+    // pose data used to ignore motion execution errors (velocity-based calculations)
+    chc += (std::abs(it->second.getOrientationYaw() - prev->second.getOrientationYaw()) / dt);
+  }
+
+  return chc;
+}
+
+double computeBackwardMovements(const std::vector<std::pair<double, RobotData>>& data_log) {
+  double bwd = 0.0;
+
+  for (const auto& data: data_log) {
+    if (data.second.getVelocityX() < 0.0) {
+      bwd += std::abs(data.second.getVelocityX());
+    }
+  }
+
+  return bwd;
+}
+
+double computeOscillations(const std::vector<std::pair<double, RobotData>>& data_log, double osc_lin_threshold, double osc_ang_threshold) {
+  double N = static_cast<double>(data_log.size());
+  double osc = 0.0;
+
+  for (auto it = data_log.cbegin() + 1; it < data_log.cend(); it++) {
+    auto prev = std::prev(it);
+    bool robot_stopped = it->second.getVelocityX() < osc_lin_threshold && it->second.getVelocityX() >= 0.0;
+    bool robot_oscillates = std::abs(it->second.getVelocityTheta()) < osc_ang_threshold;
+    if (robot_stopped && robot_oscillates) {
+      double dt = it->first - prev->first;
+      osc += (std::abs(it->second.getVelocityTheta()) / dt);
+    }
+  }
+
+  return osc;
+}
+
+double computeInPlaceRotations(const std::vector<std::pair<double, RobotData>>& data_log, double osc_lin_threshold) {
+  double N = static_cast<double>(data_log.size());
+  double inplace_rot = 0.0;
+
+  for (auto it = data_log.cbegin() + 1; it < data_log.cend(); it++) {
+    auto prev = std::prev(it);
+    bool robot_stopped = it->second.getVelocityX() < osc_lin_threshold && it->second.getVelocityX() >= 0.0;
+    bool robot_rotates = std::abs(it->second.getVelocityTheta()) >= 0.0;
+    if (robot_stopped && robot_rotates) {
+      double dt = it->first - prev->first;
+      inplace_rot += (std::abs(it->second.getVelocityTheta()) / dt);
+    }
+  }
+
+  return inplace_rot;
+}
+
 // string to pair (first = timestamp, second = logged state)
 template <typename T>
 std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::function<T(const std::string&)> from_string_fun) {
@@ -168,6 +227,10 @@ int main(int argc, char* argv[]) {
   auto file_groups = std::string(argv[3]);
   auto safety_distance = std::atof(argv[4]);
 
+  // oscillation threshold values
+  double osc_vel_lin_x_threshold = 0.05;
+  double osc_vel_ang_z_threshold = 0.15;
+
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
   auto timed_groups_data = parseFile<people_msgs_utils::Group>(file_groups, &PeopleLogger::groupFromString);
@@ -189,5 +252,18 @@ int main(int argc, char* argv[]) {
 
   double path_length_rotational = computePathRotationalLength(timed_robot_data);
   printf("Path rotational length = %.3f[rad]\n", path_length_rotational);
+
+  double chc = computeCumulativeHeadingChanges(timed_robot_data);
+  printf("Cumulative Heading Changes = %.3f[rad]\n", chc);
+
+  double bwd_movements = computeBackwardMovements(timed_robot_data);
+  printf("Backward movements = %.3f[m]\n", bwd_movements);
+
+  double oscillations = computeOscillations(timed_robot_data, osc_vel_lin_x_threshold, osc_vel_ang_z_threshold);
+  printf("Oscillations = %.3f[rad]\n", oscillations);
+
+  double in_place_rotations = computeInPlaceRotations(timed_robot_data, osc_vel_lin_x_threshold);
+  printf("In-place rotations = %.3f[rad]\n", in_place_rotations);
+
   return 0;
 }
