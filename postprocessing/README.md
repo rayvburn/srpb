@@ -10,5 +10,5 @@ mkdir build
 cd build
 cmake ..
 make
-./metric_evaluation <PATH_TO_LOG_FILE> <SAFETY_DISTANCE>
+./metric_evaluation <PATH_TO_ROBOT_LOG_FILE>  <PATH_TO_PEOPLE_LOG_FILE>  <PATH_TO_PEOPLE_GROUPS_LOG_FILE> <SAFETY_DISTANCE>
 ```
