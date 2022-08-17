@@ -5,7 +5,9 @@
 
 #include <exception>
 #include <fstream>
+#include <numeric>
 #include <string_view>
+#include <tuple>
 
 #include <move_base/robot_logger.h>
 #include <move_base/people_logger.h>
@@ -203,6 +205,132 @@ double calculateGaussian(
   return std::exp(-(exp_arg_a + exp_arg_b + exp_arg_c));
 }
 
+/**
+ * @brief Computes people personal space intrusion score
+ *
+ * People have their constrained area attached to the body projection. Once robot moves around people it may come
+ * too closer or further. In each time step a value of a person area (modelled by an Asymmetric Gaussian) is computed.
+ * This function returns scores: min Gaussian, max Gaussian and normalized to execution time. Maximum of Gaussian,
+ * which is 1.0, shows that robot was located in the same position as person over the whole experiment. On the other
+ * hand, normalized value of 0.0 means that robot never moved close to any person (according to the given variances).
+ *
+ * @param robot_data
+ * @param people_data
+ * @param sigma_h variance to the heading direction of the person (Gaussian)
+ * @param sigma_r variance to the rear (Gaussian)
+ * @param sigma_s variance to the side (Gaussian)
+ * @param max_method set to true (default) to use max element from Gaussians to normalize metrics;
+ * false means averaging over all Gaussian occurrences in a current time step
+ *
+ * @return std::tuple<double, double, double> tuple with scores: min, max and normalized to execution time
+ */
+std::tuple<double, double, double> computePersonalSpaceIntrusion(
+  const std::vector<std::pair<double, RobotData>>& robot_data,
+  const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
+  double sigma_h,
+  double sigma_r,
+  double sigma_s,
+  bool max_method = true
+) {
+  if (robot_data.size() < 2) {
+    std::cout << "Robot data size is too small, at least 2 samples are required due to time step difference calculations" << std::endl;
+    return std::make_tuple(0.0, 0.0, 0.0);
+  }
+
+  // store durations and Gaussians of the robot in terms of nearby people
+  std::vector<std::pair<double, std::vector<double>>> timed_gaussians;
+
+  /// match people detections to logged data of the robot
+  // iterator to investigate people data
+  std::vector<std::pair<double, people_msgs_utils::Person>>::const_iterator it_ppl(people_data.begin());
+
+  // iterator for robot data (e.g. poses)
+  // pose of robot in each time step must be investigated against pose of each person
+  for (
+    std::vector<std::pair<double, RobotData>>::const_iterator it_robot(robot_data.begin());
+    it_robot != robot_data.end();
+    it_robot++
+  ) {
+    /// prepare container for gaussian values in this `for` iteration
+    std::pair<double, std::vector<double>> timed_gaussian;
+    // check if this is the last element of the robot data
+    if (std::next(it_robot) == robot_data.end()) {
+      // heuristic to compute last time stamp difference (prediction by extrapolation)
+      double last_ts_diff = it_robot->first - std::prev(it_robot)->first;
+      timed_gaussian = std::make_pair(last_ts_diff, std::vector<double>());
+    } else {
+      double ts_diff = std::next(it_robot)->first - it_robot->first;
+      timed_gaussian = std::make_pair(ts_diff, std::vector<double>());
+    }
+
+    // iterate over all people recognized in a given time step
+    for (/*initialized above*/; it_ppl != people_data.end(); it_ppl++) {
+      // terminal conditions
+      bool all_people_checked_timestep = it_robot->first != it_ppl->first;
+      bool last_sample_being_checked = std::next(it_robot) == robot_data.end() && std::next(it_ppl) == people_data.end();
+
+      // processing
+      double gaussian = calculateGaussian(
+        it_robot->second.getPositionX(),
+        it_robot->second.getPositionY(),
+        it_ppl->second.getPositionX(),
+        it_ppl->second.getPositionY(),
+        it_ppl->second.getOrientationYaw(),
+        sigma_h,
+        sigma_r,
+        sigma_s
+      );
+      timed_gaussian.second.push_back(gaussian);
+
+      if (all_people_checked_timestep || last_sample_being_checked) {
+        timed_gaussians.push_back(timed_gaussian);
+        break;
+      }
+    } // iterating over people log entries
+  } // iteration over robot log entries
+
+  // find actual duration
+  double duration = 0.0;
+  for (const auto& tg: timed_gaussians) {
+    duration += tg.first;
+  }
+
+  // find gaussians and recompute according to recognized people (max/sum)
+  double metrics = 0.0;
+  double min_elem = std::numeric_limits<double>::max();
+  double max_elem = std::numeric_limits<double>::min();
+
+  // rollout gaussians and compute score (metrics)
+  for (const auto& tg: timed_gaussians) { // tg in fact might be const but ac
+    double dt = tg.first;
+    if (tg.second.empty()) {
+      std::cout << "Gaussian(s) is empty for at least 1 sample. Personal space intrusion metrics will be 0.0" << std::endl;
+      return std::make_tuple(0.0, 0.0, 0.0);
+    }
+    // overall min and max computation
+    double local_min_elem = *std::min_element(tg.second.cbegin(), tg.second.cend());
+    if (local_min_elem < min_elem) {
+      min_elem = local_min_elem;
+    }
+
+    double local_max_elem = *std::max_element(tg.second.cbegin(), tg.second.cend());
+    if (local_max_elem > max_elem) {
+      max_elem = local_max_elem;
+    }
+
+    // check for selected method of normalization
+    double metrics_elem = 0.0;
+    if (max_method) {
+      // max method used here for normalization
+      metrics_elem = local_max_elem;
+    } else {
+      // average used for normalization
+      metrics_elem = std::accumulate(tg.second.cbegin(), tg.second.cend(), 0.0) / static_cast<double>(tg.second.size());
+    }
+    metrics += (local_max_elem * (dt / duration));
+  }
+  return std::make_tuple(min_elem, max_elem, metrics);
+}
 // string to pair (first = timestamp, second = logged state)
 template <typename T>
 std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::function<T(const std::string&)> from_string_fun) {
@@ -267,6 +395,12 @@ int main(int argc, char* argv[]) {
   double osc_vel_lin_x_threshold = 0.05;
   double osc_vel_ang_z_threshold = 0.15;
 
+  // personal space Gaussian model parameters
+  // values from Kirby, 2010, Fig. A.1
+  double sigma_h = 2.00;
+  double sigma_r = 1.00;
+  double sigma_s = 1.33;
+
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
   auto timed_groups_data = parseFile<people_msgs_utils::Group>(file_groups, &PeopleLogger::groupFromString);
@@ -300,6 +434,27 @@ int main(int argc, char* argv[]) {
 
   double in_place_rotations = computeInPlaceRotations(timed_robot_data, osc_vel_lin_x_threshold);
   printf("In-place rotations = %.3f[rad]\n", in_place_rotations);
+
+  double personal_space_intrusion_min = 0.0;
+  double personal_space_intrusion_max = 0.0;
+  double personal_space_intrusion = 0.0;
+  std::tie(
+    personal_space_intrusion_min,
+    personal_space_intrusion_max,
+    personal_space_intrusion
+  ) = computePersonalSpaceIntrusion(
+    timed_robot_data,
+    timed_people_data,
+    sigma_h,
+    sigma_r,
+    sigma_s
+  );
+  printf(
+    "Personal space intrusion = %.3f[%%] (min %.3f[%%], max %.3f[%%])\n",
+    personal_space_intrusion,
+    personal_space_intrusion_min,
+    personal_space_intrusion_max
+  );
 
   return 0;
 }
