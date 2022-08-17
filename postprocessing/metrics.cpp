@@ -219,22 +219,25 @@ double calculateGaussian(
  * @param sigma_h variance to the heading direction of the person (Gaussian)
  * @param sigma_r variance to the rear (Gaussian)
  * @param sigma_s variance to the side (Gaussian)
+ * @param personal_space_threshold Gaussian values bigger than that will be considered as violation of personal space
  * @param max_method set to true (default) to use max element from Gaussians to normalize metrics;
  * false means averaging over all Gaussian occurrences in a current time step
  *
- * @return std::tuple<double, double, double> tuple with scores: min, max and normalized to execution time
+ * @return std::tuple<double, double, double, unsigned int> tuple with scores: min, max and normalized to execution
+ * time and number of personal space violations (according to @ref personal_space_threshold)
  */
-std::tuple<double, double, double> computePersonalSpaceIntrusion(
+std::tuple<double, double, double, unsigned int> computePersonalSpaceIntrusion(
   const std::vector<std::pair<double, RobotData>>& robot_data,
   const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
   double sigma_h,
   double sigma_r,
   double sigma_s,
+  double personal_space_threshold,
   bool max_method = true
 ) {
   if (robot_data.size() < 2) {
     std::cout << "Robot data size is too small, at least 2 samples are required due to time step difference calculations" << std::endl;
-    return std::make_tuple(0.0, 0.0, 0.0);
+    return std::make_tuple(0.0, 0.0, 0.0, 0);
   }
 
   // store durations and Gaussians of the robot in terms of nearby people
@@ -295,6 +298,9 @@ std::tuple<double, double, double> computePersonalSpaceIntrusion(
     duration += tg.first;
   }
 
+  // find number of personal space violations
+  unsigned int ps_violations = 0;
+
   // find gaussians and recompute according to recognized people (max/sum)
   double metrics = 0.0;
   double min_elem = std::numeric_limits<double>::max();
@@ -305,8 +311,17 @@ std::tuple<double, double, double> computePersonalSpaceIntrusion(
     double dt = tg.first;
     if (tg.second.empty()) {
       std::cout << "Gaussian(s) is empty for at least 1 sample. Personal space intrusion metrics will be 0.0" << std::endl;
-      return std::make_tuple(0.0, 0.0, 0.0);
+      return std::make_tuple(0.0, 0.0, 0.0, 0);
     }
+
+    ps_violations += std::count_if(
+      tg.second.cbegin(),
+      tg.second.cend(),
+      [&](double g) {
+        return g > personal_space_threshold;
+      }
+    );
+
     // overall min and max computation
     double local_min_elem = *std::min_element(tg.second.cbegin(), tg.second.cend());
     if (local_min_elem < min_elem) {
@@ -329,8 +344,10 @@ std::tuple<double, double, double> computePersonalSpaceIntrusion(
     }
     metrics += (local_max_elem * (dt / duration));
   }
-  return std::make_tuple(min_elem, max_elem, metrics);
+
+  return std::make_tuple(min_elem, max_elem, metrics, ps_violations);
 }
+
 // string to pair (first = timestamp, second = logged state)
 template <typename T>
 std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::function<T(const std::string&)> from_string_fun) {
@@ -400,6 +417,8 @@ int main(int argc, char* argv[]) {
   double sigma_h = 2.00;
   double sigma_r = 1.00;
   double sigma_s = 1.33;
+  // threshold of Gaussian value to detect space violations
+  double personal_space_threshold = 0.55;
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
@@ -438,22 +457,26 @@ int main(int argc, char* argv[]) {
   double personal_space_intrusion_min = 0.0;
   double personal_space_intrusion_max = 0.0;
   double personal_space_intrusion = 0.0;
+  unsigned int personal_space_violations = 0;
   std::tie(
     personal_space_intrusion_min,
     personal_space_intrusion_max,
-    personal_space_intrusion
+    personal_space_intrusion,
+    personal_space_violations
   ) = computePersonalSpaceIntrusion(
     timed_robot_data,
     timed_people_data,
     sigma_h,
     sigma_r,
-    sigma_s
+    sigma_s,
+    personal_space_threshold
   );
   printf(
-    "Personal space intrusion = %.3f[%%] (min %.3f[%%], max %.3f[%%])\n",
+    "Personal space intrusion = %.3f[%%] (min %.3f[%%], max %.3f[%%], violations %3u)\n",
     personal_space_intrusion,
     personal_space_intrusion_min,
-    personal_space_intrusion_max
+    personal_space_intrusion_max,
+    personal_space_violations
   );
 
   return 0;
