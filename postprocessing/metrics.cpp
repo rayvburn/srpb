@@ -225,6 +225,10 @@ double calculateGaussian(
  *
  * @return std::tuple<double, double, double, unsigned int> tuple with scores: min, max and normalized to execution
  * time and number of personal space violations (according to @ref personal_space_threshold)
+ *
+ * The closest to our method is the approach presented by Truong and Ngo in
+ * “To Approach Humans?”: A Unified Framework for Approaching Pose Prediction and Socially Aware Robot Navigation
+ * They called it `Social Individual Index`. Their method lacks normalization in terms of path duration.
  */
 std::tuple<double, double, double, unsigned int> computePersonalSpaceIntrusion(
   const std::vector<std::pair<double, RobotData>>& robot_data,
