@@ -11,6 +11,7 @@ find_package(catkin REQUIRED
         roscpp
         people_msgs_utils
         move_base_benchmark
+        angles
 )
 
 include_directories(

@@ -10,6 +10,8 @@
 #include <move_base/robot_logger.h>
 #include <move_base/people_logger.h>
 
+#include <angles/angles.h>
+
 double computeComputationalEfficiency(const std::vector<std::pair<double, RobotData>>& data_log) {
   size_t N = data_log.size();
   double mean = 0.0;
@@ -165,6 +167,40 @@ double computeInPlaceRotations(const std::vector<std::pair<double, RobotData>>& 
   }
 
   return inplace_rot;
+}
+
+/// Reference: Algorithm A.1 from Kirby, 2010 PhD thesis "Social Robot Navigation" (p. 166)
+/// @url https://www.ri.cmu.edu/pub_files/2010/5/rk_thesis.pdf
+double calculateGaussian(
+  double x,
+  double y,
+  double x_center,
+  double y_center,
+  double yaw,
+  double sigma_h,
+  double sigma_r,
+  double sigma_s
+) {
+  double alpha = std::atan2(y - y_center, x - x_center) - yaw + M_PI_2;
+  alpha = angles::normalize_angle(alpha);
+  double sigma = (alpha <= 0.0 ? sigma_r : sigma_h);
+
+  // save values used multiple times in computations;
+  // squared cosine/sine of theta (yaw angle)
+  double cos_yaw_sq = std::pow(std::cos(yaw), 2);
+  double sin_yaw_sq = std::pow(std::sin(yaw), 2);
+  double sin_2yaw = std::sin(2.0 * yaw);
+  double sigma_sq = std::pow(sigma, 2);
+  double sigma_s_sq = std::pow(sigma_s, 2);
+
+  double a = cos_yaw_sq / (2.0 * sigma_sq) + sin_yaw_sq / (2.0 * sigma_s_sq);
+  double b = sin_2yaw   / (4.0 * sigma_sq) - sin_2yaw   / (4.0 * sigma_s_sq);
+  double c = sin_yaw_sq / (2.0 * sigma_sq) + cos_yaw_sq / (2.0 * sigma_s_sq);
+
+  double exp_arg_a = a * (std::pow(x - x_center, 2));
+  double exp_arg_b = 2.0 * b * (x - x_center) * (y - y_center);
+  double exp_arg_c = c * std::pow(y - y_center, 2);
+  return std::exp(-(exp_arg_a + exp_arg_b + exp_arg_c));
 }
 
 // string to pair (first = timestamp, second = logged state)
