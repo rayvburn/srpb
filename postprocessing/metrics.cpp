@@ -205,6 +205,25 @@ double calculateGaussian(
   return std::exp(-(exp_arg_a + exp_arg_b + exp_arg_c));
 }
 
+/// Calculates radius of the F-formation based on positions of group members and group's center of gravity
+double calculateRadiusFformation(
+  const people_msgs_utils::Group& group,
+  const std::vector<people_msgs_utils::Person>& people_group
+) {
+  double radius = 0.0;
+  for (const auto& person: people_group) {
+    double dist_from_cog = std::sqrt(
+      std::pow(person.getPositionX() - group.getCenterOfGravity().x, 2)
+      + std::pow(person.getPositionY() - group.getCenterOfGravity().y, 2)
+    );
+    // select the maximum value as radius
+    if (radius < dist_from_cog) {
+      radius = dist_from_cog;
+    }
+  }
+  return radius;
+}
+
 /**
  * @brief Computes min, max, normalized metrics related to gaussian statistics and counts number of space violations
  *
@@ -371,6 +390,130 @@ std::tuple<double, double, double, unsigned int> computePersonalSpaceIntrusion(
   return calculateGaussianStatistics(timed_gaussians, personal_space_threshold, max_method);
 }
 
+/// Similar to personal space intrusion but related to the group space
+std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
+  const std::vector<std::pair<double, RobotData>>& robot_data,
+  const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
+  const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data,
+  double group_space_threshold,
+  bool max_method = true
+) {
+  if (robot_data.size() < 2) {
+    std::cout << "Robot data size is too small, at least 2 samples are required due to time step difference calculations" << std::endl;
+    return std::make_tuple(0.0, 0.0, 0.0, 0);
+  }
+
+  // store durations and Gaussians of the robot in terms of nearby groups
+  std::vector<std::pair<double, std::vector<double>>> timed_gaussians;
+
+  /// match people detections to logged data of the robot
+  // iterator to investigate people data
+  std::vector<std::pair<double, people_msgs_utils::Person>>::const_iterator it_ppl(people_data.begin());
+  // iterator to investigate groups data
+  std::vector<std::pair<double, people_msgs_utils::Group>>::const_iterator it_grp(groups_data.begin());
+
+  // iterator for robot data (e.g. poses)
+  // pose of robot in each time step must be investigated against pose of each person
+  for (
+    std::vector<std::pair<double, RobotData>>::const_iterator it_robot(robot_data.begin());
+    it_robot != robot_data.end();
+    it_robot++
+  ) {
+    /// prepare container for gaussian values in this `for` iteration
+    std::pair<double, std::vector<double>> timed_gaussian;
+    // check if this is the last element of the robot data
+    if (std::next(it_robot) == robot_data.end()) {
+      // heuristic to compute last time stamp difference (prediction by extrapolation)
+      double last_ts_diff = it_robot->first - std::prev(it_robot)->first;
+      timed_gaussian = std::make_pair(last_ts_diff, std::vector<double>());
+    } else {
+      double ts_diff = std::next(it_robot)->first - it_robot->first;
+      timed_gaussian = std::make_pair(ts_diff, std::vector<double>());
+    }
+
+    // iterate over all groups recognized in a given time step
+    for (/*initialized above*/; it_grp != groups_data.end(); it_grp++) {
+      bool all_groups_checked_timestep = it_robot->first != it_grp->first;
+      if (all_groups_checked_timestep) {
+        timed_gaussians.push_back(timed_gaussian);
+        break;
+      }
+
+      // collect people data into container that store group members
+      std::vector<people_msgs_utils::Person> people_this_group;
+
+      // save people iterator to restore it in case of 1 person is assigned to multiple groups (must iterate over all people recognized at a specific time step)
+      auto it_ppl_curr_timestamp = it_ppl;
+
+      // iterate over all people recognized in a given time step
+      for (/*initialized above*/; it_ppl != people_data.end(); it_ppl++) {
+        // break if timestamp does not match group's one
+        bool all_people_checked_timestep = it_grp->first != it_ppl->first;
+        bool checking_last_group = std::next(it_grp) == groups_data.end();
+        bool checking_last_person = std::next(it_ppl) == people_data.end();
+        bool last_sample_being_checked = checking_last_group && checking_last_person;
+
+        if (all_people_checked_timestep || last_sample_being_checked) {
+          break;
+        }
+
+        // add person data to the container of group members
+        auto group_members = it_grp->second.getTrackIDs();
+        if (std::find(group_members.begin(), group_members.end(), it_ppl->second.getID()) != group_members.end()) {
+          people_this_group.push_back(it_ppl->second);
+        }
+
+      } // iterating over people log entries
+
+      // terminal conditions, based on them, action is taken at the end of the iteration
+      bool checking_last_robot = std::next(it_robot) == robot_data.end();
+      bool checking_last_group = std::next(it_grp) == groups_data.end();
+      bool checking_last_person = std::next(it_ppl) == people_data.end();
+      bool last_sample_being_checked = checking_last_robot && checking_last_group && checking_last_person;
+
+      /// computations for the group
+      double fformation_radius = calculateRadiusFformation(it_grp->second, people_this_group);
+
+      /*
+       * Compute `cost` of the robot being located in the current position - how it affects group's ease.
+       * NOTE that we do not possess the orientation of the group (yaw is set to 0)
+       * so the circular model is assumed (sigmas are equal)
+       *
+       * Conversion from radius to variance was mentioned, e.g., by Truong in `To Approach Humans? (..)` article (2017)
+       */
+      double gaussian = calculateGaussian(
+        it_robot->second.getPositionX(),
+        it_robot->second.getPositionY(),
+        it_grp->second.getCenterOfGravity().x,
+        it_grp->second.getCenterOfGravity().y,
+        0.0,
+        fformation_radius / 2.0,
+        fformation_radius / 2.0,
+        fformation_radius / 2.0
+      );
+
+      // Gaussian cost of the robot being located in the current pose; cost related to the investigated group of people
+      timed_gaussian.second.push_back(gaussian);
+
+      if (all_groups_checked_timestep || last_sample_being_checked) {
+        timed_gaussians.push_back(timed_gaussian);
+        break;
+      }
+
+      // safely finished group computations, let's restore people iterator for this time step -
+      // only if needed for the next group
+      bool last_group_in_dataset = std::next(it_grp) == groups_data.end();
+      bool next_group_has_same_timestamp = std::next(it_grp)->first == it_grp->first;
+      if (!last_group_in_dataset && next_group_has_same_timestamp) {
+        it_ppl = it_ppl_curr_timestamp;
+      }
+
+    } // iterating over groups log entries
+
+  } // iteration over robot log entries
+  return calculateGaussianStatistics(timed_gaussians, group_space_threshold, max_method);
+}
+
 // string to pair (first = timestamp, second = logged state)
 template <typename T>
 std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::function<T(const std::string&)> from_string_fun) {
@@ -442,6 +585,7 @@ int main(int argc, char* argv[]) {
   double sigma_s = 1.33;
   // threshold of Gaussian value to detect space violations
   double personal_space_threshold = 0.55;
+  double group_space_threshold = 0.55;
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
@@ -500,6 +644,29 @@ int main(int argc, char* argv[]) {
     personal_space_intrusion_min,
     personal_space_intrusion_max,
     personal_space_violations
+  );
+
+  double group_space_intrusion_min = 0.0;
+  double group_space_intrusion_max = 0.0;
+  double group_space_intrusion = 0.0;
+  unsigned int group_space_violations = 0;
+  std::tie(
+    group_space_intrusion_min,
+    group_space_intrusion_max,
+    group_space_intrusion,
+    group_space_violations
+  ) = computeGroupsSpaceIntrusion(
+    timed_robot_data,
+    timed_people_data,
+    timed_groups_data,
+    group_space_threshold
+  );
+  printf(
+    "Group space intrusion = %.3f[%%] (min %.3f[%%], max %.3f[%%], violations %3u)\n",
+    group_space_intrusion,
+    group_space_intrusion_min,
+    group_space_intrusion_max,
+    group_space_violations
   );
 
   return 0;
