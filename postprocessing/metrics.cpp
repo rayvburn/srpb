@@ -408,14 +408,12 @@ double calculateDirectionDisturbance(
 
   /*
    * Note that we assume that gaussian cost of disturbance exists only within bounds of following direction angles:
-   * - opposite,
-   * - crossing-center
+   * - crossing-center (i.e. opposite and moving towards the person center)
    * - crossing-in-front
    */
   // 1D Gaussian function, note that angle domain wraps at 3.14 so we must check for maximum of gaussians
   // located at gamma_X and shifted 2 * pi to the left and right; gamma angle should already be normalized here
   double gaussian_dir_cc = calculateGaussianAngle(gamma, gamma_cc, gamma_threshold_variance, true);
-  double gaussian_dir_opp = calculateGaussianAngle(gamma, gamma_opp, gamma_threshold_variance, true);
 
   // 3 sigma rule - let the cost spread only over the CF region
   double gamma_cf_stddev = (gamma_cf_range / 2.0) / 3.0;
@@ -424,7 +422,7 @@ double calculateDirectionDisturbance(
   double gamma_cf_center = angles::normalize_angle(gamma_cf_start + gamma_cf_range / 2.0);
   double gaussian_dir_cf = calculateGaussianAngle(gamma, gamma_cf_center, gamma_cf_variance, true);
 
-  double gaussian_dir_result = std::max(std::max(gaussian_dir_cc, gaussian_dir_opp), gaussian_dir_cf);
+  double gaussian_dir_result = std::max(gaussian_dir_cc, gaussian_dir_cf);
 
   // check whether the robot is located within person's FOV (only then affects human's behaviour);
   // again, 3 sigma rule is used here -> 3 sigma rule applied to the half of the FOV
