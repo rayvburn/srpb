@@ -171,6 +171,17 @@ double computeInPlaceRotations(const std::vector<std::pair<double, RobotData>>& 
   return inplace_rot;
 }
 
+/// Computes value of 1D Gaussian probability density function
+/// @url https://en.wikipedia.org/wiki/Gaussian_function
+double calculateGaussian(double x, double mean, double variance, bool normalize = false) {
+  double scale = 1.0;
+  // with normalization, maximum possible value will be 1.0; otherwise, it depends on the value of variance
+  if (!normalize) {
+    scale = 1.0 / (std::sqrt(variance) * std::sqrt(2 * M_PI));
+  }
+  return scale * std::exp(-std::pow(x - mean, 2) / (2.0 * variance));
+}
+
 /// Reference: Algorithm A.1 from Kirby, 2010 PhD thesis "Social Robot Navigation" (p. 166)
 /// @url https://www.ri.cmu.edu/pub_files/2010/5/rk_thesis.pdf
 double calculateGaussian(
