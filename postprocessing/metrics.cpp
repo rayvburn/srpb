@@ -316,6 +316,128 @@ std::tuple<double, double, double, unsigned int> calculateGaussianStatistics(
 }
 
 /**
+ * @brief Calculates value of person disturbance induced by robot motion (its direction in particular) in vicinity of people
+ *
+ * Disturbance is modeled by a Gaussian function. Its values are computed by arguments given in domain of angles.
+ * For further details check `dirCross` concept (location of the intersection point of i and j direction rays
+ * in relation to the i centre) in `hubero_local_planner`. Here, `i` is the person and `j` is the robot.
+ *
+ * @param x_robot
+ * @param y_robot
+ * @param yaw_robot
+ * @param x_person
+ * @param y_person
+ * @param yaw_person
+ * @param fov_person total angular field of view of the person
+ * @param gamma_threshold_angle_range how broad the region of, e.g. opposite direction angles, will be
+ * @return Normalized (0-1) disturbance score
+ */
+double calculateDirectionDisturbance(
+  double x_robot,
+  double y_robot,
+  double yaw_robot,
+  double x_person,
+  double y_person,
+  double yaw_person,
+  double fov_person,
+  double gamma_threshold_angle_range
+) {
+  // direction of vector connecting robot and person (defines where the robot is located in relation to a person [ego agent])
+  double dist_vector_angle = std::atan2(y_robot - y_person, x_robot - x_person);
+
+  // relative location vector angle (defines side where the robot is located in relation to a person)
+  double rel_loc_angle = angles::normalize_angle(dist_vector_angle - yaw_person);
+
+  // old notation: alpha-beta can be mapped to: i -> robot, j -> person
+  double gamma = angles::normalize_angle(rel_loc_angle - yaw_robot);
+
+  // calculate threshold angle values, normalize angles
+  /// indicates that j moves in the same direction as i
+	double gamma_eq = angles::normalize_angle(dist_vector_angle - 2 * yaw_person);
+  /// indicates that j moves in a direction opposite to i
+	double gamma_cc = angles::normalize_angle(M_PI - 2 * yaw_person);
+  /// indicates that a ray created from a centre point and a heading of j crosses the centre point of i
+  double gamma_opp = angles::normalize_angle(gamma_eq - M_PI);
+
+  /*
+   * Find range of angles that indicate <opposite, crossing in front, etc> motion direction of the robot towards person
+   * e.g. opposite direction adjoins with `cross behind` and `outwards` ranges.
+   * Range between direction regions can be used as a variance to model gaussian cost
+   */
+  // decode relative location (right/left side)
+  std::string relative_location_side = "unknown";
+  if (rel_loc_angle < 0.0) {
+		relative_location_side = "right";
+	} else if (rel_loc_angle >= 0.0) {
+		relative_location_side = "left";
+	}
+
+  // not all angles are required in this method, some values are computed for future use
+  double gamma_cf_start = 0.0;
+  double gamma_cf_finish = 0.0;
+  double gamma_cb_start = 0.0;
+  double gamma_cb_finish = 0.0;
+  double gamma_out_start = 0.0;
+  double gamma_out_finish = 0.0;
+
+  if (relative_location_side == "right") {
+    gamma_cf_start = gamma_cc;
+    gamma_cf_finish = gamma_eq;
+    gamma_cb_start = gamma_opp;
+    gamma_cb_finish = gamma_cc;
+    gamma_out_start = gamma_eq;
+    gamma_out_finish = gamma_opp;
+  } else if (relative_location_side == "left") {
+    gamma_cf_start = gamma_eq;
+    gamma_cf_finish = gamma_cc;
+    gamma_cb_start = gamma_cc;
+    gamma_cb_finish = gamma_opp;
+    gamma_out_start = gamma_opp;
+    gamma_out_finish = gamma_eq;
+  } else {
+    throw std::runtime_error("Unknown value of relative location");
+  }
+
+  double gamma_cf_range = std::abs(angles::shortest_angular_distance(gamma_cf_start, gamma_cf_finish));
+  double gamma_cb_range = std::abs(angles::shortest_angular_distance(gamma_cb_start, gamma_cb_finish));
+  double gamma_out_range = std::abs(angles::shortest_angular_distance(gamma_out_start, gamma_out_finish));
+
+  // Variance is computed according 68–95–99.7 rule https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
+  double gamma_threshold_stddev = (gamma_threshold_angle_range / 2.0) / 3.0;
+  double gamma_threshold_variance = std::pow(gamma_threshold_stddev, 2);
+
+  /*
+   * Note that we assume that gaussian cost of disturbance exists only within bounds of following direction angles:
+   * - opposite,
+   * - crossing-center
+   * - crossing-in-front
+   */
+  // 1D Gaussian function, note that angle domain wraps at 3.14 so we must check for maximum of gaussians
+  // located at gamma_X and shifted 2 * pi to the left and right; gamma angle should already be normalized here
+  double gaussian_dir_cc = calculateGaussianAngle(gamma, gamma_cc, gamma_threshold_variance, true);
+  double gaussian_dir_opp = calculateGaussianAngle(gamma, gamma_opp, gamma_threshold_variance, true);
+
+  // 3 sigma rule - let the cost spread only over the CF region
+  double gamma_cf_stddev = (gamma_cf_range / 2.0) / 3.0;
+  double gamma_cf_variance = std::pow(gamma_cf_stddev, 2);
+  // mean - center of the cross front region
+  double gamma_cf_center = angles::normalize_angle(gamma_cf_start + gamma_cf_range / 2.0);
+  double gaussian_dir_cf = calculateGaussianAngle(gamma, gamma_cf_center, gamma_cf_variance, true);
+
+  double gaussian_dir_result = std::max(std::max(gaussian_dir_cc, gaussian_dir_opp), gaussian_dir_cf);
+
+  // check whether the robot is located within person's FOV (only then affects human's behaviour);
+  // again, 3 sigma rule is used here -> 3 sigma rule applied to the half of the FOV
+  double fov_stddev = (fov_person / 2.0) / 3.0;
+  double variance_fov = std::pow(fov_stddev, 2);
+  // starting from the left side, half of the `fov_person` is located in 0.0 and rel_loc is 0.0
+  // when obstacle is in front of the object
+  double gaussian_fov = calculateGaussian(rel_loc_angle, 0.0, variance_fov);
+
+  return gaussian_dir_result * gaussian_fov;
+}
+
+/**
  * @brief Computes people personal space intrusion score
  *
  * People have their constrained area attached to the body projection. Once robot moves around people it may come
@@ -533,6 +655,94 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
   return calculateGaussianStatistics(timed_gaussians, group_space_threshold, max_method);
 }
 
+/// Related to velocity and direction of the robot movement towards person
+std::tuple<double, double, double, unsigned int> computePersonDisturbance(
+  const std::vector<std::pair<double, RobotData>>& robot_data,
+  const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
+  double disturbance_threshold,
+  double person_fov,
+  double gamma_threshold_angle_range,
+  bool max_method = true
+) {
+  if (robot_data.size() < 2) {
+    std::cout << "Robot data size is too small, at least 2 samples are required due to time step difference calculations" << std::endl;
+    // return 0.0;
+    return std::make_tuple(0.0, 0.0, 0.0, 0);
+  }
+
+  // store durations and disturbance indices of the robot in terms of nearby people
+  std::vector<std::pair<double, std::vector<double>>> timed_disturbances;
+
+  /// match people detections to logged data of the robot
+  // iterator to investigate people data
+  std::vector<std::pair<double, people_msgs_utils::Person>>::const_iterator it_ppl(people_data.begin());
+
+  // iterator for robot data (e.g. poses)
+  // pose of robot in each time step must be investigated against pose of each person
+  for (
+    std::vector<std::pair<double, RobotData>>::const_iterator it_robot(robot_data.begin());
+    it_robot != robot_data.end();
+    it_robot++
+  ) {
+    /// prepare container for gaussian values in this `for` iteration
+    std::pair<double, std::vector<double>> timed_disturbance;
+    // check if this is the last element of the robot data
+    if (std::next(it_robot) == robot_data.end()) {
+      // heuristic to compute last time stamp difference (prediction by extrapolation)
+      double last_ts_diff = it_robot->first - std::prev(it_robot)->first;
+      timed_disturbance = std::make_pair(last_ts_diff, std::vector<double>());
+    } else {
+      double ts_diff = std::next(it_robot)->first - it_robot->first;
+      timed_disturbance = std::make_pair(ts_diff, std::vector<double>());
+    }
+
+    // iterate over all people recognized in a given time step
+    for (/*initialized above*/; it_ppl != people_data.end(); it_ppl++) {
+      // terminal conditions
+      bool all_people_checked_timestep = it_robot->first != it_ppl->first;
+      bool last_sample_being_checked = std::next(it_robot) == robot_data.end() && std::next(it_ppl) == people_data.end();
+
+      // processing
+      double disturbance = calculateDirectionDisturbance(
+        it_robot->second.getPositionX(),
+        it_robot->second.getPositionY(),
+        it_robot->second.getOrientationYaw(),
+        it_ppl->second.getPositionX(),
+        it_ppl->second.getPositionY(),
+        it_ppl->second.getOrientationYaw(),
+        person_fov,
+        gamma_threshold_angle_range
+      );
+
+      // check if robot faces person but only rotates or is moving fast
+      double speed_factor = std::sqrt(
+        std::pow(it_robot->second.getVelocityX(), 2)
+        + std::pow(it_robot->second.getVelocityY(), 2)
+      );
+
+      // check how far the robot is from the person
+      double eucl_dist = std::sqrt(
+        std::pow(it_robot->second.getPositionX() - it_ppl->second.getPositionX(), 2)
+        + std::pow(it_robot->second.getPositionY() - it_ppl->second.getPositionY(), 2)
+      );
+      const double DIST_FACTOR_EXP = -0.8; // exponent provides approx 0.5 @ 1 m between centers of robot and person
+      double dist_factor = std::exp(DIST_FACTOR_EXP * eucl_dist);
+
+      // count in factors above
+      disturbance *= (speed_factor * dist_factor);
+
+      timed_disturbance.second.push_back(disturbance);
+
+      if (all_people_checked_timestep || last_sample_being_checked) {
+        timed_disturbances.push_back(timed_disturbance);
+        break;
+      }
+    } // iterating over people log entries
+  } // iteration over robot log entries
+
+  return calculateGaussianStatistics(timed_disturbances, disturbance_threshold, max_method);
+}
+
 // string to pair (first = timestamp, second = logged state)
 template <typename T>
 std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::function<T(const std::string&)> from_string_fun) {
@@ -605,6 +815,10 @@ int main(int argc, char* argv[]) {
   // threshold of Gaussian value to detect space violations
   double personal_space_threshold = 0.55;
   double group_space_threshold = 0.55;
+  // estimated field of view of people
+  double person_fov = angles::from_degrees(190.0);
+  double disturbance_angle_range = angles::from_degrees(20.0);
+  double disturbance_threshold = 0.20;
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
@@ -686,6 +900,31 @@ int main(int argc, char* argv[]) {
     group_space_intrusion_min,
     group_space_intrusion_max,
     group_space_violations
+  );
+
+  // e.g. approaching person in a straight line, causing person to stop or avoid collision
+  double person_disturbance_min = 0.0;
+  double person_disturbance_max = 0.0;
+  double person_disturbance = 0.0;
+  unsigned int person_disturbance_violations = 0;
+  std::tie(
+    person_disturbance_min,
+    person_disturbance_max,
+    person_disturbance,
+    person_disturbance_violations
+  ) = computePersonDisturbance(
+    timed_robot_data,
+    timed_people_data,
+    disturbance_threshold,
+    person_fov,
+    disturbance_angle_range
+  );
+  printf(
+    "Person disturbance = %.3f[%%] (min %.3f[%%], max %.3f[%%], violations %3u)\n",
+    person_disturbance,
+    person_disturbance_min,
+    person_disturbance_max,
+    person_disturbance_violations
   );
 
   return 0;
