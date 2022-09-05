@@ -574,7 +574,10 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
     for (/*initialized above*/; it_grp != groups_data.end(); it_grp++) {
       bool all_groups_checked_timestep = it_robot->first != it_grp->first;
       if (all_groups_checked_timestep) {
-        timed_gaussians.push_back(timed_gaussian);
+        // extend gaussians only if the gaussian for a group is properly defined, i.e., group is not empty
+        if (!timed_gaussian.second.empty()) {
+          timed_gaussians.push_back(timed_gaussian);
+        }
         break;
       }
 
@@ -588,11 +591,17 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
       for (/*initialized above*/; it_ppl != people_data.end(); it_ppl++) {
         // break if timestamp does not match group's one
         bool all_people_checked_timestep = it_grp->first != it_ppl->first;
+        bool people_it_lagging_behind = it_ppl->first < it_grp->first;
         bool checking_last_group = std::next(it_grp) == groups_data.end();
         bool checking_last_person = std::next(it_ppl) == people_data.end();
         bool last_sample_being_checked = checking_last_group && checking_last_person;
 
-        if (all_people_checked_timestep || last_sample_being_checked) {
+        if (people_it_lagging_behind && !last_sample_being_checked) {
+          // if people timestamp hasn't progressed as the group's one, let's skip people entries w/o groups
+          while (it_ppl->first < it_grp->first) {
+            it_ppl++;
+          }
+        } else if (all_people_checked_timestep || last_sample_being_checked) {
           break;
         }
 
@@ -620,22 +629,29 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
        *
        * Conversion from radius to variance was mentioned, e.g., by Truong in `To Approach Humans? (..)` article (2017)
        */
-      double gaussian = calculateGaussian(
-        it_robot->second.getPositionX(),
-        it_robot->second.getPositionY(),
-        it_grp->second.getCenterOfGravity().x,
-        it_grp->second.getCenterOfGravity().y,
-        0.0,
-        fformation_radius / 2.0,
-        fformation_radius / 2.0,
-        fformation_radius / 2.0
-      );
+      double gaussian = 0.0;
+      // perception can report 1 person in a group - do not investigate such situations further
+      if (people_this_group.size() > 1) {
+        gaussian = calculateGaussian(
+          it_robot->second.getPositionX(),
+          it_robot->second.getPositionY(),
+          it_grp->second.getCenterOfGravity().x,
+          it_grp->second.getCenterOfGravity().y,
+          0.0,
+          fformation_radius / 2.0,
+          fformation_radius / 2.0,
+          fformation_radius / 2.0
+        );
+      }
 
       // Gaussian cost of the robot being located in the current pose; cost related to the investigated group of people
       timed_gaussian.second.push_back(gaussian);
 
       if (all_groups_checked_timestep || last_sample_being_checked) {
-        timed_gaussians.push_back(timed_gaussian);
+        // extend gaussians only if the gaussian for a group is properly defined, i.e., group is not empty
+        if (!timed_gaussian.second.empty()) {
+          timed_gaussians.push_back(timed_gaussian);
+        }
         break;
       }
 
