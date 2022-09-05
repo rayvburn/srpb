@@ -182,6 +182,14 @@ double calculateGaussian(double x, double mean, double variance, bool normalize 
   return scale * std::exp(-std::pow(x - mean, 2) / (2.0 * variance));
 }
 
+/// Computes value of 1D Gaussian PDF but includes wrapped regions of bell curve (shifted -2pi and +2pi)
+double calculateGaussianAngle(double x, double mean, double variance, bool normalize = false) {
+  double gaussian1 = calculateGaussian(x, mean             , variance, normalize);
+  double gaussian2 = calculateGaussian(x, mean - 2.0 * M_PI, variance, normalize);
+  double gaussian3 = calculateGaussian(x, mean + 2.0 * M_PI, variance, normalize);
+  return std::max(std::max(gaussian1, gaussian2), gaussian3);
+}
+
 /// Reference: Algorithm A.1 from Kirby, 2010 PhD thesis "Social Robot Navigation" (p. 166)
 /// @url https://www.ri.cmu.edu/pub_files/2010/5/rk_thesis.pdf
 double calculateGaussian(
