@@ -647,7 +647,7 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
       // Gaussian cost of the robot being located in the current pose; cost related to the investigated group of people
       timed_gaussian.second.push_back(gaussian);
 
-      if (all_groups_checked_timestep || last_sample_being_checked) {
+      if (all_groups_checked_timestep || last_sample_being_checked || checking_last_group) {
         // extend gaussians only if the gaussian for a group is properly defined, i.e., group is not empty
         if (!timed_gaussian.second.empty()) {
           timed_gaussians.push_back(timed_gaussian);
