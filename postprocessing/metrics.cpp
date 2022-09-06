@@ -329,7 +329,6 @@ std::tuple<double, double, double, unsigned int> calculateGaussianStatistics(
  * @param y_person
  * @param yaw_person
  * @param fov_person total angular field of view of the person
- * @param gamma_threshold_angle_range how broad the region of, e.g. opposite direction angles, will be
  * @return Normalized (0-1) disturbance score
  */
 double calculateDirectionDisturbance(
@@ -339,11 +338,20 @@ double calculateDirectionDisturbance(
   double x_person,
   double y_person,
   double yaw_person,
-  double fov_person,
-  double gamma_threshold_angle_range
+  double fov_person
 ) {
+  double dist_vector[2] = {0.0};
+  dist_vector[0] = x_robot - x_person;
+  dist_vector[1] = y_robot - y_person;
+
+  // length of the vector
+  double dist_vector_length = std::sqrt(
+    std::pow(dist_vector[0], 2)
+    + std::pow(dist_vector[1], 2)
+  );
+
   // direction of vector connecting robot and person (defines where the robot is located in relation to a person [ego agent])
-  double dist_vector_angle = std::atan2(y_robot - y_person, x_robot - x_person);
+  double dist_vector_angle = std::atan2(dist_vector[1], dist_vector[0]);
 
   // relative location vector angle (defines side where the robot is located in relation to a person)
   double rel_loc_angle = angles::normalize_angle(dist_vector_angle - yaw_person);
@@ -402,9 +410,14 @@ double calculateDirectionDisturbance(
   double gamma_cb_range = std::abs(angles::shortest_angular_distance(gamma_cb_start, gamma_cb_finish));
   double gamma_out_range = std::abs(angles::shortest_angular_distance(gamma_out_start, gamma_out_finish));
 
+  // determine, how wide the region of, cross_center direction angles, will be (assuming circular model of the person)
+  const double PERSON_MODEL_RADIUS = 0.4;
+  // we must keep arcsin argument below 1.0, otherwise NAN will be returned instead of a very big angle
+  double dist_gamma_range = std::max(PERSON_MODEL_RADIUS, dist_vector_length);
+  double gamma_cc_range = 2.0 * std::asin(PERSON_MODEL_RADIUS / dist_gamma_range);
   // Variance is computed according 68–95–99.7 rule https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
-  double gamma_threshold_stddev = (gamma_threshold_angle_range / 2.0) / 3.0;
-  double gamma_threshold_variance = std::pow(gamma_threshold_stddev, 2);
+  double gamma_cc_stddev = (gamma_cc_range / 2.0) / 3.0;
+  double gamma_cc_variance = std::pow(gamma_cc_stddev, 2);
 
   /*
    * Note that we assume that gaussian cost of disturbance exists only within bounds of following direction angles:
@@ -413,7 +426,7 @@ double calculateDirectionDisturbance(
    */
   // 1D Gaussian function, note that angle domain wraps at 3.14 so we must check for maximum of gaussians
   // located at gamma_X and shifted 2 * pi to the left and right; gamma angle should already be normalized here
-  double gaussian_dir_cc = calculateGaussianAngle(gamma, gamma_cc, gamma_threshold_variance, true);
+  double gaussian_dir_cc = calculateGaussianAngle(gamma, gamma_cc, gamma_cc_variance, true);
 
   // 3 sigma rule - let the cost spread only over the CF region
   double gamma_cf_stddev = (gamma_cf_range / 2.0) / 3.0;
@@ -675,7 +688,6 @@ std::tuple<double, double, double, unsigned int> computePersonDisturbance(
   const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
   double disturbance_threshold,
   double person_fov,
-  double gamma_threshold_angle_range,
   bool max_method = true
 ) {
   if (robot_data.size() < 2) {
@@ -724,8 +736,7 @@ std::tuple<double, double, double, unsigned int> computePersonDisturbance(
         it_ppl->second.getPositionX(),
         it_ppl->second.getPositionY(),
         it_ppl->second.getOrientationYaw(),
-        person_fov,
-        gamma_threshold_angle_range
+        person_fov
       );
 
       // check if robot faces person but only rotates or is moving fast
@@ -831,7 +842,7 @@ int main(int argc, char* argv[]) {
   double group_space_threshold = 0.55;
   // estimated field of view of people
   double person_fov = angles::from_degrees(190.0);
-  double disturbance_angle_range = angles::from_degrees(20.0);
+  // threshold of Gaussian value to detect significant disturbance caused by robot location or motion direction
   double disturbance_threshold = 0.20;
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
@@ -930,8 +941,7 @@ int main(int argc, char* argv[]) {
     timed_robot_data,
     timed_people_data,
     disturbance_threshold,
-    person_fov,
-    disturbance_angle_range
+    person_fov
   );
   printf(
     "Person disturbance = %.3f[%%] (min %.3f[%%], max %.3f[%%], violations %3u)\n",
