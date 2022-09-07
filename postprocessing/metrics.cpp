@@ -536,7 +536,9 @@ std::tuple<double, double, double, unsigned int> computePersonalSpaceIntrusion(
         sigma_r,
         sigma_s
       );
-      timed_gaussian.second.push_back(gaussian);
+      // count in the person's tracking reliability - we want to avoid penalizing robot that investigates `old` tracks
+      double cost = gaussian * it_ppl->second.getReliability();
+      timed_gaussian.second.push_back(cost);
 
     } // iterating over people log entries
   } // iteration over robot log entries
@@ -661,8 +663,20 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
         );
       }
 
+      // choose maximum reliability among group members as a reference to multiply gaussian
+      double group_reliability = std::max_element(
+        people_this_group.begin(),
+        people_this_group.end(),
+        [](const people_msgs_utils::Person& lhs, const people_msgs_utils::Person& rhs) {
+          return lhs.getReliability() < rhs.getReliability();
+        }
+      )->getReliability();
+
+      // count in the person's tracking reliability - we want to avoid penalizing robot that investigates `old` tracks
+      double cost = group_reliability * gaussian;
+
       // Gaussian cost of the robot being located in the current pose; cost related to the investigated group of people
-      timed_gaussian.second.push_back(gaussian);
+      timed_gaussian.second.push_back(cost);
 
       if (all_groups_checked_timestep || last_sample_being_checked || checking_last_group) {
         // extend gaussians only if the gaussian for a group is properly defined, i.e., group is not empty
@@ -760,7 +774,9 @@ std::tuple<double, double, double, unsigned int> computePersonDisturbance(
       // count in factors above
       disturbance *= (speed_factor * dist_factor);
 
-      timed_disturbance.second.push_back(disturbance);
+      // count in the person's tracking reliability - we want to avoid penalizing robot that investigates `old` tracks
+      double cost = disturbance * it_ppl->second.getReliability();
+      timed_disturbance.second.push_back(cost);
 
       if (all_people_checked_timestep || last_sample_being_checked) {
         timed_disturbances.push_back(timed_disturbance);
