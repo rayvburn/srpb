@@ -640,9 +640,11 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
        * NOTE that we do not possess the orientation of the group (yaw is set to 0)
        * so the circular model is assumed (sigmas are equal)
        *
-       * Conversion from radius to variance was mentioned, e.g., by Truong in `To Approach Humans? (..)` article (2017)
+       * Conversion from radius to stddev was mentioned, e.g., by Truong in `To Approach Humans? (..)` article (2017)
        */
       double gaussian = 0.0;
+      // 2 sigma rule is used here (mean is the center of the F-formation, 2 times stddev corresponds to its span)
+      double stddev_fformation = fformation_radius / 2.0;
       // perception can report 1 person in a group - do not investigate such situations further
       if (people_this_group.size() > 1) {
         gaussian = calculateGaussian(
@@ -651,9 +653,9 @@ std::tuple<double, double, double, unsigned int> computeGroupsSpaceIntrusion(
           it_grp->second.getCenterOfGravity().x,
           it_grp->second.getCenterOfGravity().y,
           0.0,
-          fformation_radius / 2.0,
-          fformation_radius / 2.0,
-          fformation_radius / 2.0
+          stddev_fformation,
+          stddev_fformation,
+          stddev_fformation
         );
       }
 
