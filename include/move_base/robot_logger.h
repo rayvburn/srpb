@@ -34,16 +34,19 @@ public:
 
     /// Converts given robot data into string description
     static std::string robotToString(const RobotData& robot) {
-        char buff[100];
+        char buff[150];
         sprintf(
             buff,
-            "%9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f",
+            "%9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f",
             robot.getPositionX(),
             robot.getPositionY(),
             robot.getOrientationYaw(),
             robot.getVelocityX(),
             robot.getVelocityY(),
             robot.getVelocityTheta(),
+            robot.getGoalPositionX(),
+            robot.getGoalPositionY(),
+            robot.getGoalOrientationYaw(),
             robot.getDistToObstacle(),
             robot.getLocalPlanningTime()
         );
@@ -53,7 +56,7 @@ public:
     /// Converts given @ref str string description into robot data
     static RobotData robotFromString(const std::string& str) {
         auto vals = people_msgs_utils::Person::parseString<double>(str, " ");
-        assert(vals.size() == 8);
+        assert(vals.size() == 11);
 
         geometry_msgs::Pose pose;
         pose.position.x = vals.at(0);
@@ -74,10 +77,19 @@ public:
         vel.orientation.z = quat.getZ();
         vel.orientation.w = quat.getW();
 
-        double obst_dist = vals.at(6);
-        double exec_time = vals.at(7);
+        geometry_msgs::Pose goal;
+        goal.position.x = vals.at(6);
+        goal.position.y = vals.at(7);
+        quat.setRPY(0.0, 0.0, vals.at(8));
+        goal.orientation.x = quat.getX();
+        goal.orientation.y = quat.getY();
+        goal.orientation.z = quat.getZ();
+        goal.orientation.w = quat.getW();
 
-        return RobotData(pose, vel, obst_dist, exec_time);
+        double obst_dist = vals.at(9);
+        double exec_time = vals.at(10);
+
+        return RobotData(pose, vel, goal, obst_dist, exec_time);
     }
 
 protected:

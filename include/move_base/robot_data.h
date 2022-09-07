@@ -11,7 +11,7 @@ public:
         const geometry_msgs::PoseStamped& goal_pose,
         double obstacle_distance,
         double exec_time
-    ): RobotData(robot_pose.pose, robot_vel.pose, obstacle_distance, exec_time) {}
+    ): RobotData(robot_pose.pose, robot_vel.pose, goal_pose.pose, obstacle_distance, exec_time) {}
 
     RobotData(
         const geometry_msgs::Pose& robot_pose,
