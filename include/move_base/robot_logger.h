@@ -37,12 +37,12 @@ public:
         char buff[100];
         sprintf(
             buff,
-            "%9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f",
+            "%9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f",
             robot.getPositionX(),
             robot.getPositionY(),
             robot.getOrientationYaw(),
             robot.getVelocityX(),
-            /* robot.getVelocityY(), */
+            robot.getVelocityY(),
             robot.getVelocityTheta(),
             robot.getDistToObstacle(),
             robot.getLocalPlanningTime()
@@ -53,7 +53,7 @@ public:
     /// Converts given @ref str string description into robot data
     static RobotData robotFromString(const std::string& str) {
         auto vals = people_msgs_utils::Person::parseString<double>(str, " ");
-        assert(vals.size() == 7);
+        assert(vals.size() == 8);
 
         geometry_msgs::Pose pose;
         pose.position.x = vals.at(0);
@@ -67,15 +67,15 @@ public:
 
         geometry_msgs::Pose vel;
         vel.position.x = vals.at(3);
-        // vel.position.y = ;
-        quat.setRPY(0.0, 0.0, vals.at(4));
+        vel.position.y = vals.at(4);
+        quat.setRPY(0.0, 0.0, vals.at(5));
         vel.orientation.x = quat.getX();
         vel.orientation.y = quat.getY();
         vel.orientation.z = quat.getZ();
         vel.orientation.w = quat.getW();
 
-        double obst_dist = vals.at(5);
-        double exec_time = vals.at(6);
+        double obst_dist = vals.at(6);
+        double exec_time = vals.at(7);
 
         return RobotData(pose, vel, obst_dist, exec_time);
     }
