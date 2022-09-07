@@ -519,6 +519,12 @@ std::tuple<double, double, double, unsigned int> computePersonalSpaceIntrusion(
       bool all_people_checked_timestep = it_robot->first != it_ppl->first;
       bool last_sample_being_checked = std::next(it_robot) == robot_data.end() && std::next(it_ppl) == people_data.end();
 
+      if (all_people_checked_timestep || last_sample_being_checked) {
+        if (!timed_gaussian.second.empty()) {
+          timed_gaussians.push_back(timed_gaussian);
+        }
+        break;
+      }
       // processing
       double gaussian = calculateGaussian(
         it_robot->second.getPositionX(),
@@ -532,10 +538,6 @@ std::tuple<double, double, double, unsigned int> computePersonalSpaceIntrusion(
       );
       timed_gaussian.second.push_back(gaussian);
 
-      if (all_people_checked_timestep || last_sample_being_checked) {
-        timed_gaussians.push_back(timed_gaussian);
-        break;
-      }
     } // iterating over people log entries
   } // iteration over robot log entries
 
