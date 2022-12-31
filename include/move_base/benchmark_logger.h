@@ -30,5 +30,6 @@ protected:
         fclose(*log_file);
     }
 
+    static constexpr auto EXTENSION_SEPARATOR = ".";
     std::string log_filename_;
 };
