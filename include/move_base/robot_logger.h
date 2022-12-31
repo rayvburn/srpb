@@ -11,6 +11,15 @@ class RobotLogger: public BenchmarkLogger {
 public:
     RobotLogger() = default;
 
+    void init(ros::NodeHandle& nh) {
+        BenchmarkLogger::init(nh);
+
+        auto log_path_base = log_filename_.substr(0, log_filename_.find_last_of(EXTENSION_SEPARATOR));
+        auto log_extension = log_filename_.substr(log_filename_.find_last_of(EXTENSION_SEPARATOR) + 1);
+
+        log_filename_ = log_path_base + "_robot" + EXTENSION_SEPARATOR + log_extension;
+    }
+
     void start() {
         BenchmarkLogger::start(&log_file_, log_filename_);
     }
