@@ -4,11 +4,11 @@
 void PeopleLogger::init(ros::NodeHandle& nh) {
   BenchmarkLogger::init(nh);
 
-  auto log_basename = log_filename_.substr(0, log_filename_.find_last_of("."));
-  auto log_extension = log_filename_.substr(log_filename_.find_last_of(".") + 1);
+  auto log_path_base = log_filename_.substr(0, log_filename_.find_last_of(EXTENSION_SEPARATOR));
+  auto log_extension = log_filename_.substr(log_filename_.find_last_of(EXTENSION_SEPARATOR) + 1);
 
-  log_filename_people_ = log_basename + "_people" + "." + log_extension;
-  log_filename_groups_ = log_basename + "_groups" + "." + log_extension;
+  log_filename_people_ = log_path_base + "_people" + EXTENSION_SEPARATOR + log_extension;
+  log_filename_groups_ = log_path_base + "_groups" + EXTENSION_SEPARATOR + log_extension;
 
   // social navigation benchmark utils
   people_sub_ = nh.subscribe<people_msgs::People>("/people", 1, boost::bind(&PeopleLogger::peopleCB, this, _1));
