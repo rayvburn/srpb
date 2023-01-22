@@ -23,7 +23,7 @@ include_directories(
 
 add_executable(${PROJECT_NAME}
     # main
-    metrics.cpp
+    src/metric_evaluation.cpp
     # libs
     include/postprocessing/metric.h
     include/postprocessing/metric_gaussian.h
