@@ -48,20 +48,41 @@ void PeopleLogger::finish() {
 }
 
 std::string PeopleLogger::personToString(const people_msgs_utils::Person& person) {
-    char buff[175] = {0};
+    char buff[250] = {0};
     sprintf(
         buff,
-        "%4u %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %6u %16lu %d %d",
+        // id, rel,
+        "%4u %9.4f "
+        // px,  py,   pz,   yaw
+        "%9.4f %9.4f %9.4f %9.4f "
+        //cxx   cxy   cyx   cyy   cthth
+        "%9.6f %9.6f %9.6f %9.6f %9.6f "
+        // vx    vy    vz    vth
+        "%9.4f %9.4f %9.4f %9.4f "
+        // cvxx  cvxy  cvyx  cvyy  cvthh
+        "%9.6f %9.6f %9.6f %9.6f %9.6f "
+        // det age mt oc
+        "%6u %16lu %d %d",
         person.getID(),
         person.getReliability(),
         person.getPositionX(),
         person.getPositionY(),
         person.getPositionZ(),
         person.getOrientationYaw(),
+        person.getCovariancePoseXX(),
+        person.getCovariancePoseXY(),
+        person.getCovariancePoseYX(),
+        person.getCovariancePoseYY(),
+        person.getCovariancePoseYawYaw(),
         person.getVelocityX(),
         person.getVelocityY(),
         person.getVelocityZ(),
         person.getVelocityTheta(),
+        person.getCovarianceVelocityXX(),
+        person.getCovarianceVelocityXY(),
+        person.getCovarianceVelocityYX(),
+        person.getCovarianceVelocityYY(),
+        person.getCovarianceVelocityThTh(),
         person.getDetectionID(),
         person.getTrackAge(),
         person.isMatched(),
@@ -74,7 +95,7 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
   auto vals = people_msgs_utils::Person::parseString<double>(str, " ");
 
   // see method that creates such
-  assert(vals.size() == 14);
+  assert(vals.size() == 24);
 
   std::string name = std::to_string(vals.at(0));
   geometry_msgs::Point pos;
@@ -82,9 +103,9 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
   pos.y = vals.at(3);
   pos.z = vals.at(4);
   geometry_msgs::Point vel;
-  vel.x = vals.at(6);
-  vel.y = vals.at(7);
-  vel.z = vals.at(8);
+  vel.x = vals.at(11);
+  vel.y = vals.at(12);
+  vel.z = vals.at(13);
   double reliability = vals.at(1);
 
   tf2::Quaternion quat_orient;
@@ -92,7 +113,7 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
 
   // not used...
   // tf2::Quaternion quat_vel;
-  // quat_vel.setRPY(0.0, 0.0, vals.at(9));
+  // quat_vel.setRPY(0.0, 0.0, vals.at(14));
 
   std::vector<std::string> tagnames;
   std::vector<std::string> tags;
@@ -103,16 +124,57 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
     + " " + std::to_string(quat_orient.getZ())
     + " " + std::to_string(quat_orient.getW())
   );
-  tagnames.push_back("occluded");
-  tags.push_back(std::to_string(vals.at(13)));
-  tagnames.push_back("matched");
-  tags.push_back(std::to_string(vals.at(12)));
-  tagnames.push_back("detection_id");
-  tags.push_back(std::to_string(vals.at(10)));
-  tagnames.push_back("track_age");
-  tags.push_back(std::to_string(vals.at(11)));
 
-  // NOTE: group-related tags are ommited here: `group_id`, `group_age`, `group_track_ids`, `group_center_of_gravity`
+  // prepare covariance values
+  std::string pose_covariance_str;
+  std::string vel_covariance_str;
+
+  for (unsigned int i = 0; i < people_msgs_utils::Person::COV_MAT_SIZE; i++) {
+    if (i == people_msgs_utils::Person::COV_XX_INDEX) {
+      pose_covariance_str += std::to_string(vals.at(6)) + " ";
+      vel_covariance_str += std::to_string(vals.at(15)) + " ";
+    } else if (i == people_msgs_utils::Person::COV_XY_INDEX) {
+      pose_covariance_str += std::to_string(vals.at(7)) + " ";
+      vel_covariance_str += std::to_string(vals.at(16)) + " ";
+    } else if (i == people_msgs_utils::Person::COV_YX_INDEX) {
+      pose_covariance_str += std::to_string(vals.at(8)) + " ";
+      vel_covariance_str += std::to_string(vals.at(17)) + " ";
+    } else if (i == people_msgs_utils::Person::COV_YY_INDEX) {
+      pose_covariance_str += std::to_string(vals.at(9)) + " ";
+      vel_covariance_str += std::to_string(vals.at(18)) + " ";
+    } else if (
+      i == people_msgs_utils::Person::COV_ZZ_INDEX
+      || i == people_msgs_utils::Person::COV_ROLLROLL_INDEX
+      || i == people_msgs_utils::Person::COV_PITCHPITCH_INDEX
+    ) {
+      // big uncertainty on the diagonal - those components are typically not measured
+      const double COV_UNCERT = 9999999.0;
+      pose_covariance_str += std::to_string(COV_UNCERT) + " ";
+      vel_covariance_str += std::to_string(COV_UNCERT) + " ";
+    } else if (i == people_msgs_utils::Person::COV_YAWYAW_INDEX) {
+      pose_covariance_str += std::to_string(vals.at(10)) + " ";
+      vel_covariance_str += std::to_string(vals.at(19)) + " ";
+    } else {
+      pose_covariance_str += std::to_string(0.0) + " ";
+      vel_covariance_str += std::to_string(0.0) + " ";
+    }
+  }
+
+  tagnames.push_back("pose_covariance");
+  tags.push_back(pose_covariance_str);
+  tagnames.push_back("twist_covariance");
+  tags.push_back(vel_covariance_str);
+
+  tagnames.push_back("occluded");
+  tags.push_back(std::to_string(vals.at(23)));
+  tagnames.push_back("matched");
+  tags.push_back(std::to_string(vals.at(22)));
+  tagnames.push_back("detection_id");
+  tags.push_back(std::to_string(vals.at(20)));
+  tagnames.push_back("track_age");
+  tags.push_back(std::to_string(vals.at(21)));
+
+  // NOTE: group-related tags are omitted here: `group_id`, `group_age`, `group_track_ids`, `group_center_of_gravity`, 'social_relations'
   return people_msgs_utils::Person(name, pos, vel, reliability, tagnames, tags);
 }
 
@@ -139,7 +201,7 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
 
   if (vals.empty()) {
     // return a dummy group without any IDs of tracked people
-    return people_msgs_utils::DUMMY_GROUP;
+    return people_msgs_utils::EMPTY_GROUP;
   }
 
   // `group` must contain at least 1 ID
@@ -160,6 +222,7 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
     std::to_string(vals.at(0)),
     static_cast<unsigned int>(vals.at(4)),
     track_ids,
+    std::vector<std::tuple<unsigned int, unsigned int, double>>(),
     cog
   );
 }
