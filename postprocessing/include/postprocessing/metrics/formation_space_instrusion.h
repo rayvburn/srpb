@@ -84,7 +84,7 @@ protected:
     rewinder_.setHandlerNextPersonTimestamp(
       [&]() {
         // add person data to the container of group members
-        auto group_members = rewinder_.getGroupCurr().getTrackIDs();
+        auto group_members = rewinder_.getGroupCurr().getMemberIDs();
         if (std::find(group_members.begin(), group_members.end(), rewinder_.getPersonCurr().getID()) != group_members.end()) {
           people_this_group.push_back(rewinder_.getPersonCurr());
         }

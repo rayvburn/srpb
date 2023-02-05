@@ -38,7 +38,14 @@ public:
     /// Converts given @ref group instance into string description
     static std::string groupToString(const people_msgs_utils::Group& group);
 
-    /// Converts given @ref str string description into instance of @ref people_msgs_utils::Group
+    /**
+     * Converts a given @ref str string description into instance of @ref people_msgs_utils::Group
+     *
+     * People are logged in separation to groups. Group created from string does not contain data of members since
+     * these are already logged on the 'People' side of logger. Therefore, loading people and groups can be understood
+     * as joining 2 tables, where the primary key is the person ID. After collecting all people and groups,
+     * see @ref people_msgs_utils::fillGroupsWithMembers
+     */
     static people_msgs_utils::Group groupFromString(const std::string& str);
 
 protected:

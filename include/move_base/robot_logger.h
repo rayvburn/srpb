@@ -5,7 +5,7 @@
 #include <tf2/utils.h>
 
 // helper functions
-#include <people_msgs_utils/person.h>
+#include <people_msgs_utils/utils.h>
 
 class RobotLogger: public BenchmarkLogger {
 public:
@@ -64,7 +64,7 @@ public:
 
     /// Converts given @ref str string description into robot data
     static RobotData robotFromString(const std::string& str) {
-        auto vals = people_msgs_utils::Person::parseString<double>(str, " ");
+        auto vals = people_msgs_utils::parseString<double>(str, " ");
         assert(vals.size() == 11);
 
         geometry_msgs::Pose pose;

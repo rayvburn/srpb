@@ -1,6 +1,8 @@
 #include <move_base/people_logger.h>
 #include <tf2/utils.h>
 
+#include <people_msgs_utils/utils.h>
+
 void PeopleLogger::init(ros::NodeHandle& nh) {
   BenchmarkLogger::init(nh);
 
@@ -48,192 +50,207 @@ void PeopleLogger::finish() {
 }
 
 std::string PeopleLogger::personToString(const people_msgs_utils::Person& person) {
-    char buff[250] = {0};
-    sprintf(
-        buff,
-        // id, rel,
-        "%4u %9.4f "
-        // px,  py,   pz,   yaw
-        "%9.4f %9.4f %9.4f %9.4f "
-        //cxx   cxy   cyx   cyy   cthth
-        "%9.6f %9.6f %9.6f %9.6f %9.6f "
-        // vx    vy    vz    vth
-        "%9.4f %9.4f %9.4f %9.4f "
-        // cvxx  cvxy  cvyx  cvyy  cvthh
-        "%9.6f %9.6f %9.6f %9.6f %9.6f "
-        // det age mt oc
-        "%6u %16lu %d %d",
-        person.getID(),
-        person.getReliability(),
-        person.getPositionX(),
-        person.getPositionY(),
-        person.getPositionZ(),
-        person.getOrientationYaw(),
-        person.getCovariancePoseXX(),
-        person.getCovariancePoseXY(),
-        person.getCovariancePoseYX(),
-        person.getCovariancePoseYY(),
-        person.getCovariancePoseYawYaw(),
-        person.getVelocityX(),
-        person.getVelocityY(),
-        person.getVelocityZ(),
-        person.getVelocityTheta(),
-        person.getCovarianceVelocityXX(),
-        person.getCovarianceVelocityXY(),
-        person.getCovarianceVelocityYX(),
-        person.getCovarianceVelocityYY(),
-        person.getCovarianceVelocityThTh(),
-        person.getDetectionID(),
-        person.getTrackAge(),
-        person.isMatched(),
-        person.isOccluded()
-    );
-    return std::string(buff);
+  char buff[320] = {0};
+  sprintf(
+    buff,
+    // id, rel,
+    "%4u %9.4f "
+    // px,  py,   pz,   yaw
+    "%9.4f %9.4f %9.4f %9.4f "
+    //cxx   cxy   cyx   cyy   cthth
+    "%9.6f %9.6f %9.6f %9.6f %9.6f "
+    // vx    vy    vz    vth
+    "%9.4f %9.4f %9.4f %9.4f "
+    // cvxx  cvxy  cvyx  cvyy  cvthh
+    "%9.6f %9.6f %9.6f %9.6f %9.6f "
+    // det age mt oc grp
+    "%6u %12lu %d %d %6u",
+    /*  0 */ person.getID(),
+    /*  1 */ person.getReliability(),
+    /*  2 */ person.getPositionX(),
+    /*  3 */ person.getPositionY(),
+    /*  4 */ person.getPositionZ(),
+    /*  5 */ person.getOrientationYaw(),
+    /*  6 */ person.getCovariancePoseXX(),
+    /*  7 */ person.getCovariancePoseXY(),
+    /*  8 */ person.getCovariancePoseYX(),
+    /*  9 */ person.getCovariancePoseYY(),
+    /* 10 */ person.getCovariancePoseYawYaw(),
+    /* 11 */ person.getVelocityX(),
+    /* 12 */ person.getVelocityY(),
+    /* 13 */ person.getVelocityZ(),
+    /* 14 */ person.getVelocityTheta(),
+    /* 15 */ person.getCovarianceVelocityXX(),
+    /* 16 */ person.getCovarianceVelocityXY(),
+    /* 17 */ person.getCovarianceVelocityYX(),
+    /* 18 */ person.getCovarianceVelocityYY(),
+    /* 19 */ person.getCovarianceVelocityThTh(),
+    /* 20 */ person.getDetectionID(),
+    /* 21 */ person.getTrackAge(),
+    /* 22 */ person.isMatched(),
+    /* 23 */ person.isOccluded(),
+    /* 24 */ person.getGroupID()
+  );
+  return std::string(buff);
 }
 
 people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str) {
-  auto vals = people_msgs_utils::Person::parseString<double>(str, " ");
+  auto vals = people_msgs_utils::parseString<double>(str, " ");
 
-  // see method that creates such
-  assert(vals.size() == 24);
+  // value indexes dictionary can be found in @ref personToString method
+  assert(vals.size() == 25);
 
-  std::string name = std::to_string(vals.at(0));
-  geometry_msgs::Point pos;
-  pos.x = vals.at(2);
-  pos.y = vals.at(3);
-  pos.z = vals.at(4);
-  geometry_msgs::Point vel;
-  vel.x = vals.at(11);
-  vel.y = vals.at(12);
-  vel.z = vals.at(13);
+  // IDs are numbers in reality
+  std::string name = std::to_string(static_cast<unsigned int>(vals.at(0)));
   double reliability = vals.at(1);
+
+  geometry_msgs::PoseWithCovariance pose;
+  pose.pose.position.x = vals.at(2);
+  pose.pose.position.y = vals.at(3);
+  pose.pose.position.z = vals.at(4);
 
   tf2::Quaternion quat_orient;
   quat_orient.setRPY(0.0, 0.0, vals.at(5));
+  pose.pose.orientation.x = quat_orient.getX();
+  pose.pose.orientation.y = quat_orient.getY();
+  pose.pose.orientation.z = quat_orient.getZ();
+  pose.pose.orientation.w = quat_orient.getW();
 
-  // not used...
-  // tf2::Quaternion quat_vel;
-  // quat_vel.setRPY(0.0, 0.0, vals.at(14));
+  pose.covariance.at(people_msgs_utils::Person::COV_XX_INDEX) = vals.at(6);
+  pose.covariance.at(people_msgs_utils::Person::COV_XY_INDEX) = vals.at(7);
+  pose.covariance.at(people_msgs_utils::Person::COV_YX_INDEX) = vals.at(8);
+  pose.covariance.at(people_msgs_utils::Person::COV_YY_INDEX) = vals.at(9);
+  pose.covariance.at(people_msgs_utils::Person::COV_YAWYAW_INDEX) = vals.at(10);
 
-  std::vector<std::string> tagnames;
-  std::vector<std::string> tags;
-  tagnames.push_back("orientation");
-  tags.push_back(
-    std::to_string(quat_orient.getX())
-    + " " + std::to_string(quat_orient.getY())
-    + " " + std::to_string(quat_orient.getZ())
-    + " " + std::to_string(quat_orient.getW())
+  geometry_msgs::PoseWithCovariance vel;
+  vel.pose.position.x = vals.at(11);
+  vel.pose.position.y = vals.at(12);
+  vel.pose.position.z = vals.at(13);
+
+  tf2::Quaternion quat_vel;
+  quat_vel.setRPY(0.0, 0.0, vals.at(14));
+  vel.pose.orientation.x = quat_vel.getX();
+  vel.pose.orientation.y = quat_vel.getY();
+  vel.pose.orientation.z = quat_vel.getZ();
+  vel.pose.orientation.w = quat_vel.getW();
+
+  vel.covariance.at(people_msgs_utils::Person::COV_XX_INDEX) = vals.at(15);
+  vel.covariance.at(people_msgs_utils::Person::COV_XY_INDEX) = vals.at(16);
+  vel.covariance.at(people_msgs_utils::Person::COV_YX_INDEX) = vals.at(17);
+  vel.covariance.at(people_msgs_utils::Person::COV_YY_INDEX) = vals.at(18);
+  vel.covariance.at(people_msgs_utils::Person::COV_YAWYAW_INDEX) = vals.at(19);
+
+  unsigned int detection_id = vals.at(20);
+  unsigned long int track_age = vals.at(21);
+  bool matched = static_cast<bool>(vals.at(22));
+  bool occluded = static_cast<bool>(vals.at(23));
+  std::string group_name = std::to_string(static_cast<unsigned int>(vals.at(24)));
+
+  return people_msgs_utils::Person(
+    name,
+    pose,
+    vel,
+    reliability,
+    occluded,
+    matched,
+    detection_id,
+    track_age,
+    group_name
   );
-
-  // prepare covariance values
-  std::string pose_covariance_str;
-  std::string vel_covariance_str;
-
-  for (unsigned int i = 0; i < people_msgs_utils::Person::COV_MAT_SIZE; i++) {
-    if (i == people_msgs_utils::Person::COV_XX_INDEX) {
-      pose_covariance_str += std::to_string(vals.at(6)) + " ";
-      vel_covariance_str += std::to_string(vals.at(15)) + " ";
-    } else if (i == people_msgs_utils::Person::COV_XY_INDEX) {
-      pose_covariance_str += std::to_string(vals.at(7)) + " ";
-      vel_covariance_str += std::to_string(vals.at(16)) + " ";
-    } else if (i == people_msgs_utils::Person::COV_YX_INDEX) {
-      pose_covariance_str += std::to_string(vals.at(8)) + " ";
-      vel_covariance_str += std::to_string(vals.at(17)) + " ";
-    } else if (i == people_msgs_utils::Person::COV_YY_INDEX) {
-      pose_covariance_str += std::to_string(vals.at(9)) + " ";
-      vel_covariance_str += std::to_string(vals.at(18)) + " ";
-    } else if (
-      i == people_msgs_utils::Person::COV_ZZ_INDEX
-      || i == people_msgs_utils::Person::COV_ROLLROLL_INDEX
-      || i == people_msgs_utils::Person::COV_PITCHPITCH_INDEX
-    ) {
-      // big uncertainty on the diagonal - those components are typically not measured
-      const double COV_UNCERT = 9999999.0;
-      pose_covariance_str += std::to_string(COV_UNCERT) + " ";
-      vel_covariance_str += std::to_string(COV_UNCERT) + " ";
-    } else if (i == people_msgs_utils::Person::COV_YAWYAW_INDEX) {
-      pose_covariance_str += std::to_string(vals.at(10)) + " ";
-      vel_covariance_str += std::to_string(vals.at(19)) + " ";
-    } else {
-      pose_covariance_str += std::to_string(0.0) + " ";
-      vel_covariance_str += std::to_string(0.0) + " ";
-    }
-  }
-
-  tagnames.push_back("pose_covariance");
-  tags.push_back(pose_covariance_str);
-  tagnames.push_back("twist_covariance");
-  tags.push_back(vel_covariance_str);
-
-  tagnames.push_back("occluded");
-  tags.push_back(std::to_string(vals.at(23)));
-  tagnames.push_back("matched");
-  tags.push_back(std::to_string(vals.at(22)));
-  tagnames.push_back("detection_id");
-  tags.push_back(std::to_string(vals.at(20)));
-  tagnames.push_back("track_age");
-  tags.push_back(std::to_string(vals.at(21)));
-
-  // NOTE: group-related tags are omitted here: `group_id`, `group_age`, `group_track_ids`, `group_center_of_gravity`, 'social_relations'
-  return people_msgs_utils::Person(name, pos, vel, reliability, tagnames, tags);
 }
 
 std::string PeopleLogger::groupToString(const people_msgs_utils::Group& group) {
-  char buff[125] = {0};
+  char buff[180] = {0};
+
+  // 1st part: static
   sprintf(
     buff,
-    "%4u %9.4f %9.4f %9.4f %11lu ",
+    "%4u %9.4f %9.4f %9.4f %12lu ",
     group.getID(),
     group.getCenterOfGravity().x,
     group.getCenterOfGravity().y,
     group.getCenterOfGravity().z,
     group.getAge()
   );
-  for (const auto& track: group.getTrackIDs()) {
+
+  // dynamic size of member identifiers
+  for (const auto& id: group.getMemberIDs()) {
     std::size_t pos = std::strlen(buff);
-    sprintf(&buff[pos], "%4u ", track);
+    sprintf(&buff[pos], " %4u", id);
   }
+
+  // social relations will have dynamic size too
+  // add separator, to divide static + member IDs part and relations part
+  sprintf(&buff[std::strlen(buff)], " / ");
+  for (const auto& relation: group.getSocialRelations()) {
+    std::size_t pos = std::strlen(buff);
+    auto who1 = std::get<0>(relation);
+    auto who2 = std::get<1>(relation);
+    auto rel_strength = std::get<2>(relation);
+    sprintf(&buff[pos], " %4u %4u %6.4f", who1, who2, rel_strength);
+  }
+
   return std::string(buff);
 }
 
 people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
-  auto vals = people_msgs_utils::Person::parseString<double>(str, " ");
+  // divide into 2 parts considering separator
+  size_t separator = str.find("/");
+  auto vals1 = people_msgs_utils::parseString<double>(str.substr(0, separator - 1), " ");
+  auto vals2 = people_msgs_utils::parseString<double>(str.substr(separator + 1), " ");
 
-  if (vals.empty()) {
+  if (vals1.empty()) {
     // return a dummy group without any IDs of tracked people
     return people_msgs_utils::EMPTY_GROUP;
   }
 
-  // `group` must contain at least 1 ID
-  assert(vals.size() >= 6);
+  // 5 static entries and `group` must contain at least 2 IDs
+  assert(vals1.size() >= 7);
 
+  std::string name = std::to_string(static_cast<unsigned int>(vals1.at(0)));
   geometry_msgs::Point cog;
-  cog.x = vals.at(1);
-  cog.y = vals.at(2);
-  cog.z = vals.at(3);
+  cog.x = vals1.at(1);
+  cog.y = vals1.at(2);
+  cog.z = vals1.at(3);
+  unsigned long int age = vals1.at(4);
 
-  std::vector<unsigned int> track_ids;
+  std::vector<unsigned int> member_ids;
   // start from the first track ID
-  for (size_t i = 5; i < vals.size(); i++) {
-    track_ids.push_back(static_cast<unsigned int>(vals.at(i)));
+  for (size_t i = 5; i < vals1.size(); i++) {
+    member_ids.push_back(static_cast<unsigned int>(vals1.at(i)));
   }
 
+  // check if relations are available
+  std::vector<std::tuple<unsigned int, unsigned int, double>> relations;
+  if (!vals2.empty() && vals2.size() % 3 == 0) {
+    // each relation represented by a triplet
+    for (
+      auto it = vals2.cbegin();
+      it != vals2.cend();
+      it = it + 3
+    ) {
+      unsigned int id1 = *it;
+      unsigned int id2 = *(it+1);
+      double strength = *(it+2);
+      relations.push_back(std::make_tuple(id1, id2, strength));
+    }
+  }
+
+  /*
+   * NOTE: members with their attributes are not available here so this is kinda dummy group,
+   * needs further association with people set, see @ref people_msgs_utils::fillGroupsWithMembers
+   */
   return people_msgs_utils::Group(
-    std::to_string(vals.at(0)),
-    static_cast<unsigned int>(vals.at(4)),
-    track_ids,
-    std::vector<std::tuple<unsigned int, unsigned int, double>>(),
+    name,
+    age,
+    std::vector<people_msgs_utils::Person>(),
+    member_ids,
+    relations,
     cog
   );
 }
 
 void PeopleLogger::peopleCB(const people_msgs::PeopleConstPtr& msg) {
     std::lock_guard<std::mutex> l(cb_mutex_);
-
-    people_.clear();
-    for (const auto& person: msg->people) {
-        people_.emplace_back(person);
-    }
-
-    groups_ = people_msgs_utils::Group::fromPeople(people_);
+    std::tie(people_, groups_) = people_msgs_utils::createFromPeople(msg->people);
 }

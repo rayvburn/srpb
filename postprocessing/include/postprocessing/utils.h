@@ -7,6 +7,18 @@
 #include <tuple>
 #include <vector>
 
+#include <people_msgs_utils/utils.h>
+
+/**
+ * @brief Does similar to what @ref people_msgs_utils::fillGroupsWithMembers does, but considers timestamps of data
+ *
+ * @return Modified @ref timed_groups vector
+ */
+std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
+    const std::vector<std::pair<double, people_msgs_utils::Group>>& timed_groups,
+    const std::vector<std::pair<double, people_msgs_utils::Person>>& timed_people
+);
+
 /**
  * @defgroup templates Template functions
  * @{

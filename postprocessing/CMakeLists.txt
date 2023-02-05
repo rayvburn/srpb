@@ -45,6 +45,7 @@ add_executable(${PROJECT_NAME}
     # sources
     src/metric_gaussian.cpp
     src/rewinder.cpp
+    src/utils.cpp
 )
 
 target_link_libraries(
