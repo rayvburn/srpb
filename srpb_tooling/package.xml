@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+    <name>srpb_tooling</name>
+    <version>1.0.0</version>
+    <description>
+
+        The package provides calculating modules which help to gather environmental data during robot navigation.
+
+    </description>
+    <author>Jarosław Karwowski</author>
+    <maintainer email="chromedivizer@gmail.com">Jarosław Karwowski</maintainer>
+    <license>BSD-3</license>
+    <url>https://github.com/rayvburn/srpb</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>cmake_modules</build_depend>
+    <depend>costmap_2d</depend>
+    <depend>geometry_msgs</depend>
+    <depend>roscpp</depend>
+    <depend>Ceres</depend>
+    <depend>OpenCV</depend>
+
+</package>
