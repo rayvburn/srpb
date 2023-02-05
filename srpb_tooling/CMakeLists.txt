@@ -26,6 +26,9 @@ catkin_package(
     CATKIN_DEPENDS
         geometry_msgs
         roscpp
+    DEPENDS
+        Ceres
+        OpenCV
 )
 
 include_directories(
