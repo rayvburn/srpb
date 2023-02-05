@@ -1,6 +1,6 @@
 #pragma once
 
-#include "postprocessing/metric_gaussian.h"
+#include "srpb_postprocessing/metric_gaussian.h"
 
 /**
  * @brief Computes people personal space intrusion score

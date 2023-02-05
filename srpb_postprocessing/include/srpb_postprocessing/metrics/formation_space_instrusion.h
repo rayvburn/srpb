@@ -1,8 +1,8 @@
 #pragma once
 
-#include "postprocessing/metric_gaussian.h"
+#include "srpb_postprocessing/metric_gaussian.h"
 
-#include <move_base/robot_data.h>
+#include <srpb_logger/robot_data.h>
 #include <people_msgs_utils/person.h>
 #include <people_msgs_utils/group.h>
 

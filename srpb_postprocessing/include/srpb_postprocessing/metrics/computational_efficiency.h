@@ -1,6 +1,6 @@
 #pragma once
 
-#include "postprocessing/metric.h"
+#include "srpb_postprocessing/metric.h"
 
 class ComputationalEfficiency: public Metric {
 public:

@@ -1,4 +1,4 @@
-#include "postprocessing/metric_gaussian.h"
+#include "srpb_postprocessing/metric_gaussian.h"
 
 #include <algorithm>
 #include <limits>

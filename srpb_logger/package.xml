@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+    <name>srpb_logger</name>
+    <version>0.0.4</version>
+    <description>
+
+        The srpb_logger package provides implementation of tools that logging and parsing of data necessary for evaluation of robot behaviour during navigation
+
+    </description>
+    <author>Jarosław Karwowski</author>
+    <maintainer email="chromedivizer@gmail.com">Jarosław Karwowski</maintainer>
+
+    <license>BSD-3</license>
+    <url>https://github.com/rayvburn/srpb</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>cmake_modules</build_depend>
+    <build_depend>message_generation</build_depend>
+    <build_depend>tf2_geometry_msgs</build_depend>
+
+    <depend>roscpp</depend>
+    <depend>geometry_msgs</depend>
+    <depend>people_msgs</depend>
+    <depend>people_msgs_utils</depend>
+    <depend>tf2</depend>
+
+</package>

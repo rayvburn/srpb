@@ -1,9 +1,9 @@
 #pragma once
 
-#include "postprocessing/metric_gaussian.h"
+#include "srpb_postprocessing/metric_gaussian.h"
 
 #include <angles/angles.h>
-#include <move_base/robot_data.h>
+#include <srpb_logger/robot_data.h>
 #include <people_msgs_utils/person.h>
 
 /// Related to velocity and direction of the robot movement towards person

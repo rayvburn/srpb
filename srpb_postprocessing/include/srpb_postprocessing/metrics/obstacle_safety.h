@@ -1,7 +1,8 @@
 #pragma once
 
-#include "postprocessing/metric.h"
+#include "srpb_postprocessing/metric.h"
 
+/// @details Originally implemented in MRPB 1.0 (https://github.com/NKU-MobFly-Robotics/local-planning-benchmark)
 class ObstacleSafety: public Metric {
 public:
   ObstacleSafety(

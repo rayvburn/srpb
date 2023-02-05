@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <move_base/people_logger.h>
+#include <srpb_logger/people_logger.h>
 
 // Test cases
 TEST(ConversionTest, person) {
