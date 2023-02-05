@@ -1,7 +1,7 @@
 #include "postprocessing/rewinder.h"
 
 Rewinder::Rewinder(
-    const std::vector<std::pair<double, RobotData>>& robot_data
+  const std::vector<std::pair<double, RobotData>>& robot_data
 ):
   robot_data_(robot_data),
   people_data_(std::vector<std::pair<double, people_msgs_utils::Person>>()),
@@ -11,8 +11,8 @@ Rewinder::Rewinder(
 {}
 
 Rewinder::Rewinder(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
-    const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data
+  const std::vector<std::pair<double, RobotData>>& robot_data,
+  const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data
 ):
   robot_data_(robot_data),
   people_data_(people_data),
@@ -22,9 +22,9 @@ Rewinder::Rewinder(
 {}
 
 Rewinder::Rewinder(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
-    const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
-    const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
+  const std::vector<std::pair<double, RobotData>>& robot_data,
+  const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
+  const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
 ):
   robot_data_(robot_data),
   people_data_(people_data),
@@ -165,7 +165,6 @@ bool Rewinder::perform() {
         if (handler_next_person_timestamp_) {
           handler_next_person_timestamp_();
         }
-
       } // iterating over people log entries
 
       // terminal conditions, based on them, action is taken at the end of the iteration

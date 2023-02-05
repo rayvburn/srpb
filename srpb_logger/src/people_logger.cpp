@@ -251,6 +251,6 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
 }
 
 void PeopleLogger::peopleCB(const people_msgs::PeopleConstPtr& msg) {
-    std::lock_guard<std::mutex> l(cb_mutex_);
-    std::tie(people_, groups_) = people_msgs_utils::createFromPeople(msg->people);
+  std::lock_guard<std::mutex> l(cb_mutex_);
+  std::tie(people_, groups_) = people_msgs_utils::createFromPeople(msg->people);
 }
