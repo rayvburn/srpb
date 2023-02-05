@@ -2,9 +2,12 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class VelocitySmoothness: public Metric {
 public:
-  VelocitySmoothness(const std::vector<std::pair<double, RobotData>>& robot_data): Metric(robot_data) {
+  VelocitySmoothness(const std::vector<std::pair<double, logger::RobotData>>& robot_data): Metric(robot_data) {
     compute();
   }
 
@@ -32,3 +35,6 @@ protected:
     velocity_smoothness_ = mean;
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

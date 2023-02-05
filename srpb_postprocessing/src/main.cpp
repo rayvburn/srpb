@@ -17,6 +17,9 @@
 #include "srpb_postprocessing/metrics/personal_space_instrusion.h"
 #include "srpb_postprocessing/metrics/velocity_smoothness.h"
 
+using namespace srpb::logger;
+using namespace srpb::postprocessing;
+
 int main(int argc, char* argv[]) {
   if (argc != 5) {
     printf(

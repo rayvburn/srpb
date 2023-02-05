@@ -6,11 +6,14 @@
 #include <srpb_logger/robot_data.h>
 #include <people_msgs_utils/person.h>
 
+namespace srpb {
+namespace postprocessing {
+
 /// Related to velocity and direction of the robot movement towards person
 class PersonDisturbance: public MetricGaussian {
 public:
   PersonDisturbance(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
     double disturbance_threshold,
     double person_fov,
@@ -248,3 +251,6 @@ protected:
     ) = MetricGaussian::calculateGaussianStatistics(timed_disturbances, disturbance_threshold_, max_method_);
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

@@ -2,10 +2,13 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class Oscillations: public Metric {
 public:
   Oscillations(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     double osc_lin_threshold,
     double osc_ang_threshold
   ):
@@ -43,3 +46,6 @@ protected:
     osc_ = osc;
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

@@ -3,6 +3,9 @@
 
 #include <people_msgs_utils/utils.h>
 
+namespace srpb {
+namespace logger {
+
 void PeopleLogger::init(ros::NodeHandle& nh) {
   BenchmarkLogger::init(nh);
 
@@ -254,3 +257,6 @@ void PeopleLogger::peopleCB(const people_msgs::PeopleConstPtr& msg) {
   std::lock_guard<std::mutex> l(cb_mutex_);
   std::tie(people_, groups_) = people_msgs_utils::createFromPeople(msg->people);
 }
+
+} // namespace logger
+} // namespace srpb

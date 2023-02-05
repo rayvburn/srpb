@@ -2,9 +2,12 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class PathLinearLength: public Metric {
 public:
-  PathLinearLength(const std::vector<std::pair<double, RobotData>>& robot_data): Metric(robot_data) {
+  PathLinearLength(const std::vector<std::pair<double, logger::RobotData>>& robot_data): Metric(robot_data) {
     compute();
   }
 
@@ -30,3 +33,6 @@ protected:
     path_length_linear_ = path_length;
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

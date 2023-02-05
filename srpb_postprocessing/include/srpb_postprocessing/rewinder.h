@@ -9,22 +9,25 @@
 #include <people_msgs_utils/person.h>
 #include <people_msgs_utils/group.h>
 
+namespace srpb {
+namespace postprocessing {
+
 /**
  * Given robot, people and formation data, processes all information for each entity for each timestamp
  */
 class Rewinder {
 public:
     Rewinder(
-        const std::vector<std::pair<double, RobotData>>& robot_data
+        const std::vector<std::pair<double, logger::RobotData>>& robot_data
     );
 
     Rewinder(
-        const std::vector<std::pair<double, RobotData>>& robot_data,
+        const std::vector<std::pair<double, logger::RobotData>>& robot_data,
         const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data
     );
 
     Rewinder(
-        const std::vector<std::pair<double, RobotData>>& robot_data,
+        const std::vector<std::pair<double, logger::RobotData>>& robot_data,
         const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
         const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
     );
@@ -73,9 +76,9 @@ public:
         return robot_data_.size();
     }
 
-    RobotData getRobotCurr() const;
-    RobotData getRobotPrev() const;
-    RobotData getRobotNext() const;
+    logger::RobotData getRobotCurr() const;
+    logger::RobotData getRobotPrev() const;
+    logger::RobotData getRobotNext() const;
 
     people_msgs_utils::Person getPersonCurr() const;
     people_msgs_utils::Person getPersonPrev() const;
@@ -94,7 +97,7 @@ protected:
 
     std::runtime_error createRuntimeError(const std::string& position, const std::string& data_set) const;
 
-    const std::vector<std::pair<double, RobotData>>& robot_data_;
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data_;
     const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data_;
     const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data_;
 
@@ -110,7 +113,7 @@ protected:
     /// @}
 
     /// Iterator to investigate robot data
-    std::vector<std::pair<double, RobotData>>::const_iterator it_robot_;
+    std::vector<std::pair<double, logger::RobotData>>::const_iterator it_robot_;
     /// Iterator to investigate people data
     std::vector<std::pair<double, people_msgs_utils::Person>>::const_iterator it_ppl_;
     /// Iterator to investigate groups data
@@ -126,3 +129,6 @@ protected:
     // called after checking all possible people observed in a given timestamp (handler_next_person_timestamp_)
     std::function<void(void)> handler_next_group_timestamp_;
 };
+
+} // namespace postprocessing
+} // namespace srpb

@@ -4,6 +4,9 @@
 #include <ceres/cubic_interpolation.h>
 #include <opencv2/opencv.hpp>
 
+namespace srpb {
+namespace tooling {
+
 // A helper class implemented for calculating the distance between the robot and the closest obstacle
 class ObsDistCalculator
 {
@@ -13,3 +16,6 @@ public:
 
   double compute(costmap_2d::Costmap2DROS* costmap_ros) const;
 };
+
+} // namespace tooling
+} // namespace srpb

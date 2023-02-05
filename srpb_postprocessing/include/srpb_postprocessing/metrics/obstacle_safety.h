@@ -2,11 +2,14 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 /// @details Originally implemented in MRPB 1.0 (https://github.com/NKU-MobFly-Robotics/local-planning-benchmark)
 class ObstacleSafety: public Metric {
 public:
   ObstacleSafety(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     double safety_distance
   ):
     Metric(robot_data),
@@ -66,3 +69,6 @@ protected:
     obstacle_safety_ = ts_sum / rewinder_.getDuration();
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

@@ -6,6 +6,9 @@
 
 #include <angles/angles.h>
 
+namespace srpb {
+namespace postprocessing {
+
 double MetricGaussian::calculateGaussian(double x, double mean, double variance, bool normalize) {
   double scale = 1.0;
   // with normalization, maximum possible value will be 1.0; otherwise, it depends on the value of variance
@@ -114,3 +117,6 @@ std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussi
 
   return std::make_tuple(min_elem, max_elem, metrics, space_violations);
 }
+
+} // namespace postprocessing
+} // namespace srpb

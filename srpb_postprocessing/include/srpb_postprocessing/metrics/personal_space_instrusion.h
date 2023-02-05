@@ -2,6 +2,9 @@
 
 #include "srpb_postprocessing/metric_gaussian.h"
 
+namespace srpb {
+namespace postprocessing {
+
 /**
  * @brief Computes people personal space intrusion score
  *
@@ -30,7 +33,7 @@
 class PersonalSpaceIntrusion: public MetricGaussian {
 public:
   PersonalSpaceIntrusion(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
     double sigma_h,
     double sigma_r,
@@ -123,3 +126,6 @@ protected:
     ) = MetricGaussian::calculateGaussianStatistics(timed_gaussians, personal_space_threshold_, max_method_);
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

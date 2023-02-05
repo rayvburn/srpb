@@ -1,5 +1,8 @@
 #include "srpb_postprocessing/utils.h"
 
+namespace srpb {
+namespace postprocessing {
+
 std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
     const std::vector<std::pair<double, people_msgs_utils::Group>>& timed_groups,
     const std::vector<std::pair<double, people_msgs_utils::Person>>& timed_people
@@ -102,3 +105,6 @@ std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
     }
     return outputt;
 }
+
+} // namespace postprocessing
+} // namespace srpb

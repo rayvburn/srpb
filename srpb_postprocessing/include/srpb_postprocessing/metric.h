@@ -9,19 +9,22 @@
 
 #include "srpb_postprocessing/rewinder.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class Metric {
 public:
 	Metric(
-        const std::vector<std::pair<double, RobotData>>& robot_data
+        const std::vector<std::pair<double, logger::RobotData>>& robot_data
     ): rewinder_(robot_data) {}
 
     Metric(
-        const std::vector<std::pair<double, RobotData>>& robot_data,
+        const std::vector<std::pair<double, logger::RobotData>>& robot_data,
         const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data
     ): rewinder_(robot_data, people_data) {}
 
     Metric(
-        const std::vector<std::pair<double, RobotData>>& robot_data,
+        const std::vector<std::pair<double, logger::RobotData>>& robot_data,
         const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
         const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
     ): rewinder_(robot_data, people_data, groups_data) {}
@@ -33,3 +36,6 @@ protected:
 
     virtual void compute() = 0;
 };
+
+} // namespace postprocessing
+} // namespace srpb

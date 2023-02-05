@@ -2,6 +2,8 @@
 
 #include <srpb_logger/people_logger.h>
 
+using namespace srpb::logger;
+
 // Test cases
 TEST(ConversionTest, person) {
     std::string name = "963";

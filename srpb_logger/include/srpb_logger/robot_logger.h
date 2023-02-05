@@ -7,6 +7,9 @@
 // helper functions
 #include <people_msgs_utils/utils.h>
 
+namespace srpb {
+namespace logger {
+
 class RobotLogger: public BenchmarkLogger {
 public:
     RobotLogger() = default;
@@ -104,3 +107,6 @@ public:
 protected:
     FILE* log_file_;
 };
+
+} // namespace logger
+} // namespace srpb

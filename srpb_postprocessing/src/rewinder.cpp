@@ -1,5 +1,11 @@
 #include "srpb_postprocessing/rewinder.h"
 
+namespace srpb {
+namespace postprocessing {
+
+// for convenience and compactness
+using namespace srpb::logger;
+
 Rewinder::Rewinder(
   const std::vector<std::pair<double, RobotData>>& robot_data
 ):
@@ -305,3 +311,6 @@ std::runtime_error Rewinder::Rewinder::createRuntimeError(const std::string& pos
     + " timestamp)"
   );
 }
+
+} // namespace postprocessing
+} // namespace srpb

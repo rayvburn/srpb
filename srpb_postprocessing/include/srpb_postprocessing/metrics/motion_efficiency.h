@@ -2,9 +2,12 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class MotionEfficiency: public Metric {
 public:
-  MotionEfficiency(const std::vector<std::pair<double, RobotData>>& robot_data): Metric(robot_data) {
+  MotionEfficiency(const std::vector<std::pair<double, logger::RobotData>>& robot_data): Metric(robot_data) {
     compute();
   }
 
@@ -20,3 +23,6 @@ protected:
     motion_efficiency_ = rewinder_.getDuration();
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

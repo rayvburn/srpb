@@ -2,9 +2,12 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class ComputationalEfficiency: public Metric {
 public:
-  ComputationalEfficiency(const std::vector<std::pair<double, RobotData>>& robot_data): Metric(robot_data) {
+  ComputationalEfficiency(const std::vector<std::pair<double, logger::RobotData>>& robot_data): Metric(robot_data) {
     compute();
   }
 
@@ -27,3 +30,6 @@ protected:
     computational_efficiency_ = mean / rewinder_.getTimestampsNum();
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

@@ -2,19 +2,22 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class MetricGaussian: public Metric {
 public:
 	MetricGaussian(
-      const std::vector<std::pair<double, RobotData>>& robot_data
+      const std::vector<std::pair<double, logger::RobotData>>& robot_data
   ): Metric(robot_data) {}
 
   MetricGaussian(
-      const std::vector<std::pair<double, RobotData>>& robot_data,
+      const std::vector<std::pair<double, logger::RobotData>>& robot_data,
       const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data
   ): Metric(robot_data, people_data) {}
 
   MetricGaussian(
-      const std::vector<std::pair<double, RobotData>>& robot_data,
+      const std::vector<std::pair<double, logger::RobotData>>& robot_data,
       const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
       const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
   ): Metric(robot_data, people_data, groups_data) {}
@@ -63,3 +66,6 @@ public:
 protected:
   virtual void compute() = 0;
 };
+
+} // namespace postprocessing
+} // namespace srpb

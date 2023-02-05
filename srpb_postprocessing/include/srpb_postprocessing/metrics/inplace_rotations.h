@@ -2,10 +2,13 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class InplaceRotations: public Metric {
 public:
   InplaceRotations(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     double osc_lin_threshold
   ):
     Metric(robot_data),
@@ -40,3 +43,6 @@ protected:
     in_place_rotations_ = inplace_rot;
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

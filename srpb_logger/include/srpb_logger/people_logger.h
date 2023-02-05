@@ -11,6 +11,9 @@
 
 #include <mutex>
 
+namespace srpb {
+namespace logger {
+
 /**
  * @brief Subscribes to people_msgs and saves meaningful data into log files
  *
@@ -62,3 +65,6 @@ protected:
     FILE* log_file_groups_;
     std::string log_filename_groups_;
 };
+
+} // namespace logger
+} // namespace srpb

@@ -3,6 +3,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2/utils.h>
 
+namespace srpb {
+namespace logger {
+
 class RobotData {
 public:
     RobotData(
@@ -111,3 +114,6 @@ protected:
     double obstacle_distance_;
     double local_plan_exec_time_;
 };
+
+} // namespace logger
+} // namespace srpb

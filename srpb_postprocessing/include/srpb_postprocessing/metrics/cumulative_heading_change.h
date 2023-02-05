@@ -2,9 +2,12 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class CumulativeHeadingChange: public Metric {
 public:
-  CumulativeHeadingChange(const std::vector<std::pair<double, RobotData>>& robot_data): Metric(robot_data) {
+  CumulativeHeadingChange(const std::vector<std::pair<double, logger::RobotData>>& robot_data): Metric(robot_data) {
     compute();
   }
 
@@ -29,3 +32,6 @@ protected:
     chc_ = chc;
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

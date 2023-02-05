@@ -6,11 +6,14 @@
 #include <people_msgs_utils/person.h>
 #include <people_msgs_utils/group.h>
 
+namespace srpb {
+namespace postprocessing {
+
 /// Similar to personal space intrusion but related to the group space
 class FormationSpaceIntrusion: public MetricGaussian {
 public:
   FormationSpaceIntrusion(
-    const std::vector<std::pair<double, RobotData>>& robot_data,
+    const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
     const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data,
     double group_space_threshold,
@@ -161,3 +164,6 @@ protected:
     ) = MetricGaussian::calculateGaussianStatistics(timed_gaussians, group_space_threshold_, max_method_);
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

@@ -2,9 +2,12 @@
 
 #include "srpb_postprocessing/metric.h"
 
+namespace srpb {
+namespace postprocessing {
+
 class BackwardMovements: public Metric {
 public:
-  BackwardMovements(const std::vector<std::pair<double, RobotData>>& robot_data): Metric(robot_data) {
+  BackwardMovements(const std::vector<std::pair<double, logger::RobotData>>& robot_data): Metric(robot_data) {
     compute();
   }
 
@@ -30,3 +33,6 @@ protected:
     bwd_ = bwd;
   }
 };
+
+} // namespace postprocessing
+} // namespace srpb

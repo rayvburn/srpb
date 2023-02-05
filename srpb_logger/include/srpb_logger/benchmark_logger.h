@@ -6,6 +6,9 @@
 #include <iomanip>
 #include <sstream>
 
+namespace srpb {
+namespace logger {
+
 class BenchmarkLogger {
 public:
     virtual void init(ros::NodeHandle& nh) {
@@ -54,3 +57,6 @@ protected:
     static constexpr auto EXTENSION_SEPARATOR = ".";
     std::string log_filename_;
 };
+
+} // namespace logger
+} // namespace srpb

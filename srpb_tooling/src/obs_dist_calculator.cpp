@@ -1,5 +1,8 @@
 #include "srpb_tooling/obs_dist_calculator.h"
 
+namespace srpb {
+namespace tooling {
+
 ObsDistCalculator::ObsDistCalculator()
 {
 }
@@ -65,3 +68,6 @@ double ObsDistCalculator::compute(costmap_2d::Costmap2DROS* costmap_ros) const
 
   return dist;
 }
+
+} // namespace tooling
+} // namespace srpb
