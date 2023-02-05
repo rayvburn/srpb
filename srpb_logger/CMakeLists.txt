@@ -16,7 +16,7 @@ catkin_package(
     INCLUDE_DIRS
         include
     LIBRARIES
-        ${PROJECT_NAME}
+        ${PROJECT_NAME}_lib
     CATKIN_DEPENDS
         roscpp
         geometry_msgs
@@ -31,20 +31,21 @@ include_directories(
 )
 
 # move_base
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}_lib
   include/${PROJECT_NAME}/benchmark_logger.h
   include/${PROJECT_NAME}/people_logger.h
   include/${PROJECT_NAME}/robot_data.h
   include/${PROJECT_NAME}/robot_logger.h
   src/people_logger.cpp
 )
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
   ${people_msgs_utils_LIBRARIES}
 )
+
+# install library
 install(
-    TARGETS
-        ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}_lib
     DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
