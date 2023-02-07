@@ -114,7 +114,7 @@ protected:
         double stddev_fformation = fformation_radius / 2.0;
         // perception can report 1 person in a group - do not investigate such situations further
         if (people_this_group.size() > 1) {
-          gaussian = MetricGaussian::calculateGaussian(
+          gaussian = social_nav_utils::calculateGaussianAsymmetrical(
             rewinder_.getRobotCurr().getPositionX(),
             rewinder_.getRobotCurr().getPositionY(),
             rewinder_.getGroupCurr().getCenterOfGravity().x,

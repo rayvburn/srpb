@@ -138,14 +138,14 @@ public:
      */
     // 1D Gaussian function, note that angle domain wraps at 3.14 so we must check for maximum of gaussians
     // located at gamma_X and shifted 2 * pi to the left and right; gamma angle should already be normalized here
-    double gaussian_dir_cc = calculateGaussianAngle(gamma, gamma_cc, gamma_cc_variance);
+    double gaussian_dir_cc = social_nav_utils::calculateGaussianAngle(gamma, gamma_cc, gamma_cc_variance);
 
     // 3 sigma rule - let the cost spread only over the CF region
     double gamma_cf_stddev = (gamma_cf_range / 2.0) / 3.0;
     double gamma_cf_variance = std::pow(gamma_cf_stddev, 2);
     // mean - center of the cross front region
     double gamma_cf_center = angles::normalize_angle(gamma_cf_start + gamma_cf_range / 2.0);
-    double gaussian_dir_cf = calculateGaussianAngle(gamma, gamma_cf_center, gamma_cf_variance);
+    double gaussian_dir_cf = social_nav_utils::calculateGaussianAngle(gamma, gamma_cf_center, gamma_cf_variance);
 
     double gaussian_dir_result = std::max(gaussian_dir_cc, gaussian_dir_cf);
 
@@ -155,7 +155,7 @@ public:
     double variance_fov = std::pow(fov_stddev, 2);
     // starting from the left side, half of the `fov_person` is located in 0.0 and rel_loc is 0.0
     // when obstacle is in front of the object
-    double gaussian_fov = calculateGaussian(rel_loc_angle, 0.0, variance_fov);
+    double gaussian_fov = social_nav_utils::calculateGaussian(rel_loc_angle, 0.0, variance_fov);
 
     return gaussian_dir_result * gaussian_fov;
   }

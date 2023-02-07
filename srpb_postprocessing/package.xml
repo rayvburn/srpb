@@ -23,6 +23,7 @@
     <depend>people_msgs</depend>
     <depend>people_msgs_utils</depend>
     <depend>roscpp</depend>
+    <depend>social_nav_utils</depend>
     <depend>srpb_logger</depend>
 
 </package>

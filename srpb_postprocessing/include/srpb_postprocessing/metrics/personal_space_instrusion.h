@@ -93,7 +93,7 @@ protected:
     rewinder_.setHandlerNextPersonTimestamp(
       [&]() {
         // processing
-        double gaussian = calculateGaussian(
+        double gaussian = social_nav_utils::calculateGaussianAsymmetrical(
           rewinder_.getRobotCurr().getPositionX(),
           rewinder_.getRobotCurr().getPositionY(),
           rewinder_.getPersonCurr().getPositionX(),

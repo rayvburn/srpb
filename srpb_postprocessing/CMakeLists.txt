@@ -13,6 +13,7 @@ find_package(catkin REQUIRED
         people_msgs
         people_msgs_utils
         roscpp
+        social_nav_utils
         srpb_logger
 )
 
@@ -27,6 +28,7 @@ catkin_package(
         people_msgs
         people_msgs_utils
         roscpp
+        social_nav_utils
         srpb_logger
 )
 
@@ -34,6 +36,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${people_msgs_utils_INCLUDE_DIRS}
+    ${social_nav_utils_INCLUDE_DIRS}
     ${srpb_logger_INCLUDE_DIRS}
 )
 
@@ -65,6 +68,7 @@ add_library(${PROJECT_NAME}_lib
 target_link_libraries(${PROJECT_NAME}_lib
     ${catkin_LIBRARIES}
     ${people_msgs_utils_LIBRARIES}
+    ${social_nav_utils_LIBRARIES}
     ${srpb_logger_LIBRARIES}
 )
 
