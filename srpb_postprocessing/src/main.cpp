@@ -60,6 +60,13 @@ int main(int argc, char* argv[]) {
   // since Person and Group are logged in separation, so by default Group does not contain members, only their IDs
   timed_groups_data = fillGroupsWithMembers(timed_groups_data, timed_people_data);
 
+  printf(
+    "Processing %4lu samples of robot data, %4lu samples of people data and %4lu samples of groups data\r\n",
+    timed_robot_data.size(),
+    timed_people_data.size(),
+    timed_groups_data.size()
+  );
+
   ObstacleSafety safety(timed_robot_data, safety_distance);
   safety.printResults();
 
