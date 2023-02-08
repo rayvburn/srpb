@@ -14,6 +14,9 @@ namespace postprocessing {
 
 /**
  * Given robot, people and formation data, processes all information for each entity for each timestamp
+ *
+ * This class requires data to be given in a chronological order, so first elements of pairs may repeat, but generally
+ * should be sorted in an incremental order.
  */
 class Rewinder {
 public:
