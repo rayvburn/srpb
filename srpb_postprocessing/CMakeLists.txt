@@ -80,3 +80,12 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     ${PROJECT_NAME}_lib
 )
+
+## Testing
+# catkin run_tests --no-deps srpb_postprocessing
+if (CATKIN_ENABLE_TESTING)
+    catkin_add_gmock(test_rewinder test/test_rewinder.cpp)
+    if(TARGET test_rewinder)
+        target_link_libraries(test_rewinder ${PROJECT_NAME}_lib)
+    endif()
+endif()
