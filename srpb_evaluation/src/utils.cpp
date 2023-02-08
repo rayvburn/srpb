@@ -102,6 +102,15 @@ std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
          * Flow forces that all people from the given timestamp were already collected
          */
         groups_this_ts.push_back(group_it->second);
+
+        // handle 'on exist' from loop
+        if (std::next(group_it) == timed_groups.cend() && !groups_this_ts.empty()) {
+            // steps for groups from the current timestamp finished - associate members to groups
+            auto groups_filled = people_msgs_utils::fillGroupsWithMembers(groups_this_ts, people_this_ts);
+            for (const auto& groupf: groups_filled) {
+                outputt.push_back({timestamp_group, groupf});
+            }
+        }
     }
     return outputt;
 }
