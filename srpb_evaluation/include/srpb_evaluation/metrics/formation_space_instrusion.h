@@ -1,13 +1,13 @@
 #pragma once
 
-#include "srpb_postprocessing/metric_gaussian.h"
+#include "srpb_evaluation/metric_gaussian.h"
 
 #include <srpb_logger/robot_data.h>
 #include <people_msgs_utils/person.h>
 #include <people_msgs_utils/group.h>
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 /// Similar to personal space intrusion but related to the group space
 class FormationSpaceIntrusion: public MetricGaussian {
@@ -165,5 +165,5 @@ protected:
   }
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

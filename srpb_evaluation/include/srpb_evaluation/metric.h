@@ -7,10 +7,10 @@
 #include <people_msgs_utils/person.h>
 #include <people_msgs_utils/group.h>
 
-#include "srpb_postprocessing/rewinder.h"
+#include "srpb_evaluation/rewinder.h"
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 class Metric {
 public:
@@ -37,5 +37,5 @@ protected:
     virtual void compute() = 0;
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

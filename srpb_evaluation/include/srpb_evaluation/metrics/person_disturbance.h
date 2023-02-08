@@ -1,13 +1,13 @@
 #pragma once
 
-#include "srpb_postprocessing/metric_gaussian.h"
+#include "srpb_evaluation/metric_gaussian.h"
 
 #include <angles/angles.h>
 #include <srpb_logger/robot_data.h>
 #include <people_msgs_utils/person.h>
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 /// Related to velocity and direction of the robot movement towards person
 class PersonDisturbance: public MetricGaussian {
@@ -252,5 +252,5 @@ protected:
   }
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

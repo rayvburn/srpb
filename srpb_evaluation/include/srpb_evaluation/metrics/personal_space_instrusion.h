@@ -1,9 +1,9 @@
 #pragma once
 
-#include "srpb_postprocessing/metric_gaussian.h"
+#include "srpb_evaluation/metric_gaussian.h"
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 /**
  * @brief Computes people personal space intrusion score
@@ -127,5 +127,5 @@ protected:
   }
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

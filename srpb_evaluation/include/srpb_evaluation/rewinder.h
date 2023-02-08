@@ -10,7 +10,7 @@
 #include <people_msgs_utils/group.h>
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 /**
  * Given robot, people and formation data, processes all information for each entity for each timestamp
@@ -133,5 +133,5 @@ protected:
     std::function<void(void)> handler_next_group_timestamp_;
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

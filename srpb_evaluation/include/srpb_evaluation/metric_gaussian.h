@@ -1,12 +1,12 @@
 #pragma once
 
-#include "srpb_postprocessing/metric.h"
+#include "srpb_evaluation/metric.h"
 
 // helper functions for calculation of Gaussian distribution value
 #include <social_nav_utils/gaussians.h>
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 class MetricGaussian: public Metric {
 public:
@@ -48,5 +48,5 @@ protected:
   virtual void compute() = 0;
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

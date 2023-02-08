@@ -1,7 +1,7 @@
-#include "srpb_postprocessing/utils.h"
+#include "srpb_evaluation/utils.h"
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
     const std::vector<std::pair<double, people_msgs_utils::Group>>& timed_groups,
@@ -106,5 +106,5 @@ std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
     return outputt;
 }
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

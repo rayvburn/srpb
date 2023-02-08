@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <srpb_postprocessing/rewinder.h>
+#include <srpb_evaluation/rewinder.h>
 
 using namespace srpb;
 
@@ -67,7 +67,7 @@ TEST(TestRewinder, robot) {
     testing::MockFunction<void(void)> mockCbAllGroupsTimestamp;
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call()).Times(0);
 
-    postprocessing::Rewinder rew(robot_data);
+    evaluation::Rewinder rew(robot_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -116,7 +116,7 @@ TEST(TestRewinder, robotPeople) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(0);
 
-    postprocessing::Rewinder rew(robot_data, people_data);
+    evaluation::Rewinder rew(robot_data, people_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -170,7 +170,7 @@ TEST(TestRewinder, robotPeopleGroups1) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(3);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -251,7 +251,7 @@ TEST(TestRewinder, robotPeopleGroups2) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(12);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -308,7 +308,7 @@ TEST(TestRewinder, robotPeopleGroups3) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(3);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -387,7 +387,7 @@ TEST(TestRewinder, robotPeopleGroups4) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(4);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -467,7 +467,7 @@ TEST(TestRewinder, robotPeopleGroups5) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(4);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -543,7 +543,7 @@ TEST(TestRewinder, robotPeopleGroups6) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(2);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -618,7 +618,7 @@ TEST(TestRewinder, robotPeopleGroups7) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(1);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -693,7 +693,7 @@ TEST(TestRewinder, robotPeopleGroups8) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(1);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());
@@ -769,7 +769,7 @@ TEST(TestRewinder, robotPeopleGroups9) {
     EXPECT_CALL(mockCbAllGroupsTimestamp, Call())
         .Times(2);
 
-    postprocessing::Rewinder rew(robot_data, people_data, group_data);
+    evaluation::Rewinder rew(robot_data, people_data, group_data);
     rew.setHandlerNextTimestamp(mockCbNextTimestamp.AsStdFunction());
     rew.setHandlerLastTimestamp(mockCbLastTimestamp.AsStdFunction());
     rew.setHandlerNextPersonTimestamp(mockCbNextPersonTimestamp.AsStdFunction());

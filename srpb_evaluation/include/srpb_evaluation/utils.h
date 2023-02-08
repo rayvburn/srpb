@@ -10,7 +10,7 @@
 #include <people_msgs_utils/utils.h>
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 /**
  * @brief Does similar to what @ref people_msgs_utils::fillGroupsWithMembers does, but considers timestamps of data
@@ -70,5 +70,5 @@ static std::vector<std::pair<double, T>> parseFile(const std::string& filepath, 
 }
 /// @}
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

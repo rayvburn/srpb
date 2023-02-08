@@ -1,9 +1,9 @@
 #pragma once
 
-#include "srpb_postprocessing/metric.h"
+#include "srpb_evaluation/metric.h"
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 /// @details Originally implemented in MRPB 1.0 (https://github.com/NKU-MobFly-Robotics/local-planning-benchmark)
 class ObstacleSafety: public Metric {
@@ -70,5 +70,5 @@ protected:
   }
 };
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

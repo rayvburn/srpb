@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(srpb_postprocessing)
+project(srpb_evaluation)
 
 SET(CMAKE_BUILD_TYPE Release)  # Debug, Release
 message(STATUS "BUILD TYPE: " ${CMAKE_BUILD_TYPE})
@@ -82,7 +82,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 ## Testing
-# catkin run_tests --no-deps srpb_postprocessing
+# catkin run_tests --no-deps srpb_evaluation
 if (CATKIN_ENABLE_TESTING)
     catkin_add_gmock(test_rewinder test/test_rewinder.cpp)
     if(TARGET test_rewinder)

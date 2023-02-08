@@ -1,7 +1,7 @@
-#include "srpb_postprocessing/rewinder.h"
+#include "srpb_evaluation/rewinder.h"
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 // for convenience and compactness
 using namespace srpb::logger;
@@ -335,5 +335,5 @@ std::runtime_error Rewinder::Rewinder::createRuntimeError(const std::string& pos
   );
 }
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb

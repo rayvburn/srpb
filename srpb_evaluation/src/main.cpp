@@ -2,23 +2,23 @@
 #include <srpb_logger/robot_logger.h>
 #include <srpb_logger/people_logger.h>
 
-#include "srpb_postprocessing/utils.h"
+#include "srpb_evaluation/utils.h"
 
-#include "srpb_postprocessing/metrics/backward_movements.h"
-#include "srpb_postprocessing/metrics/computational_efficiency.h"
-#include "srpb_postprocessing/metrics/cumulative_heading_change.h"
-#include "srpb_postprocessing/metrics/formation_space_instrusion.h"
-#include "srpb_postprocessing/metrics/inplace_rotations.h"
-#include "srpb_postprocessing/metrics/motion_efficiency.h"
-#include "srpb_postprocessing/metrics/obstacle_safety.h"
-#include "srpb_postprocessing/metrics/oscillations.h"
-#include "srpb_postprocessing/metrics/path_linear_length.h"
-#include "srpb_postprocessing/metrics/person_disturbance.h"
-#include "srpb_postprocessing/metrics/personal_space_instrusion.h"
-#include "srpb_postprocessing/metrics/velocity_smoothness.h"
+#include "srpb_evaluation/metrics/backward_movements.h"
+#include "srpb_evaluation/metrics/computational_efficiency.h"
+#include "srpb_evaluation/metrics/cumulative_heading_change.h"
+#include "srpb_evaluation/metrics/formation_space_instrusion.h"
+#include "srpb_evaluation/metrics/inplace_rotations.h"
+#include "srpb_evaluation/metrics/motion_efficiency.h"
+#include "srpb_evaluation/metrics/obstacle_safety.h"
+#include "srpb_evaluation/metrics/oscillations.h"
+#include "srpb_evaluation/metrics/path_linear_length.h"
+#include "srpb_evaluation/metrics/person_disturbance.h"
+#include "srpb_evaluation/metrics/personal_space_instrusion.h"
+#include "srpb_evaluation/metrics/velocity_smoothness.h"
 
 using namespace srpb::logger;
-using namespace srpb::postprocessing;
+using namespace srpb::evaluation;
 
 int main(int argc, char* argv[]) {
   if (argc != 5) {

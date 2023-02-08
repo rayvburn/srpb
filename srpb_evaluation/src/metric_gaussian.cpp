@@ -1,4 +1,4 @@
-#include "srpb_postprocessing/metric_gaussian.h"
+#include "srpb_evaluation/metric_gaussian.h"
 
 #include <algorithm>
 #include <limits>
@@ -7,7 +7,7 @@
 #include <angles/angles.h>
 
 namespace srpb {
-namespace postprocessing {
+namespace evaluation {
 
 std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussianStatistics(
   std::vector<std::pair<double, std::vector<double>>> timed_gaussians,
@@ -70,5 +70,5 @@ std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussi
   return std::make_tuple(min_elem, max_elem, metrics, space_violations);
 }
 
-} // namespace postprocessing
+} // namespace evaluation
 } // namespace srpb
