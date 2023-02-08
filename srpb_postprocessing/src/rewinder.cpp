@@ -103,25 +103,28 @@ bool Rewinder::perform() {
       }
     }
 
-    // allows not checking any groups data; no need to check for lack of people data here
-    bool groups_empty_but_people_checked = false;
-
-    // prepare predicates
-    auto all_people_checked_timestep_fun = [&]()->bool {
-      return (!data_groups_empty_ && !data_people_empty_ && it_ppl_->first != it_grp_->first)
-      || (data_groups_empty_ && !data_people_empty_ && it_ppl_->first != it_robot_->first);
+    auto allPeopleCheckedFun = [&]() -> bool {
+      return data_people_empty_ || (!data_people_empty_ && it_ppl_ == people_data_.cend());
     };
-
-    auto all_people_checked_fun = [&]()->bool {
-      return data_people_empty_ || (!data_people_empty_ && (std::next(it_ppl_) == people_data_.cend()));
+    auto allPeopleInTimestepCheckedFun = [&]() -> bool {
+      return (!data_groups_empty_ && !data_people_empty_ && it_ppl_->first != it_robot_->first)
+        || (data_groups_empty_ && !data_people_empty_ && it_ppl_->first != it_robot_->first)
+        || allPeopleCheckedFun();
     };
+    auto groupsAndPeopleSkippableFun = [&]() -> bool {
+      return !data_groups_empty_ && (it_grp_->first > it_robot_->first)
+        && !data_people_empty_ && (it_ppl_->first > it_robot_->first);
+    };
+    if (groupsAndPeopleSkippableFun()) {
+      continue;
+    }
 
     // iterate over all groups recognized in a given time step
     for (
       /*initialized above*/;
       (
         data_groups_empty_
-        && (!data_people_empty_ && !all_people_checked_timestep_fun() && !all_people_checked_fun())
+        && (!data_people_empty_ && !allPeopleInTimestepCheckedFun() && !allPeopleCheckedFun())
       )
       ||
       (
@@ -129,16 +132,45 @@ bool Rewinder::perform() {
       );
       it_grp_++
     ) {
-      bool all_groups_checked_timestep =
-        groups_empty_but_people_checked
-        || (!data_groups_empty_ && (it_robot_->first != it_grp_->first));
-      if (all_groups_checked_timestep) {
-        // handle event
-        if (handler_all_groups_timestamp_) {
+      // predicates for loops execution
+      auto peopleItLaggingBehindGroupsFun = [&]() -> bool {
+        return !data_groups_empty_ && !data_people_empty_ && it_ppl_->first < it_grp_->first;
+      };
+      auto allGroupsInTimestepCheckedFun = [&]() -> bool {
+        return data_groups_empty_ || (!data_groups_empty_ && it_robot_->first != it_grp_->first);
+      };
+      auto nextGroupHasSameTimestampFun = [&]() -> bool {
+        return !data_groups_empty_ && (std::next(it_grp_) != groups_data_.cend()) && (std::next(it_grp_)->first == it_grp_->first);
+      };
+      auto groupsEmptyButPeopleCheckedFun = [&]() -> bool {
+        return data_groups_empty_ && allPeopleCheckedFun();
+      };
+      auto groupsInTimestampValidFun = [&]() -> bool {
+        return !data_groups_empty_ && std::prev(it_grp_)->first == it_robot_->first;
+      };
+      // terminal conditions, based on them, action is taken at the end of the iteration
+      auto checkingLastRobotFun = [&]() -> bool {
+        return std::next(it_robot_) == robot_data_.cend();
+      };
+      auto checkingLastPersonFun = [&]() -> bool {
+        return data_people_empty_ || std::next(it_ppl_) == people_data_.cend();
+      };
+      auto checkingLastGroupFun = [&]() -> bool {
+        return !data_groups_empty_ && std::next(it_grp_) == groups_data_.cend();
+      };
+      auto lastSampleBeingCheckedFun = [&]() -> bool {
+        return checkingLastRobotFun() && checkingLastGroupFun() && checkingLastPersonFun();
+      };
+
+      // call 'all groups' handler only if there were some groups and all were already processed
+      if (allGroupsInTimestepCheckedFun() && allPeopleInTimestepCheckedFun()) {
+        // handle event checking if there were some groups (timestamps match determines that)
+        if (groupsInTimestampValidFun() && handler_all_groups_timestamp_) {
           handler_all_groups_timestamp_();
         }
         break;
       }
+
       // save people iterator to restore it in case of 1 person is assigned to multiple groups (must iterate over all people recognized at a specific time step)
       auto it_ppl_curr_timestamp = it_ppl_;
 
@@ -148,55 +180,46 @@ bool Rewinder::perform() {
         !data_people_empty_ && it_ppl_ != people_data_.cend();
         it_ppl_++
       ) {
-        // break if timestamp does not match group's one
-        bool all_people_checked_timestep = all_people_checked_timestep_fun();
-        bool people_it_lagging_behind = !data_groups_empty_ && !data_people_empty_ && it_ppl_->first < it_grp_->first;
-        bool checking_last_group = !data_groups_empty_ && std::next(it_grp_) == groups_data_.cend();
-        bool checking_last_person = all_people_checked_fun();
-        bool last_sample_being_checked = checking_last_group && checking_last_person;
-        if (people_it_lagging_behind && !last_sample_being_checked) {
-          // if people timestamp hasn't progressed as the group's one, let's skip people entries w/o groups
-          while (it_ppl_->first < it_grp_->first) {
-            it_ppl_++;
-          }
-        } else if (all_people_checked_timestep || last_sample_being_checked) {
-          // handle event
-          if (handler_all_people_timestamp_) {
+        if (allPeopleInTimestepCheckedFun()) {
+          // handle event only when next timestamp is different from the current one
+          if (!data_people_empty_ && handler_all_people_timestamp_) {
             handler_all_people_timestamp_();
           }
           break;
         }
 
         // handle event
-        if (handler_next_person_timestamp_) {
+        if (!data_people_empty_ && handler_next_person_timestamp_) {
           handler_next_person_timestamp_();
         }
+
+        // when person overall last sample occurs in the last timestamp, it will be handled here since next person loop will not be executed
+        if (checkingLastPersonFun()) {
+          // handle event
+          if (!data_people_empty_ && handler_all_people_timestamp_) {
+            handler_all_people_timestamp_();
+          }
+        }
+
       } // iterating over people log entries
 
-      // terminal conditions, based on them, action is taken at the end of the iteration
-      bool checking_last_robot = std::next(it_robot_) == robot_data_.cend();
-      bool checking_last_group = data_groups_empty_ || std::next(it_grp_) == groups_data_.cend();
-      bool checking_last_person = data_people_empty_ || std::next(it_ppl_) == people_data_.cend();
-      bool last_sample_being_checked = checking_last_robot && checking_last_group && checking_last_person;
-
+      // NOTE that it_ppl is always 1 step ahead of group at this moment
+      auto foundPeopleRelatedToGroupFun = [&]() -> bool {
+        return !data_groups_empty_ && it_ppl_ != people_data_.cbegin() && std::prev(it_ppl_)->first == it_grp_->first;
+      };
       // handle event
-      if (handler_next_group_timestamp_) {
+      if (foundPeopleRelatedToGroupFun() && handler_next_group_timestamp_) {
         handler_next_group_timestamp_();
       }
 
-      if (all_groups_checked_timestep || last_sample_being_checked || checking_last_group) {
+      if (allGroupsInTimestepCheckedFun() || lastSampleBeingCheckedFun() || checkingLastGroupFun()) {
         // handle event
-        if (handler_all_groups_timestamp_) {
+        if (foundPeopleRelatedToGroupFun() && handler_all_groups_timestamp_) {
           handler_all_groups_timestamp_();
         }
         break;
       }
-
-      // safely finished group computations, let's restore people iterator for this time step -
-      // only if needed for the next group
-      bool last_group_in_dataset = std::next(it_grp_) == groups_data_.cend();
-      bool next_group_has_same_timestamp = std::next(it_grp_)->first == it_grp_->first;
-      if (!last_group_in_dataset && next_group_has_same_timestamp) {
+      if (!checkingLastGroupFun() && nextGroupHasSameTimestampFun()) {
         it_ppl_ = it_ppl_curr_timestamp;
       }
 
