@@ -6,6 +6,7 @@
 
 #include "srpb_evaluation/metrics/backward_movements.h"
 #include "srpb_evaluation/metrics/computational_efficiency.h"
+#include "srpb_evaluation/metrics/computational_time_repeatability.h"
 #include "srpb_evaluation/metrics/cumulative_heading_change.h"
 #include "srpb_evaluation/metrics/formation_space_instrusion.h"
 #include "srpb_evaluation/metrics/inplace_rotations.h"
@@ -75,6 +76,9 @@ int main(int argc, char* argv[]) {
 
   ComputationalEfficiency cef(timed_robot_data);
   cef.printResults();
+
+  ComputationalTimeRepeatability cre(timed_robot_data);
+  cre.printResults();
 
   VelocitySmoothness vsm(timed_robot_data);
   vsm.printResults();

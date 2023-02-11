@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME}_lib
     # specific metrics
     include/${PROJECT_NAME}/metrics/backward_movements.h
     include/${PROJECT_NAME}/metrics/computational_efficiency.h
+    include/${PROJECT_NAME}/metrics/computational_time_repeatability.h
     include/${PROJECT_NAME}/metrics/cumulative_heading_change.h
     include/${PROJECT_NAME}/metrics/formation_space_instrusion.h
     include/${PROJECT_NAME}/metrics/inplace_rotations.h
