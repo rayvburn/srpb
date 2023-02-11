@@ -95,9 +95,6 @@ int main(int argc, char* argv[]) {
   CumulativeHeadingChange chc(timed_robot_data);
   chc.printResults();
 
-  BackwardMovements bwd(timed_robot_data);
-  bwd.printResults();
-
   Oscillations osc(
     timed_robot_data,
     osc_vel_lin_x_threshold,
@@ -106,6 +103,9 @@ int main(int argc, char* argv[]) {
     osc_vel_ang_z_threshold
   );
   osc.printResults();
+
+  BackwardMovements bwd(timed_robot_data, osc_vel_x_threshold);
+  bwd.printResults();
 
   InplaceRotations inplace(timed_robot_data, osc_vel_lin_x_threshold);
   inplace.printResults();
