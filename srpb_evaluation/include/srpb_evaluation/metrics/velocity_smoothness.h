@@ -23,8 +23,9 @@ protected:
     rewinder_.setHandlerNextTimestamp(
       [&]() {
         double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
-        double acc = std::abs(rewinder_.getRobotNext().getVelocityX() - rewinder_.getRobotCurr().getVelocityX()) / dt;
-        mean += acc;
+        double acc_x = std::abs(rewinder_.getRobotNext().getVelocityX() - rewinder_.getRobotCurr().getVelocityX()) / dt;
+        double acc_y = std::abs(rewinder_.getRobotNext().getVelocityY() - rewinder_.getRobotCurr().getVelocityY()) / dt;
+        mean += std::hypot(acc_x, acc_y);
       }
     );
     rewinder_.perform();
