@@ -9,41 +9,58 @@ class Oscillations: public Metric {
 public:
   Oscillations(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
-    double osc_lin_threshold,
-    double osc_ang_threshold
+    double vel_lin_threshold,
+    double vel_x_threshold,
+    double vel_y_threshold,
+    double vel_ang_threshold
   ):
     Metric(robot_data),
-    osc_lin_threshold_(osc_lin_threshold),
-    osc_ang_threshold_(osc_ang_threshold)
+    vel_lin_threshold_(vel_lin_threshold),
+    vel_x_threshold_(vel_x_threshold),
+    vel_y_threshold_(vel_y_threshold),
+    vel_ang_threshold_(vel_ang_threshold)
   {
     compute();
   }
 
   void printResults() const override {
-    printf("Oscillations = %.4f [rad]\n", osc_);
+    printf("Oscillations = %.4f [%%]\n", osc_ * 100.0);
   }
 
 protected:
-  double osc_lin_threshold_;
-  double osc_ang_threshold_;
+  double vel_lin_threshold_;
+  double vel_x_threshold_;
+  double vel_y_threshold_;
+  double vel_ang_threshold_;
+  /// Percentage
   double osc_;
 
   void compute() override {
-    double osc = 0.0;
+    double osc_time = 0.0;
+
     rewinder_.setHandlerNextTimestamp(
       [&]() {
-        bool robot_stopped = rewinder_.getRobotCurr().getVelocityX() < osc_lin_threshold_ && rewinder_.getRobotCurr().getVelocityX() >= 0.0;
-        bool robot_oscillates = std::abs(rewinder_.getRobotCurr().getVelocityTheta()) < osc_ang_threshold_;
-        if (robot_stopped && robot_oscillates) {
-          double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
-          osc += (std::abs(rewinder_.getRobotCurr().getVelocityTheta()) / dt);
+        // evaluate oscillation conditions
+        bool vx_matches = std::abs(rewinder_.getRobotCurr().getVelocityX()) < vel_x_threshold_;
+        bool vy_matches = std::abs(rewinder_.getRobotCurr().getVelocityX()) < vel_y_threshold_;
+        bool vth_matches = std::abs(rewinder_.getRobotCurr().getVelocityTheta()) < vel_ang_threshold_;
+
+        double vel_lin = std::hypot(rewinder_.getRobotCurr().getVelocityX(), rewinder_.getRobotCurr().getVelocityY());
+        bool vel_lin_matches = vel_lin < vel_lin_threshold_;
+
+        if (!vx_matches || !vy_matches || !vth_matches || !vel_lin_matches) {
+          return;
         }
+
+        double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
+        osc_time += dt;
       }
     );
     rewinder_.perform();
 
     // save result
-    osc_ = osc;
+    double total_duration = rewinder_.getTimestampLast() - rewinder_.getTimestampFirst();
+    osc_ = osc_time / total_duration;
   }
 };
 

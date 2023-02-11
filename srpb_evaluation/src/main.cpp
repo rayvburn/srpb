@@ -41,6 +41,8 @@ int main(int argc, char* argv[]) {
 
   // oscillation threshold values
   double osc_vel_lin_x_threshold = 0.05;
+  double osc_vel_x_threshold = 0.05;
+  double osc_vel_y_threshold = 0.05;
   double osc_vel_ang_z_threshold = 0.15;
 
   // personal space Gaussian model parameters
@@ -96,7 +98,13 @@ int main(int argc, char* argv[]) {
   BackwardMovements bwd(timed_robot_data);
   bwd.printResults();
 
-  Oscillations osc(timed_robot_data, osc_vel_lin_x_threshold, osc_vel_ang_z_threshold);
+  Oscillations osc(
+    timed_robot_data,
+    osc_vel_lin_x_threshold,
+    osc_vel_x_threshold,
+    osc_vel_y_threshold,
+    osc_vel_ang_z_threshold
+  );
   osc.printResults();
 
   InplaceRotations inplace(timed_robot_data, osc_vel_lin_x_threshold);
