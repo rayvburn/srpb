@@ -9,6 +9,7 @@
 #include "srpb_evaluation/metrics/computational_time_repeatability.h"
 #include "srpb_evaluation/metrics/cumulative_heading_change.h"
 #include "srpb_evaluation/metrics/formation_space_instrusion.h"
+#include "srpb_evaluation/metrics/goal_reached.h"
 #include "srpb_evaluation/metrics/inplace_rotations.h"
 #include "srpb_evaluation/metrics/motion_efficiency.h"
 #include "srpb_evaluation/metrics/obstacle_safety.h"
@@ -67,6 +68,9 @@ int main(int argc, char* argv[]) {
     timed_people_data.size(),
     timed_groups_data.size()
   );
+
+  GoalReached mgoal(timed_robot_data);
+  mgoal.printResults();
 
   ObstacleSafety safety(timed_robot_data, safety_distance);
   safety.printResults();
