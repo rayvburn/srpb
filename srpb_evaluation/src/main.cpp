@@ -47,9 +47,9 @@ int main(int argc, char* argv[]) {
 
   // personal space Gaussian model parameters
   // values from Kirby, 2010, Fig. A.1
-  double sigma_h = 2.00;
-  double sigma_r = 1.00;
-  double sigma_s = 1.33;
+  double personal_space_var_h = std::pow(2.00, 2);
+  double personal_space_var_r = std::pow(1.00, 2);
+  double personal_space_var_s = std::pow(1.33, 2);
   // threshold of Gaussian value to detect space violations
   double personal_space_threshold = 0.55;
   double group_space_threshold = 0.55;
@@ -113,9 +113,9 @@ int main(int argc, char* argv[]) {
   PersonalSpaceIntrusion psi(
     timed_robot_data,
     timed_people_data,
-    sigma_h,
-    sigma_r,
-    sigma_s,
+    personal_space_var_h,
+    personal_space_var_r,
+    personal_space_var_s,
     personal_space_threshold
   );
   psi.printResults();
