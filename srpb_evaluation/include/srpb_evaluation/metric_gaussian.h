@@ -31,16 +31,16 @@ public:
    * @brief Computes min, max, normalized metrics related to gaussian statistics and counts number of space violations
    *
    * @param timed_gaussians vector of pairs with, first, timestamp, and second, values of gaussians
-   * @param space_violation_threshold Gaussian values bigger than that will be considered as violation of personal space
+   * @param violation_threshold Gaussian values bigger than that will be considered as violation of personal space
    * @param max_method set to true (default) to use max element from Gaussians to normalize metrics;
    * false means averaging over all Gaussian occurrences in a current time step
    *
-   * @return std::tuple<double, double, double, unsigned int> tuple with scores: min, max and normalized to execution
-   * time and number of personal space violations (according to @ref personal_space_threshold)
+   * @return std::tuple<double, double, double, double> tuple with scores: min, max and normalized to execution
+   * time and percentage of violation of, e.g., personal space violations (according to given threshold and gaussians)
    */
-  static std::tuple<double, double, double, unsigned int> calculateGaussianStatistics(
+  static std::tuple<double, double, double, double> calculateGaussianStatistics(
     std::vector<std::pair<double, std::vector<double>>> timed_gaussians,
-    double space_violation_threshold,
+    double violation_threshold,
     bool max_method = true
   );
 

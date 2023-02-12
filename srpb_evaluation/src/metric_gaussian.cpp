@@ -9,9 +9,9 @@
 namespace srpb {
 namespace evaluation {
 
-std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussianStatistics(
+std::tuple<double, double, double, double> MetricGaussian::calculateGaussianStatistics(
   std::vector<std::pair<double, std::vector<double>>> timed_gaussians,
-  double space_violation_threshold,
+  double violation_threshold,
   bool max_method
 ) {
   // find actual duration
@@ -21,7 +21,8 @@ std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussi
   }
 
   // find number of personal space / f-formation space violations
-  unsigned int space_violations = 0;
+  unsigned int gaussian_violations = 0;
+  unsigned int gaussians_total = 0;
 
   // find gaussians and recompute according to recognized people (max/sum)
   double metrics = 0.0;
@@ -36,11 +37,14 @@ std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussi
       return std::make_tuple(0.0, 0.0, 0.0, 0);
     }
 
-    space_violations += std::count_if(
+    // count timestamps when violations ocurred
+    gaussian_violations += std::count_if(
       tg.second.cbegin(),
       tg.second.cend(),
       [&](double g) {
-        return g > space_violation_threshold;
+        // count total numbers to find percentage
+        gaussians_total++;
+        return g > violation_threshold;
       }
     );
 
@@ -64,10 +68,15 @@ std::tuple<double, double, double, unsigned int> MetricGaussian::calculateGaussi
       // average used for normalization
       metrics_elem = std::accumulate(tg.second.cbegin(), tg.second.cend(), 0.0) / static_cast<double>(tg.second.size());
     }
-    metrics += (local_max_elem * (dt / duration));
+
+    // Gaussians must be referenced to timestamps when, e.g., people were actually detected
+    metrics += (metrics_elem * (dt / duration));
   }
 
-  return std::make_tuple(min_elem, max_elem, metrics, space_violations);
+  // find percentage of time when personal space / f-formation space etc. thresholds were violated
+  double gaussian_violations_percentage = gaussian_violations / static_cast<double>(gaussians_total);
+
+  return std::make_tuple(min_elem, max_elem, metrics, gaussian_violations_percentage);
 }
 
 } // namespace evaluation
