@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
    * With percentage results (implemented) - referring to max at each step.
    */
   double personal_space_threshold = 0.50;
-  double group_space_threshold = 0.55;
+  double group_space_threshold = 0.50;
   // estimated field of view of people
   double person_fov = angles::from_degrees(190.0);
   // threshold of Gaussian value to detect significant disturbance caused by robot location or motion direction

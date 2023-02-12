@@ -6,6 +6,12 @@
 #include <people_msgs_utils/person.h>
 #include <people_msgs_utils/group.h>
 
+#include <social_nav_utils/gaussians.h>
+#include <social_nav_utils/ellipse_fitting.h>
+
+// may prevent compilation errors calling to matrix.inverse()
+#include <eigen3/Eigen/LU>
+
 namespace srpb {
 namespace evaluation {
 
@@ -26,33 +32,75 @@ public:
     compute();
   }
 
-  /// Calculates radius of the F-formation based on positions of group members and group's center of gravity
-  static double calculateRadiusFformation(
-    const people_msgs_utils::Group& group,
-    const std::vector<people_msgs_utils::Person>& people_group
-  ) {
-    double radius = 0.0;
-    for (const auto& person: people_group) {
-      double dist_from_cog = std::sqrt(
-        std::pow(person.getPositionX() - group.getCenterOfGravity().x, 2)
-        + std::pow(person.getPositionY() - group.getCenterOfGravity().y, 2)
-      );
-      // select the maximum value as radius
-      if (radius < dist_from_cog) {
-        radius = dist_from_cog;
-      }
-    }
-    return radius;
-  }
-
   void printResults() const override {
     printf(
-      "Formation space intrusion = %.4f [%%] (min = %.4f [%%], max = %.4f [%%], violations %3u)\n",
-      intrusion_total_,
-      intrusion_min_,
-      intrusion_max_,
-      violations_num_
+      "Formation space intrusion = %.4f [%%] (min = %.4f [%%], max = %.4f [%%], violations %.4f [%%])\n",
+      intrusion_total_ * 100.0,
+      intrusion_min_ * 100.0,
+      intrusion_max_ * 100.0,
+      violations_percentage_ * 100.0
     );
+  }
+
+  /**
+   * @brief Computes value of a Gaussian (given by method parameters) at given position
+   *
+   * @param ospace_pos_x
+   * @param ospace_pos_y
+   * @param ospace_orientation
+   * @param ospace_variance_x
+   * @param ospace_variance_y
+   * @param pos_center_variance_xx
+   * @param pos_center_variance_xyyx
+   * @param pos_center_variance_yy
+   * @param robot_pos_x
+   * @param robot_pos_y
+   * @return double
+   *
+   * @sa computeFormationSpaceGaussian
+   */
+  static double computeFormationSpaceGaussian(
+    double ospace_pos_x,
+    double ospace_pos_y,
+    double ospace_orientation,
+    double ospace_variance_x,
+    double ospace_variance_y,
+    double pos_center_variance_xx,
+    double pos_center_variance_xyyx,
+    double pos_center_variance_yy,
+    double robot_pos_x,
+    double robot_pos_y
+  ) {
+    // create matrix for covariance rotation
+    Eigen::MatrixXd rot(2, 2);
+    rot << std::cos(ospace_orientation), -std::sin(ospace_orientation),
+      std::sin(ospace_orientation), std::cos(ospace_orientation);
+
+    // create covariance matrix of the personal zone model
+    Eigen::MatrixXd cov_fsi_init(2, 2);
+    cov_fsi_init << ospace_variance_x, 0.0, 0.0, ospace_variance_y;
+
+    // rotate covariance matrix
+    Eigen::MatrixXd cov_fsi(2, 2);
+    cov_fsi = rot * cov_fsi_init * rot.inverse();
+
+    // create covariance matrix of the position estimation uncertainty
+    Eigen::MatrixXd cov_pos(2, 2);
+    cov_pos << pos_center_variance_xx, pos_center_variance_xyyx, pos_center_variance_xyyx, pos_center_variance_yy;
+
+    // resultant covariance matrices (variances summed up)
+    Eigen::MatrixXd cov_result(2, 2);
+    cov_result = cov_pos + cov_fsi;
+
+    // prepare vectors for gaussian calculation
+    // position to check Gaussian against - position of robot
+    Eigen::VectorXd x_pos(2);
+    x_pos << robot_pos_x, robot_pos_y;
+    // mean - position of the group
+    Eigen::VectorXd mean_pos(2);
+    mean_pos << ospace_pos_x, ospace_pos_y;
+
+    return social_nav_utils::calculateGaussian(x_pos, mean_pos, cov_result);
   }
 
 protected:
@@ -64,85 +112,57 @@ protected:
   double intrusion_min_;
   double intrusion_max_;
   double intrusion_total_;
-  unsigned int violations_num_;
+  double violations_percentage_;
 
   void compute() override {
-    // store durations and Gaussians of the robot in terms of nearby people
+    // store durations and Gaussians of the robot in terms of nearby groups
     std::vector<std::pair<double, std::vector<double>>> timed_gaussians;
     /// prepare container for gaussian values in this `for` iteration
     std::pair<double, std::vector<double>> timed_gaussian;
 
-    // collect people data into container that store group members
-    std::vector<people_msgs_utils::Person> people_this_group;
-
     rewinder_.setHandlerNextTimestamp(
       [&]() {
-        if (rewinder_.getTimestampCurr() == rewinder_.getTimestampLast()) {
-          return;
-        }
+        // prepare container for upcoming calculations related to human personal spaces
         timed_gaussian = std::make_pair(rewinder_.getTimestampNext() - rewinder_.getTimestampCurr(), std::vector<double>());
-      }
-    );
-
-    rewinder_.setHandlerNextPersonTimestamp(
-      [&]() {
-        // add person data to the container of group members
-        auto group_members = rewinder_.getGroupCurr().getMemberIDs();
-        if (std::find(group_members.begin(), group_members.end(), rewinder_.getPersonCurr().getID()) != group_members.end()) {
-          people_this_group.push_back(rewinder_.getPersonCurr());
-        }
       }
     );
 
     rewinder_.setHandlerNextGroupTimestamp(
       [&]() {
-        /// computations for the group
-        double fformation_radius = FormationSpaceIntrusion::calculateRadiusFformation(
-          rewinder_.getGroupCurr(),
-          people_this_group
+        // computations for the group
+        // take half of the span and apply 2 sigma rule
+        // (mean is the center of the O-space, 2 times stddev corresponds to its span)
+        double variance_ospace_x = std::pow((rewinder_.getGroupCurr().getSpanX() / 2.0) / 2.0, 2);
+        double variance_ospace_y = std::pow((rewinder_.getGroupCurr().getSpanY() / 2.0) / 2.0, 2);
+
+        double gaussian = computeFormationSpaceGaussian(
+          rewinder_.getGroupCurr().getPositionX(),
+          rewinder_.getGroupCurr().getPositionY(),
+          rewinder_.getGroupCurr().getOrientationYaw(),
+          variance_ospace_x,
+          variance_ospace_y,
+          rewinder_.getGroupCurr().getCovariancePoseXX(),
+          rewinder_.getGroupCurr().getCovariancePoseXY(),
+          rewinder_.getGroupCurr().getCovariancePoseYY(),
+          rewinder_.getRobotCurr().getPositionX(),
+          rewinder_.getRobotCurr().getPositionY()
         );
 
-        /*
-         * Compute `cost` of the robot being located in the current position - how it affects group's ease.
-         * NOTE that we do not possess the orientation of the group (yaw is set to 0)
-         * so the circular model is assumed (sigmas are equal)
-         *
-         * Conversion from radius to stddev was mentioned, e.g., by Truong in `To Approach Humans? (..)` article (2017)
-         */
-        double gaussian = 0.0;
-        // 2 sigma rule is used here (mean is the center of the F-formation, 2 times stddev corresponds to its span)
-        double stddev_fformation = fformation_radius / 2.0;
-        // perception can report 1 person in a group - do not investigate such situations further
-        if (people_this_group.size() > 1) {
-          gaussian = social_nav_utils::calculateGaussianAsymmetrical(
-            rewinder_.getRobotCurr().getPositionX(),
-            rewinder_.getRobotCurr().getPositionY(),
-            rewinder_.getGroupCurr().getCenterOfGravity().x,
-            rewinder_.getGroupCurr().getCenterOfGravity().y,
-            0.0,
-            stddev_fformation,
-            stddev_fformation,
-            stddev_fformation
-          );
-        }
-
-        // choose maximum reliability among group members as a reference to multiply gaussian
-        double group_reliability = std::max_element(
-          people_this_group.begin(),
-          people_this_group.end(),
-          [](const people_msgs_utils::Person& lhs, const people_msgs_utils::Person& rhs) {
-            return lhs.getReliability() < rhs.getReliability();
-          }
-        )->getReliability();
-
-        // count in the person's tracking reliability - we want to avoid penalizing robot that investigates `old` tracks
-        double cost = group_reliability * gaussian;
+        double gaussian_max = computeFormationSpaceGaussian(
+          rewinder_.getGroupCurr().getPositionX(),
+          rewinder_.getGroupCurr().getPositionY(),
+          rewinder_.getGroupCurr().getOrientationYaw(),
+          variance_ospace_x,
+          variance_ospace_y,
+          rewinder_.getGroupCurr().getCovariancePoseXX(),
+          rewinder_.getGroupCurr().getCovariancePoseXY(),
+          rewinder_.getGroupCurr().getCovariancePoseYY(),
+          rewinder_.getGroupCurr().getPositionX(),
+          rewinder_.getGroupCurr().getPositionY()
+        );
 
         // Gaussian cost of the robot being located in the current pose; cost related to the investigated group of people
-        timed_gaussian.second.push_back(cost);
-
-        // clear set of people for the next group
-        people_this_group.clear();
+        timed_gaussian.second.push_back(gaussian / gaussian_max);
       }
     );
 
@@ -160,7 +180,7 @@ protected:
       intrusion_min_,
       intrusion_max_,
       intrusion_total_,
-      violations_num_
+      violations_percentage_
     ) = MetricGaussian::calculateGaussianStatistics(timed_gaussians, group_space_threshold_, max_method_);
   }
 };
