@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
   BackwardMovements bwd(timed_robot_data, osc_vel_x_threshold);
   bwd.printResults();
 
-  InplaceRotations inplace(timed_robot_data, osc_vel_lin_x_threshold);
+  InplaceRotations inplace(timed_robot_data, osc_vel_ang_z_threshold);
   inplace.printResults();
 
   PersonalSpaceIntrusion psi(

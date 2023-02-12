@@ -7,40 +7,54 @@ namespace evaluation {
 
 class InplaceRotations: public Metric {
 public:
+  /// Tolerance for velocity components to consider them as negligible
+  static constexpr double VEL_STOPPED_TOLERANCE = 5e-03;
+
+  /**
+   * @brief Constructor
+   *
+   * @param vel_ang_threshold in-place rotation threshold (must be orthogonal to oscillation metric)
+   */
   InplaceRotations(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
-    double osc_lin_threshold
+    double vel_ang_threshold
   ):
     Metric(robot_data),
-    osc_lin_threshold_(osc_lin_threshold)
+    vel_ang_threshold_(vel_ang_threshold)
   {
     compute();
   }
 
   void printResults() const override {
-    printf("In-place rotations = %.4f [rad]\n", in_place_rotations_);
+    printf("In-place rotations = %.4f [%%]\n", in_place_rotations_ * 100.0);
   }
 
 protected:
-  double osc_lin_threshold_;
+  double vel_ang_threshold_;
   double in_place_rotations_;
 
   void compute() override {
-    double inplace_rot = 0.0;
+    double inplace_rot_time = 0.0;
+
     rewinder_.setHandlerNextTimestamp(
       [&]() {
-        bool robot_stopped = rewinder_.getRobotCurr().getVelocityX() < osc_lin_threshold_ && rewinder_.getRobotCurr().getVelocityX() >= 0.0;
-        bool robot_rotates = std::abs(rewinder_.getRobotCurr().getVelocityTheta()) >= 0.0;
-        if (robot_stopped && robot_rotates) {
-          double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
-          inplace_rot += (std::abs(rewinder_.getRobotCurr().getVelocityTheta()) / dt);
+        bool vel_x_matches = std::abs(rewinder_.getRobotCurr().getVelocityX()) < VEL_STOPPED_TOLERANCE;
+        bool vel_y_matches = std::abs(rewinder_.getRobotCurr().getVelocityY()) < VEL_STOPPED_TOLERANCE;
+        bool vel_th_matches = std::abs(rewinder_.getRobotCurr().getVelocityTheta()) >= vel_ang_threshold_;
+
+        if (!vel_x_matches || !vel_y_matches || !vel_th_matches) {
+          return;
         }
+
+        double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
+        inplace_rot_time += dt;
       }
     );
     rewinder_.perform();
 
     // save result
-    in_place_rotations_ = inplace_rot;
+    double total_duration = rewinder_.getTimestampLast() - rewinder_.getTimestampFirst();
+    in_place_rotations_ = inplace_rot_time / total_duration;
   }
 };
 
