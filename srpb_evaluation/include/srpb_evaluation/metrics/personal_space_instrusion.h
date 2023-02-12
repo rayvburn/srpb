@@ -60,11 +60,11 @@ public:
 
   void printResults() const override {
     printf(
-      "Personal space intrusion = %.4f [units] (min = %.4f [units], max = %.4f [units], violations %.4f [%%])\n",
-      intrusion_total_,
-      intrusion_min_,
-      intrusion_max_,
-      violations_percentage_
+      "Personal space intrusion = %.4f [%%] (min = %.4f [%%], max = %.4f [%%], violations %.4f [%%])\n",
+      intrusion_total_ * 100.0,
+      intrusion_min_ * 100.0,
+      intrusion_max_ * 100.0,
+      violations_percentage_ * 100.0
     );
   }
 
@@ -222,6 +222,7 @@ protected:
     // on event 'iterating through next person in the timestamp' - compute Gaussian of Personal Zone at robot position
     rewinder_.setHandlerNextPersonTimestamp(
       [&]() {
+        // compute gaussian at position of robot
         double gaussian = computePersonalSpaceGaussian(
           rewinder_.getPersonCurr().getPositionX(),
           rewinder_.getPersonCurr().getPositionY(),
@@ -238,8 +239,25 @@ protected:
           true
         );
 
+        //  find max of Gaussian knowing the current arrangement and certainty - compute gaussian at mean position
+        double gaussian_max = computePersonalSpaceGaussian(
+          rewinder_.getPersonCurr().getPositionX(),
+          rewinder_.getPersonCurr().getPositionY(),
+          rewinder_.getPersonCurr().getOrientationYaw(),
+          rewinder_.getPersonCurr().getCovariancePoseXX(),
+          rewinder_.getPersonCurr().getCovariancePoseXY(),
+          rewinder_.getPersonCurr().getCovariancePoseYX(),
+          rewinder_.getPersonCurr().getCovariancePoseYY(),
+          var_front_,
+          var_rear_,
+          var_side_,
+          rewinder_.getPersonCurr().getPositionX(),
+          rewinder_.getPersonCurr().getPositionY(),
+          true
+        );
+
         // store result for later aggregation
-        timed_gaussian.second.push_back(gaussian);
+        timed_gaussian.second.push_back(gaussian / gaussian_max);
       }
     );
 

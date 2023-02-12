@@ -50,8 +50,12 @@ int main(int argc, char* argv[]) {
   double personal_space_var_h = std::pow(2.00, 2);
   double personal_space_var_r = std::pow(1.00, 2);
   double personal_space_var_s = std::pow(1.33, 2);
-  // threshold of Gaussian value to detect space violations
-  double personal_space_threshold = 0.55;
+  /*
+   * Threshold of Gaussian value to detect space violations.
+   * With Kirby's parameters PS in the center is approx. 0.14 (without uncertainty accounted in).
+   * With percentage results (implemented) - referring to max at each step.
+   */
+  double personal_space_threshold = 0.50;
   double group_space_threshold = 0.55;
   // estimated field of view of people
   double person_fov = angles::from_degrees(190.0);
