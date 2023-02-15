@@ -12,7 +12,7 @@ public:
   }
 
   void printResults() const override {
-    printf("Cumulative Heading Change = %.4f [rad]\n", chc_);
+    printf("Cumulative Heading Change = %.4f [rad/s^2]\n", chc_);
   }
 
 protected:
