@@ -18,8 +18,8 @@ people_msgs_utils::Person createPerson(const std::string& name, const std::strin
 
 people_msgs_utils::Group createIllformedGroup(
     const std::string& name,
-    const std::vector<unsigned int>& members,
-    const std::vector<std::tuple<unsigned int, unsigned int, double>>& relations
+    const std::vector<std::string>& members,
+    const std::vector<std::tuple<std::string, std::string, double>>& relations
 ) {
     return people_msgs_utils::Group(
         name,
@@ -49,20 +49,20 @@ TEST(TestFillGroupsWithMembers, members1) {
     std::vector<std::pair<double, people_msgs_utils::Group>> tgrp{
         {0.5, createIllformedGroup(
             "100",
-            std::vector<unsigned int>{01, 02},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{01, 02, 0.987}}
+            std::vector<std::string>{"01", "02"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"01", "02", 0.987}}
         )},
         {1.5, createIllformedGroup("100",
-            std::vector<unsigned int>{02, 03},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{02, 03, 0.789}}
+            std::vector<std::string>{"02", "03"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"02", "03", 0.789}}
         )},
         {1.5, createIllformedGroup("101",
-            std::vector<unsigned int>{04, 05},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{04, 05, 0.852}}
+            std::vector<std::string>{"04", "05"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"04", "05", 0.852}}
         )},
         {2.5, createIllformedGroup("102",
-            std::vector<unsigned int>{03, 06},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{03, 06, 0.369}}
+            std::vector<std::string>{"03", "06"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"03", "06", 0.369}}
         )}
     };
 
@@ -92,29 +92,29 @@ TEST(TestFillGroupsWithMembers, members1) {
     ASSERT_EQ(tgrp_filled.at(0).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(0).second.getMembers().at(0).getName(), "01");
     ASSERT_EQ(tgrp_filled.at(0).second.getMembers().at(1).getName(), "02");
-    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations(1).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations(2).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations("01").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations("02").size(), 1);
 
     ASSERT_EQ(tgrp_filled.at(1).second.getName(), "100");
     ASSERT_EQ(tgrp_filled.at(1).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(1).second.getMembers().at(0).getName(), "02");
     ASSERT_EQ(tgrp_filled.at(1).second.getMembers().at(1).getName(), "03");
-    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations(2).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations(3).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations("02").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations("03").size(), 1);
 
     ASSERT_EQ(tgrp_filled.at(2).second.getName(), "101");
     ASSERT_EQ(tgrp_filled.at(2).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(2).second.getMembers().at(0).getName(), "04");
     ASSERT_EQ(tgrp_filled.at(2).second.getMembers().at(1).getName(), "05");
-    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations(4).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations(5).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations("04").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations("05").size(), 1);
 
     ASSERT_EQ(tgrp_filled.at(3).second.getName(), "102");
     ASSERT_EQ(tgrp_filled.at(3).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(3).second.getMembers().at(0).getName(), "03");
     ASSERT_EQ(tgrp_filled.at(3).second.getMembers().at(1).getName(), "06");
-    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations(3).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations(6).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations("03").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations("06").size(), 1);
 }
 
 TEST(TestFillGroupsWithMembers, members2) {
@@ -135,24 +135,24 @@ TEST(TestFillGroupsWithMembers, members2) {
     std::vector<std::pair<double, people_msgs_utils::Group>> tgrp{
         {0.5, createIllformedGroup(
             "100",
-            std::vector<unsigned int>{01, 02, 03},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{
-                {01, 02, 0.987},
-                {02, 03, 0.321},
-                {01, 03, 0.147}
+            std::vector<std::string>{"01", "02", "03"},
+            std::vector<std::tuple<std::string, std::string, double>>{
+                {"01", "02", 0.987},
+                {"02", "03", 0.321},
+                {"01", "03", 0.147}
             }
         )},
         {1.5, createIllformedGroup("100",
-            std::vector<unsigned int>{02, 03},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{02, 03, 0.789}}
+            std::vector<std::string>{"02", "03"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"02", "03", 0.789}}
         )},
         {1.5, createIllformedGroup("101",
-            std::vector<unsigned int>{04, 05},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{04, 05, 0.741}}
+            std::vector<std::string>{"04", "05"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"04", "05", 0.741}}
         )},
         {2.5, createIllformedGroup("100",
-            std::vector<unsigned int>{03, 05},
-            std::vector<std::tuple<unsigned int, unsigned int, double>>{{03, 05, 0.852}}
+            std::vector<std::string>{"03", "05"},
+            std::vector<std::tuple<std::string, std::string, double>>{{"03", "05", 0.852}}
         )}
     };
 
@@ -183,30 +183,30 @@ TEST(TestFillGroupsWithMembers, members2) {
     ASSERT_EQ(tgrp_filled.at(0).second.getMembers().at(0).getName(), "01");
     ASSERT_EQ(tgrp_filled.at(0).second.getMembers().at(1).getName(), "02");
     ASSERT_EQ(tgrp_filled.at(0).second.getMembers().at(2).getName(), "03");
-    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations(1).size(), 2);
-    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations(2).size(), 2);
-    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations(3).size(), 2);
+    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations("01").size(), 2);
+    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations("02").size(), 2);
+    ASSERT_EQ(tgrp_filled.at(0).second.getSocialRelations("03").size(), 2);
 
     ASSERT_EQ(tgrp_filled.at(1).second.getName(), "100");
     ASSERT_EQ(tgrp_filled.at(1).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(1).second.getMembers().at(0).getName(), "02");
     ASSERT_EQ(tgrp_filled.at(1).second.getMembers().at(1).getName(), "03");
-    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations(2).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations(3).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations("02").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(1).second.getSocialRelations("03").size(), 1);
 
     ASSERT_EQ(tgrp_filled.at(2).second.getName(), "101");
     ASSERT_EQ(tgrp_filled.at(2).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(2).second.getMembers().at(0).getName(), "04");
     ASSERT_EQ(tgrp_filled.at(2).second.getMembers().at(1).getName(), "05");
-    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations(4).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations(5).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations("04").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(2).second.getSocialRelations("05").size(), 1);
 
     ASSERT_EQ(tgrp_filled.at(3).second.getName(), "100");
     ASSERT_EQ(tgrp_filled.at(3).second.getMembers().size(), 2);
     ASSERT_EQ(tgrp_filled.at(3).second.getMembers().at(0).getName(), "03");
     ASSERT_EQ(tgrp_filled.at(3).second.getMembers().at(1).getName(), "05");
-    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations(3).size(), 1);
-    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations(5).size(), 1);
+    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations("03").size(), 1);
+    ASSERT_EQ(tgrp_filled.at(3).second.getSocialRelations("05").size(), 1);
 }
 
 int main(int argc, char** argv) {

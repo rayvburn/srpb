@@ -136,9 +136,9 @@ TEST(ConversionTest, group) {
             std::vector<std::string>()
         )
     };
-    std::vector<unsigned int> member_ids{2468, 8462};
+    std::vector<std::string> member_ids{"2468", "8462"};
     // 2 members -> 1 relation
-    std::vector<std::tuple<unsigned int, unsigned int, double>> relations{{2468, 8462, 0.753}};
+    std::vector<std::tuple<std::string, std::string, double>> relations{{"2468", "8462", 0.753}};
     geometry_msgs::Point cog;
     cog.x = 5.684;
     cog.y = 6.953;

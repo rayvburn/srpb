@@ -52,6 +52,9 @@ public:
     static people_msgs_utils::Group groupFromString(const std::string& str);
 
 protected:
+	/// Literal to use once person is not assigned to any group (to maintain the same size of logged entries)
+	static const std::string GROUP_NAME_EMPTY;
+
     void peopleCB(const people_msgs::PeopleConstPtr& msg);
 
     ros::Subscriber people_sub_;
