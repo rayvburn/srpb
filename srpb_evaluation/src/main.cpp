@@ -10,12 +10,12 @@
 #include "srpb_evaluation/metrics/cumulative_heading_change.h"
 #include "srpb_evaluation/metrics/formation_space_instrusion.h"
 #include "srpb_evaluation/metrics/goal_reached.h"
+#include "srpb_evaluation/metrics/heading_direction_disturbance.h"
 #include "srpb_evaluation/metrics/inplace_rotations.h"
 #include "srpb_evaluation/metrics/motion_efficiency.h"
 #include "srpb_evaluation/metrics/obstacle_safety.h"
 #include "srpb_evaluation/metrics/oscillations.h"
 #include "srpb_evaluation/metrics/path_linear_length.h"
-#include "srpb_evaluation/metrics/person_disturbance.h"
 #include "srpb_evaluation/metrics/personal_space_instrusion.h"
 #include "srpb_evaluation/metrics/velocity_smoothness.h"
 
@@ -57,10 +57,17 @@ int main(int argc, char* argv[]) {
    */
   double personal_space_threshold = 0.50;
   double group_space_threshold = 0.50;
+
+  // How much space (radius) is physically occupied by a human
+  double person_occupancy_radius = 0.28;
   // estimated field of view of people
   double person_fov = angles::from_degrees(190.0);
+    // Size of the circumradius of the evaluated mobile base
+  double robot_circumradius = 0.275;
+  // Maximum allowable speed for the evaluated robot
+  double robot_max_speed = 0.55;
   // threshold of Gaussian value to detect significant disturbance caused by robot location or motion direction
-  double disturbance_threshold = 0.20;
+  double heading_disturbance_threshold = 0.20;
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
@@ -132,13 +139,16 @@ int main(int argc, char* argv[]) {
   );
   fsi.printResults();
 
-  PersonDisturbance disturbance(
+  HeadingDirectionDisturbance heading_direction(
     timed_robot_data,
     timed_people_data,
-    disturbance_threshold,
-    person_fov
+    heading_disturbance_threshold,
+    person_occupancy_radius,
+    person_fov,
+    robot_circumradius,
+    robot_max_speed
   );
-  disturbance.printResults();
+  heading_direction.printResults();
 
   return 0;
 }
