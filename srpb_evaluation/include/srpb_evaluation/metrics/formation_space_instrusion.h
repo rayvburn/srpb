@@ -2,15 +2,7 @@
 
 #include "srpb_evaluation/metric_gaussian.h"
 
-#include <srpb_logger/robot_data.h>
-#include <people_msgs_utils/person.h>
-#include <people_msgs_utils/group.h>
-
-#include <social_nav_utils/gaussians.h>
-#include <social_nav_utils/ellipse_fitting.h>
-
-// may prevent compilation errors calling to matrix.inverse()
-#include <eigen3/Eigen/LU>
+#include <social_nav_utils/formation_space_intrusion.h>
 
 namespace srpb {
 namespace evaluation {
@@ -40,67 +32,6 @@ public:
       intrusion_max_ * 100.0,
       violations_percentage_ * 100.0
     );
-  }
-
-  /**
-   * @brief Computes value of a Gaussian (given by method parameters) at given position
-   *
-   * @param ospace_pos_x
-   * @param ospace_pos_y
-   * @param ospace_orientation
-   * @param ospace_variance_x
-   * @param ospace_variance_y
-   * @param pos_center_variance_xx
-   * @param pos_center_variance_xyyx
-   * @param pos_center_variance_yy
-   * @param robot_pos_x
-   * @param robot_pos_y
-   * @return double
-   *
-   * @sa computeFormationSpaceGaussian
-   */
-  static double computeFormationSpaceGaussian(
-    double ospace_pos_x,
-    double ospace_pos_y,
-    double ospace_orientation,
-    double ospace_variance_x,
-    double ospace_variance_y,
-    double pos_center_variance_xx,
-    double pos_center_variance_xyyx,
-    double pos_center_variance_yy,
-    double robot_pos_x,
-    double robot_pos_y
-  ) {
-    // create matrix for covariance rotation
-    Eigen::MatrixXd rot(2, 2);
-    rot << std::cos(ospace_orientation), -std::sin(ospace_orientation),
-      std::sin(ospace_orientation), std::cos(ospace_orientation);
-
-    // create covariance matrix of the personal zone model
-    Eigen::MatrixXd cov_fsi_init(2, 2);
-    cov_fsi_init << ospace_variance_x, 0.0, 0.0, ospace_variance_y;
-
-    // rotate covariance matrix
-    Eigen::MatrixXd cov_fsi(2, 2);
-    cov_fsi = rot * cov_fsi_init * rot.inverse();
-
-    // create covariance matrix of the position estimation uncertainty
-    Eigen::MatrixXd cov_pos(2, 2);
-    cov_pos << pos_center_variance_xx, pos_center_variance_xyyx, pos_center_variance_xyyx, pos_center_variance_yy;
-
-    // resultant covariance matrices (variances summed up)
-    Eigen::MatrixXd cov_result(2, 2);
-    cov_result = cov_pos + cov_fsi;
-
-    // prepare vectors for gaussian calculation
-    // position to check Gaussian against - position of robot
-    Eigen::VectorXd x_pos(2);
-    x_pos << robot_pos_x, robot_pos_y;
-    // mean - position of the group
-    Eigen::VectorXd mean_pos(2);
-    mean_pos << ospace_pos_x, ospace_pos_y;
-
-    return social_nav_utils::calculateGaussian(x_pos, mean_pos, cov_result);
   }
 
 protected:
@@ -135,7 +66,7 @@ protected:
         double variance_ospace_x = std::pow((rewinder_.getGroupCurr().getSpanX() / 2.0) / 2.0, 2);
         double variance_ospace_y = std::pow((rewinder_.getGroupCurr().getSpanY() / 2.0) / 2.0, 2);
 
-        double gaussian = computeFormationSpaceGaussian(
+        social_nav_utils::FormationSpaceIntrusion fsi(
           rewinder_.getGroupCurr().getPositionX(),
           rewinder_.getGroupCurr().getPositionY(),
           rewinder_.getGroupCurr().getOrientationYaw(),
@@ -147,22 +78,10 @@ protected:
           rewinder_.getRobotCurr().getPositionX(),
           rewinder_.getRobotCurr().getPositionY()
         );
-
-        double gaussian_max = computeFormationSpaceGaussian(
-          rewinder_.getGroupCurr().getPositionX(),
-          rewinder_.getGroupCurr().getPositionY(),
-          rewinder_.getGroupCurr().getOrientationYaw(),
-          variance_ospace_x,
-          variance_ospace_y,
-          rewinder_.getGroupCurr().getCovariancePoseXX(),
-          rewinder_.getGroupCurr().getCovariancePoseXY(),
-          rewinder_.getGroupCurr().getCovariancePoseYY(),
-          rewinder_.getGroupCurr().getPositionX(),
-          rewinder_.getGroupCurr().getPositionY()
-        );
+        fsi.normalize();
 
         // Gaussian cost of the robot being located in the current pose; cost related to the investigated group of people
-        timed_gaussian.second.push_back(gaussian / gaussian_max);
+        timed_gaussian.second.push_back(fsi.getScale());
       }
     );
 
