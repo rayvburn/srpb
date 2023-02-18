@@ -2,12 +2,7 @@
 
 #include "srpb_evaluation/metric_gaussian.h"
 
-#include <social_nav_utils/distance_vector.h>
-#include <social_nav_utils/relative_location.h>
-#include <social_nav_utils/gaussians.h>
-
-// may prevent compilation errors calling to matrix.inverse()
-#include <eigen3/Eigen/LU>
+#include <social_nav_utils/personal_space_intrusion.h>
 
 namespace srpb {
 namespace evaluation {
@@ -68,130 +63,6 @@ public:
     );
   }
 
-  /**
-   * @brief Computes value of a Gaussian modelling the personal space
-   *
-   * Includes pose uncertainty of the human
-   *
-   * @param person_pos_x
-   * @param person_pos_y
-   * @param person_orient_yaw
-   * @param person_pos_cov_xx
-   * @param person_pos_cov_xy
-   * @param person_pos_cov_yx
-   * @param person_pos_cov_yy
-   * @param person_ps_var_front variance along the front direction of a person
-   * @param person_ps_var_rear variance along the rear direction of a person
-   * @param person_ps_var_side variance along the direction of person side
-   * @param robot_pos_x
-   * @param robot_pos_y
-   * @param unify_asymmetry_scale adjusts scale of the output to avoid a step when front/rear covariances strongly differ
-   * @return double
-   */
-  static double computePersonalSpaceGaussian(
-    double person_pos_x,
-    double person_pos_y,
-    double person_orient_yaw,
-    double person_pos_cov_xx,
-    double person_pos_cov_xy,
-    double person_pos_cov_yx,
-    double person_pos_cov_yy,
-    double person_ps_var_front,
-    double person_ps_var_rear,
-    double person_ps_var_side,
-    double robot_pos_x,
-    double robot_pos_y,
-    bool unify_asymmetry_scale = false
-  ) {
-    // create matrix for covariance rotation
-    double rot_angle = person_orient_yaw;
-    Eigen::MatrixXd rot(2, 2);
-    rot << std::cos(rot_angle), -std::sin(rot_angle),
-      std::sin(rot_angle), std::cos(rot_angle);
-
-    // create human position uncertainty matrix
-    Eigen::MatrixXd cov_p(2, 2);
-    cov_p << person_pos_cov_xx, person_pos_cov_xy, person_pos_cov_yx, person_pos_cov_yy;
-
-    // prepare vectors for gaussian calculation
-    // position to check Gaussian against - position of robot
-    Eigen::VectorXd x_pos(2);
-    x_pos << robot_pos_x, robot_pos_y;
-    // mean - position of human
-    Eigen::VectorXd mean_pos(2);
-    mean_pos << person_pos_x, person_pos_y;
-
-    /*
-     * Perfect Gaussians in terms of mathematical description. Selecting `unify_asymmetry_scale`,
-     * With asymmetry there will be a bump across the center axis due to different variances (thus maximums)
-     */
-    if (!unify_asymmetry_scale) {
-      // aka phi
-      social_nav_utils::DistanceVector dist_vector(
-        person_pos_x,
-        person_pos_y,
-        robot_pos_x,
-        robot_pos_y
-      );
-
-      // aka delta
-      social_nav_utils::RelativeLocation rel_loc(dist_vector, person_orient_yaw);
-
-      // choose variance
-      double var_h_heading = person_ps_var_rear;
-      if (rel_loc.getAngle() <= M_PI_2) {
-        var_h_heading = person_ps_var_front;
-      }
-
-      // create covariance matrix of the personal zone model
-      Eigen::MatrixXd cov_psi_init(2, 2);
-      cov_psi_init << var_h_heading, 0.0, 0.0, person_ps_var_side;
-
-      // rotate covariance matrix
-      Eigen::MatrixXd cov_psi(2, 2);
-      cov_psi = rot * cov_psi_init * rot.inverse();
-
-      // resultant covariance matrix
-      Eigen::MatrixXd cov_result(2, 2);
-      cov_result = cov_p + cov_psi;
-
-      // we already know the covariance so there is no need to evaluate the 'Asymmetrical' Gaussian case for `x_pos`
-      return social_nav_utils::calculateGaussian(x_pos, mean_pos, cov_result);
-    }
-
-    /*
-     * More popular version - the Gaussian with higher variance is prolonged in the uppper direction according
-     * to the second one's maximum (in the mean pose)
-     */
-    // create covariance matrices of the personal zone model
-    Eigen::MatrixXd cov_psi_init_front(2, 2);
-    cov_psi_init_front << person_ps_var_front, 0.0, 0.0, person_ps_var_side;
-    Eigen::MatrixXd cov_psi_init_rear(2, 2);
-    cov_psi_init_rear << person_ps_var_rear, 0.0, 0.0, person_ps_var_side;
-
-    // rotate covariance matrices
-    Eigen::MatrixXd cov_psi_front(2, 2);
-    cov_psi_front = rot * cov_psi_init_front * rot.inverse();
-    Eigen::MatrixXd cov_psi_rear(2, 2);
-    cov_psi_rear = rot * cov_psi_init_rear * rot.inverse();
-
-    // resultant covariance matrices (variances summed up)
-    Eigen::MatrixXd cov_result_front(2, 2);
-    cov_result_front = cov_p + cov_psi_front;
-    Eigen::MatrixXd cov_result_rear(2, 2);
-    cov_result_rear = cov_p + cov_psi_rear;
-
-    // compute value of asymmetric Gaussian
-    return social_nav_utils::calculateGaussianAsymmetrical(
-      x_pos,
-      mean_pos,
-      person_orient_yaw,
-      cov_result_front,
-      cov_result_rear,
-      true
-    );
-  }
-
 protected:
   // parameters
   double var_front_;
@@ -223,7 +94,7 @@ protected:
     rewinder_.setHandlerNextPersonTimestamp(
       [&]() {
         // compute gaussian at position of robot
-        double gaussian = computePersonalSpaceGaussian(
+        social_nav_utils::PersonalSpaceIntrusion psi(
           rewinder_.getPersonCurr().getPositionX(),
           rewinder_.getPersonCurr().getPositionY(),
           rewinder_.getPersonCurr().getOrientationYaw(),
@@ -238,26 +109,10 @@ protected:
           rewinder_.getRobotCurr().getPositionY(),
           true
         );
-
-        //  find max of Gaussian knowing the current arrangement and certainty - compute gaussian at mean position
-        double gaussian_max = computePersonalSpaceGaussian(
-          rewinder_.getPersonCurr().getPositionX(),
-          rewinder_.getPersonCurr().getPositionY(),
-          rewinder_.getPersonCurr().getOrientationYaw(),
-          rewinder_.getPersonCurr().getCovariancePoseXX(),
-          rewinder_.getPersonCurr().getCovariancePoseXY(),
-          rewinder_.getPersonCurr().getCovariancePoseYX(),
-          rewinder_.getPersonCurr().getCovariancePoseYY(),
-          var_front_,
-          var_rear_,
-          var_side_,
-          rewinder_.getPersonCurr().getPositionX(),
-          rewinder_.getPersonCurr().getPositionY(),
-          true
-        );
+        psi.normalize();
 
         // store result for later aggregation
-        timed_gaussian.second.push_back(gaussian / gaussian_max);
+        timed_gaussian.second.push_back(psi.getScale());
       }
     );
 
