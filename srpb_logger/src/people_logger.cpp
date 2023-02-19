@@ -261,6 +261,64 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
 void PeopleLogger::peopleCB(const people_msgs::PeopleConstPtr& msg) {
   std::lock_guard<std::mutex> l(cb_mutex_);
   std::tie(people_, groups_) = people_msgs_utils::createFromPeople(msg->people);
+
+  // once extracted, let's transform to the common frame
+  std::vector<people_msgs_utils::Person> people;
+  for (const auto person: people_) {
+    // transform pose
+    geometry_msgs::PoseWithCovarianceStamped pose;
+    pose.header = msg->header;
+    pose.pose.pose.position = person.getPosition();
+    pose.pose.pose.orientation = person.getOrientation();
+    // pose covariance
+    auto pose_cov = person.getCovariancePose();
+    std::copy(pose_cov.cbegin(), pose_cov.cend(), pose.pose.covariance.begin());
+    auto pose_transformed = transformPose(pose);
+
+    // compose velocity with covariance
+    geometry_msgs::PoseWithCovarianceStamped vel;
+    vel.header = msg->header;
+    vel.pose.pose = person.getVelocity();
+    // velocity covariance
+    auto vel_cov = person.getCovarianceVelocity();
+    std::copy(vel_cov.cbegin(), vel_cov.cend(), vel.pose.covariance.begin());
+    // TODO: transform velocity to the local frame of the person, currently metrics don't use that information
+
+    people.emplace_back(
+      person.getName(),
+      pose.pose,
+      vel.pose,
+      person.getReliability(),
+      person.isOccluded(),
+      person.isMatched(),
+      person.getDetectionID(),
+      person.getTrackAge(),
+      person.getGroupName()
+    );
+  }
+  // overwrite
+  people_ = people;
+
+  // transform centers of gravity
+  std::vector<people_msgs_utils::Group> groups;
+  for (const auto group: groups_) {
+    geometry_msgs::PoseStamped cog;
+    cog.header = msg->header;
+    cog.pose.position = group.getCenterOfGravity();
+    geometry_msgs::PoseStamped cog_transformed = transformPose(cog);
+
+    // create groups without members (not necessary at this stage)
+    groups.emplace_back(
+      group.getName(),
+      group.getAge(),
+      std::vector<people_msgs_utils::Person>(),
+      group.getMemberIDs(),
+      group.getSocialRelations(),
+      cog_transformed.pose.position
+    );
+  }
+  // association of people to groups must be performed again, overwrite older groups
+  groups_ = people_msgs_utils::fillGroupsWithMembers(groups, people_);
 }
 
 } // namespace logger

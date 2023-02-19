@@ -157,7 +157,22 @@ RobotData RobotLogger::robotFromString(const std::string& str) {
 void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {
     std::lock_guard<std::mutex> l(cb_mutex_);
     // save pose
-    robot_pose_ = msg->pose;
+    robot_pose_ = transformPose(msg->pose, msg->header.frame_id).pose;
+    // prepare velocity
+    geometry_msgs::PoseWithCovariance vel;
+    vel.pose.position.x = msg->twist.twist.linear.x;
+    vel.pose.position.y = msg->twist.twist.linear.y;
+    vel.pose.position.z = msg->twist.twist.linear.z;
+    tf2::Quaternion vel_quat;
+    vel_quat.setRPY(msg->twist.twist.angular.x, msg->twist.twist.angular.y, msg->twist.twist.angular.z);
+    vel.pose.orientation.x = vel_quat.getX();
+    vel.pose.orientation.y = vel_quat.getY();
+    vel.pose.orientation.z = vel_quat.getZ();
+    vel.pose.orientation.w = vel_quat.getW();
+    // prepare covariance
+    vel.covariance = msg->twist.covariance;
+    // save velocity
+    robot_vel_ = vel;
 }
 
 } // namespace srpb
