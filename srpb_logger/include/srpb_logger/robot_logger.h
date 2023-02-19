@@ -2,110 +2,51 @@
 
 #include "benchmark_logger.h"
 #include "robot_data.h"
-#include <tf2/utils.h>
+
+#include <nav_msgs/Odometry.h>
 
 // helper functions
 #include <people_msgs_utils/utils.h>
+
+#include <mutex>
 
 namespace srpb {
 namespace logger {
 
 class RobotLogger: public BenchmarkLogger {
 public:
+    /// For odometry, e.g., Z, Roll, Pitch (based on diff_drive controller)
+    static constexpr auto COVARIANCE_UNKNOWN = 1000000.0;
+
     RobotLogger() = default;
 
-    void init(ros::NodeHandle& nh) {
-        BenchmarkLogger::init(nh);
+    void init(ros::NodeHandle& nh);
 
-        auto log_path_base = log_filename_.substr(0, log_filename_.find_last_of(EXTENSION_SEPARATOR));
-        auto log_extension = log_filename_.substr(log_filename_.find_last_of(EXTENSION_SEPARATOR) + 1);
+    void start();
 
-        log_filename_ = log_path_base + "_robot" + EXTENSION_SEPARATOR + log_extension;
-    }
+    /// Performs writes to files that this class handles, most recent robot data is used
+    void update(double timestamp, const RobotData& robot);
 
-    void start() {
-        BenchmarkLogger::start(&log_file_, log_filename_);
-    }
-
-    void update(double timestamp, const RobotData& robot) {
-        if (log_file_ == nullptr) {
-            throw std::runtime_error("File descriptor for RobotLogger was not properly created!");
-        }
-
-        fprintf(
-            log_file_,
-            "%9.4f %s\n",
-            timestamp,
-            RobotLogger::robotToString(robot).c_str()
-        );
-    }
-
-    void finish() {
-        BenchmarkLogger::finish(&log_file_);
-    }
+    void finish();
 
     /// Converts given robot data into string description
-    static std::string robotToString(const RobotData& robot) {
-        char buff[150];
-        sprintf(
-            buff,
-            "%9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f",
-            robot.getPositionX(),
-            robot.getPositionY(),
-            robot.getOrientationYaw(),
-            robot.getVelocityX(),
-            robot.getVelocityY(),
-            robot.getVelocityTheta(),
-            robot.getGoalPositionX(),
-            robot.getGoalPositionY(),
-            robot.getGoalOrientationYaw(),
-            robot.getDistToObstacle(),
-            robot.getLocalPlanningTime()
-        );
-        return std::string(buff);
-    }
+    static std::string robotToString(const RobotData& robot);
 
     /// Converts given @ref str string description into robot data
-    static RobotData robotFromString(const std::string& str) {
-        auto vals = people_msgs_utils::parseString<double>(str, " ");
-        assert(vals.size() == 11);
-
-        geometry_msgs::Pose pose;
-        pose.position.x = vals.at(0);
-        pose.position.y = vals.at(1);
-        tf2::Quaternion quat;
-        quat.setRPY(0.0, 0.0, vals.at(2));
-        pose.orientation.x = quat.getX();
-        pose.orientation.y = quat.getY();
-        pose.orientation.z = quat.getZ();
-        pose.orientation.w = quat.getW();
-
-        geometry_msgs::Pose vel;
-        vel.position.x = vals.at(3);
-        vel.position.y = vals.at(4);
-        quat.setRPY(0.0, 0.0, vals.at(5));
-        vel.orientation.x = quat.getX();
-        vel.orientation.y = quat.getY();
-        vel.orientation.z = quat.getZ();
-        vel.orientation.w = quat.getW();
-
-        geometry_msgs::Pose goal;
-        goal.position.x = vals.at(6);
-        goal.position.y = vals.at(7);
-        quat.setRPY(0.0, 0.0, vals.at(8));
-        goal.orientation.x = quat.getX();
-        goal.orientation.y = quat.getY();
-        goal.orientation.z = quat.getZ();
-        goal.orientation.w = quat.getW();
-
-        double obst_dist = vals.at(9);
-        double exec_time = vals.at(10);
-
-        return RobotData(pose, vel, goal, obst_dist, exec_time);
-    }
+    static RobotData robotFromString(const std::string& str);
 
 protected:
+    void localizationCB(const nav_msgs::OdometryConstPtr& msg);
+
     FILE* log_file_;
+
+    std::mutex cb_mutex_;
+    ros::Subscriber localization_sub_;
+
+    /// Newest pose with covariance of the robot (expressed in coordinate system given by 'target_frame_')
+    geometry_msgs::PoseWithCovariance robot_pose_;
+    /// Newest velocity with covariance of the robot (expressed in local coordinate system)
+    geometry_msgs::PoseWithCovariance robot_vel_;
 };
 
 } // namespace logger

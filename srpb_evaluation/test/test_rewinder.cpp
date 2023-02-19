@@ -7,8 +7,8 @@ using namespace srpb;
 
 // dummy objects to fill up the data vectors
 const logger::RobotData DUMMY_ROBOT(
-    geometry_msgs::PoseStamped(),
-    geometry_msgs::PoseStamped(),
+    geometry_msgs::PoseWithCovarianceStamped(),
+    geometry_msgs::PoseWithCovarianceStamped(),
     geometry_msgs::PoseStamped(),
     0.5,
     0.1

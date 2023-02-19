@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME}_lib
   include/${PROJECT_NAME}/robot_data.h
   include/${PROJECT_NAME}/robot_logger.h
   src/people_logger.cpp
+  src/robot_logger.cpp
 )
 target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
