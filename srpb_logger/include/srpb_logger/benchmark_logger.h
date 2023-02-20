@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -46,7 +47,14 @@ public:
     geometry_msgs::PoseWithCovarianceStamped transformPose(const geometry_msgs::PoseWithCovarianceStamped& pose_in) {
         geometry_msgs::PoseWithCovarianceStamped pose_out;
         try {
-            tf_buffer_.transform(pose_in, pose_out, target_frame_);
+            /*
+             * NOTE: simply calling
+             *   tf_buffer_.transform(pose_in, pose_out, target_frame_);
+             * does not force time source to use so, e.g., for goal poses received from external tool it may happen
+             * that wrong time source will be used and transform is not found (wall vs sim time difference).
+             */
+            auto transform_stamped = tf_buffer_.lookupTransform(target_frame_, pose_in.header.frame_id, ros::Time(0));
+            tf2::doTransform(pose_in, pose_out, transform_stamped);
         } catch (tf2::TransformException &ex) {
             ROS_WARN("Failure %s\n", ex.what());
         }
