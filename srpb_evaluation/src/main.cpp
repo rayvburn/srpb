@@ -39,6 +39,10 @@ int main(int argc, char* argv[]) {
   auto file_groups = std::string(argv[3]);
   auto safety_distance = std::atof(argv[4]);
 
+  // goal reached values
+  double goal_tolerance_xy = 0.2;
+  double goal_tolerance_yaw = 0.2;
+
   // oscillation threshold values
   double osc_vel_lin_x_threshold = 0.05;
   double osc_vel_x_threshold = 0.05;
@@ -82,7 +86,7 @@ int main(int argc, char* argv[]) {
     timed_groups_data.size()
   );
 
-  GoalReached mgoal(timed_robot_data);
+  GoalReached mgoal(timed_robot_data, goal_tolerance_xy, goal_tolerance_yaw);
   mgoal.printResults();
 
   ObstacleSafety safety(timed_robot_data, safety_distance);
