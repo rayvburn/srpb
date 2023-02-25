@@ -3,6 +3,9 @@
 
 #include <people_msgs_utils/utils.h>
 
+#include <sstream>
+#include <iomanip>
+
 namespace srpb {
 namespace logger {
 
@@ -55,48 +58,34 @@ void PeopleLogger::finish() {
 }
 
 std::string PeopleLogger::personToString(const people_msgs_utils::Person& person) {
-  char buff[325] = {0};
-  sprintf(
-    buff,
-    // id, rel,
-    "%6s %9.4f "
-    // px,  py,   pz,   yaw
-    "%9.4f %9.4f %9.4f %9.4f "
-    //cxx   cxy   cyx   cyy   cthth
-    "%9.6f %9.6f %9.6f %9.6f %9.6f "
-    // vx    vy    vz    vth
-    "%9.4f %9.4f %9.4f %9.4f "
-    // cvxx  cvxy  cvyx  cvyy  cvthh
-    "%9.6f %9.6f %9.6f %9.6f %9.6f "
-    // det age mt oc grp
-    "%6u %12lu %d %d %6s",
-    /*  0 */ person.getName().c_str(),
-    /*  1 */ person.getReliability(),
-    /*  2 */ person.getPositionX(),
-    /*  3 */ person.getPositionY(),
-    /*  4 */ person.getPositionZ(),
-    /*  5 */ person.getOrientationYaw(),
-    /*  6 */ person.getCovariancePoseXX(),
-    /*  7 */ person.getCovariancePoseXY(),
-    /*  8 */ person.getCovariancePoseYX(),
-    /*  9 */ person.getCovariancePoseYY(),
-    /* 10 */ person.getCovariancePoseYawYaw(),
-    /* 11 */ person.getVelocityX(),
-    /* 12 */ person.getVelocityY(),
-    /* 13 */ person.getVelocityZ(),
-    /* 14 */ person.getVelocityTheta(),
-    /* 15 */ person.getCovarianceVelocityXX(),
-    /* 16 */ person.getCovarianceVelocityXY(),
-    /* 17 */ person.getCovarianceVelocityYX(),
-    /* 18 */ person.getCovarianceVelocityYY(),
-    /* 19 */ person.getCovarianceVelocityThTh(),
-    /* 20 */ person.getDetectionID(),
-    /* 21 */ person.getTrackAge(),
-    /* 22 */ person.isMatched(),
-    /* 23 */ person.isOccluded(),
-    /* 24 */ person.isAssignedToGroup() ? person.getGroupName().c_str() : GROUP_NAME_EMPTY.c_str()
-  );
-  return std::string(buff);
+  std::stringstream ss;
+  ss.setf(std::ios::fixed);
+  /*  0 */ ss << std::setw(6) << person.getName() << " ";
+  /*  1 */ ss << std::setw(9) << std::setprecision(4) << person.getReliability() << " ";
+  /*  2 */ ss << std::setw(9) << std::setprecision(4) << person.getPositionX() << " ";
+  /*  3 */ ss << std::setw(9) << std::setprecision(4) << person.getPositionY() << " ";
+  /*  4 */ ss << std::setw(9) << std::setprecision(4) << person.getPositionZ() << " ";
+  /*  5 */ ss << std::setw(9) << std::setprecision(4) << person.getOrientationYaw() << " ";
+  /*  6 */ ss << std::setw(9) << std::setprecision(6) << person.getCovariancePoseXX() << " ";
+  /*  7 */ ss << std::setw(9) << std::setprecision(6) << person.getCovariancePoseXY() << " ";
+  /*  8 */ ss << std::setw(9) << std::setprecision(6) << person.getCovariancePoseYX() << " ";
+  /*  9 */ ss << std::setw(9) << std::setprecision(6) << person.getCovariancePoseYY() << " ";
+  /* 10 */ ss << std::setw(9) << std::setprecision(6) << person.getCovariancePoseYawYaw() << " ";
+  /* 11 */ ss << std::setw(9) << std::setprecision(4) << person.getVelocityX() << " ";
+  /* 12 */ ss << std::setw(9) << std::setprecision(4) << person.getVelocityY() << " ";
+  /* 13 */ ss << std::setw(9) << std::setprecision(4) << person.getVelocityZ() << " ";
+  /* 14 */ ss << std::setw(9) << std::setprecision(4) << person.getVelocityTheta() << " ";
+  /* 15 */ ss << std::setw(9) << std::setprecision(6) << person.getCovarianceVelocityXX() << " ";
+  /* 16 */ ss << std::setw(9) << std::setprecision(6) << person.getCovarianceVelocityXY() << " ";
+  /* 17 */ ss << std::setw(9) << std::setprecision(6) << person.getCovarianceVelocityYX() << " ";
+  /* 18 */ ss << std::setw(9) << std::setprecision(6) << person.getCovarianceVelocityYY() << " ";
+  /* 19 */ ss << std::setw(9) << std::setprecision(6) << person.getCovarianceVelocityThTh() << " ";
+  /* 20 */ ss << std::setw(6) << person.getDetectionID() << " ";
+  /* 21 */ ss << std::setw(12) << person.getTrackAge() << " ";
+  /* 22 */ ss << std::setw(1) << person.isMatched() << " ";
+  /* 23 */ ss << std::setw(1) << person.isOccluded() << " ";
+  /* 24 */ ss << std::setw(6) << (person.isAssignedToGroup() ? person.getGroupName() : GROUP_NAME_EMPTY);
+  return ss.str();
 }
 
 people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str) {
@@ -168,37 +157,33 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
 }
 
 std::string PeopleLogger::groupToString(const people_msgs_utils::Group& group) {
-  char buff[500] = {0};
+  std::stringstream ss;
+  ss.setf(std::ios::fixed);
 
   // 1st part: static
-  sprintf(
-    buff,
-    "%6s %9.4f %9.4f %9.4f %12lu ",
-    group.getName().c_str(),
-    group.getCenterOfGravity().x,
-    group.getCenterOfGravity().y,
-    group.getCenterOfGravity().z,
-    group.getAge()
-  );
+  ss << std::setw(6) << group.getName() << " ";
+  ss << std::setw(9) << std::setprecision(4) << group.getCenterOfGravity().x << " ";
+  ss << std::setw(9) << std::setprecision(4) << group.getCenterOfGravity().y << " ";
+  ss << std::setw(9) << std::setprecision(4) << group.getCenterOfGravity().z << " ";
+  ss << std::setw(12) << group.getAge() << " ";
 
   // dynamic size of member identifiers
   for (const auto& id: group.getMemberIDs()) {
-    std::size_t pos = std::strlen(buff);
-    sprintf(&buff[pos], " %6s", id.c_str());
+    ss << " " << std::setw(6) << id;
   }
 
   // social relations will have dynamic size too
   // add separator, to divide static + member IDs part and relations part
-  sprintf(&buff[std::strlen(buff)], " / ");
+  ss << " / ";
   for (const auto& relation: group.getSocialRelations()) {
-    std::size_t pos = std::strlen(buff);
     auto who1 = std::get<0>(relation);
     auto who2 = std::get<1>(relation);
     auto rel_strength = std::get<2>(relation);
-    sprintf(&buff[pos], " %6s %6s %6.4f", who1.c_str(), who2.c_str(), rel_strength);
+    ss << " " << std::setw(6) << who1;
+    ss << " " << std::setw(6) << who2;
+    ss << " " << std::setw(6) << std::setprecision(4) << rel_strength;
   }
-
-  return std::string(buff);
+  return ss.str();
 }
 
 people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {

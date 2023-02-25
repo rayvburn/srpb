@@ -2,6 +2,9 @@
 
 #include <tf2/utils.h>
 
+#include <sstream>
+#include <iomanip>
+
 namespace srpb {
 namespace logger {
 
@@ -54,46 +57,32 @@ void RobotLogger::finish() {
 }
 
 std::string RobotLogger::robotToString(const RobotData& robot) {
-    char buff[300] = {0};
-    sprintf(
-        buff,
-        // pose: x y z yaw
-        "%9.4f %9.4f %9.4f %9.4f "
-        // pose cov
-        "%9.4f %9.4f %9.4f %9.4f %9.4f "
-        // vel: x y z theta
-        "%9.4f %9.4f %9.4f %9.4f "
-        // vel cov
-        "%9.4f %9.4f %9.4f %9.4f %9.4f "
-        // goal pose 2d
-        "%9.4f %9.4f %9.4f "
-        // dist to obstacle, planning time
-        "%9.4f %9.4f",
-        /*  0 */ robot.getPositionX(),
-        /*  1 */ robot.getPositionY(),
-        /*  2 */ robot.getPositionZ(),
-        /*  3 */ robot.getOrientationYaw(),
-        /*  4 */ robot.getCovariancePoseXX(),
-        /*  5 */ robot.getCovariancePoseXY(),
-        /*  6 */ robot.getCovariancePoseYX(),
-        /*  7 */ robot.getCovariancePoseYY(),
-        /*  8 */ robot.getCovariancePoseYawYaw(),
-        /*  9 */ robot.getVelocityX(),
-        /* 10 */ robot.getVelocityY(),
-        /* 11 */ robot.getVelocityZ(),
-        /* 12 */ robot.getVelocityTheta(),
-        /* 13 */ robot.getCovarianceVelocityXX(),
-        /* 14 */ robot.getCovarianceVelocityXY(),
-        /* 15 */ robot.getCovarianceVelocityYX(),
-        /* 16 */ robot.getCovarianceVelocityYY(),
-        /* 17 */ robot.getCovarianceVelocityThTh(),
-        /* 18 */ robot.getGoalPositionX(),
-        /* 19 */ robot.getGoalPositionY(),
-        /* 20 */ robot.getGoalOrientationYaw(),
-        /* 21 */ robot.getDistToObstacle(),
-        /* 22 */ robot.getLocalPlanningTime()
-    );
-    return std::string(buff);
+    std::stringstream ss;
+    ss.setf(std::ios::fixed);
+    /*  0 */ ss << std::setw(9) << std::setprecision(4) << robot.getPositionX() << " ";
+    /*  1 */ ss << std::setw(9) << std::setprecision(4) << robot.getPositionY() << " ";
+    /*  2 */ ss << std::setw(9) << std::setprecision(4) << robot.getPositionZ() << " ";
+    /*  3 */ ss << std::setw(9) << std::setprecision(4) << robot.getOrientationYaw() << " ";
+    /*  4 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovariancePoseXX() << " ";
+    /*  5 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovariancePoseXY() << " ";
+    /*  6 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovariancePoseYX() << " ";
+    /*  7 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovariancePoseYY() << " ";
+    /*  8 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovariancePoseYawYaw() << " ";
+    /*  9 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityX() << " ";
+    /* 10 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityY() << " ";
+    /* 11 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityZ() << " ";
+    /* 12 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityTheta() << " ";
+    /* 13 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovarianceVelocityXX() << " ";
+    /* 14 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovarianceVelocityXY() << " ";
+    /* 15 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovarianceVelocityYX() << " ";
+    /* 16 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovarianceVelocityYY() << " ";
+    /* 17 */ ss << std::setw(9) << std::setprecision(4) << robot.getCovarianceVelocityThTh() << " ";
+    /* 18 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalPositionX() << " ";
+    /* 19 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalPositionY() << " ";
+    /* 20 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalOrientationYaw() << " ";
+    /* 21 */ ss << std::setw(9) << std::setprecision(4) << robot.getDistToObstacle() << " ";
+    /* 22 */ ss << std::setw(9) << std::setprecision(4) << robot.getLocalPlanningTime();
+    return ss.str();
 }
 
 RobotData RobotLogger::robotFromString(const std::string& str) {
