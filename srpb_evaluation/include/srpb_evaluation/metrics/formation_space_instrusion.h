@@ -21,6 +21,9 @@ public:
     group_space_threshold_(group_space_threshold),
     max_method_(max_method)
   {
+    if (people_data.empty() || groups_data.empty()) {
+      return;
+    }
     compute();
   }
 

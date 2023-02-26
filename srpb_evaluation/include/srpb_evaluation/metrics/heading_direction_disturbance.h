@@ -28,6 +28,9 @@ public:
     robot_max_speed_(robot_max_speed),
     max_method_(max_method)
   {
+    if (people_data.empty()) {
+      return;
+    }
     compute();
   }
 
