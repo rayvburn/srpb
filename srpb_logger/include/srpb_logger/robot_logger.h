@@ -39,7 +39,7 @@ public:
 protected:
     void localizationCB(const nav_msgs::OdometryConstPtr& msg);
 
-    FILE* log_file_;
+    std::fstream log_file_;
 
     std::mutex cb_mutex_;
     ros::Subscriber localization_sub_;

@@ -9,6 +9,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 #include <ctime>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 
@@ -95,22 +96,22 @@ public:
 protected:
     BenchmarkLogger(): target_frame_("odom"), tf_listener_(tf_buffer_) {}
 
-    void start(FILE** log_file, std::string log_filename) {
+    void start(std::fstream& log_file, std::string log_filename) {
         //open the file to record the navigation data
-        *log_file = fopen(log_filename.c_str(), "w+");
-        if (*log_file == NULL) {
-            ROS_ERROR("Failed to open the log file `%s` for benchmarking `move_base`", log_filename.c_str());
+        log_file.open(log_filename, std::ios::out);
+        if (log_file.is_open()) {
             return;
         }
+        ROS_ERROR("Failed to open the log file `%s` for benchmarking `move_base`", log_filename.c_str());
     }
 
-    void finish(FILE** log_file) {
-        if (*log_file == NULL) {
-            ROS_ERROR("Failed to close the log file for benchmarking `move_base`");
+    void finish(std::fstream& log_file) {
+        // close the file
+        log_file.close();
+        if (!log_file.is_open()) {
             return;
         }
-        // close the file
-        fclose(*log_file);
+        ROS_ERROR("Failed to close the log file for benchmarking `move_base`");
     }
 
     static constexpr auto EXTENSION_SEPARATOR = ".";

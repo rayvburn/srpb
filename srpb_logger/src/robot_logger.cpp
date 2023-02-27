@@ -24,11 +24,11 @@ void RobotLogger::init(ros::NodeHandle& nh) {
 }
 
 void RobotLogger::start() {
-    BenchmarkLogger::start(&log_file_, log_filename_);
+    BenchmarkLogger::start(log_file_, log_filename_);
 }
 
 void RobotLogger::update(double timestamp, const RobotData& robot) {
-    if (log_file_ == nullptr) {
+    if (!log_file_) {
         throw std::runtime_error("File descriptor for RobotLogger was not properly created!");
     }
 
@@ -44,16 +44,15 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
         );
     }
 
-    fprintf(
-        log_file_,
-        "%9.4f %s\n",
-        timestamp,
-        RobotLogger::robotToString(robot_data).c_str()
-    );
+    std::stringstream ss;
+    ss.setf(std::ios::fixed);
+    ss << std::setw(9) << std::setprecision(4) << timestamp << " ";
+    ss << RobotLogger::robotToString(robot_data) << std::endl;
+    log_file_ << ss.str();
 }
 
 void RobotLogger::finish() {
-    BenchmarkLogger::finish(&log_file_);
+    BenchmarkLogger::finish(log_file_);
 }
 
 std::string RobotLogger::robotToString(const RobotData& robot) {

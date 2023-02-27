@@ -64,9 +64,9 @@ protected:
     std::vector<people_msgs_utils::Person> people_;
     std::vector<people_msgs_utils::Group> groups_;
 
-    FILE* log_file_people_;
+    std::fstream log_file_people_;
     std::string log_filename_people_;
-    FILE* log_file_groups_;
+    std::fstream log_file_groups_;
     std::string log_filename_groups_;
 };
 

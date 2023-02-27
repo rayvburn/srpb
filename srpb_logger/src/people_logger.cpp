@@ -25,36 +25,48 @@ void PeopleLogger::init(ros::NodeHandle& nh) {
 }
 
 void PeopleLogger::start() {
-  BenchmarkLogger::start(&log_file_people_, log_filename_people_);
-  BenchmarkLogger::start(&log_file_groups_, log_filename_groups_);
+  BenchmarkLogger::start(log_file_people_, log_filename_people_);
+  BenchmarkLogger::start(log_file_groups_, log_filename_groups_);
 }
 
 void PeopleLogger::update(double timestamp) {
   // no people -> no groups
   // fill up people and group entries with timestamp (indicating that no detections and tracks were present then)
   if (people_.empty()) {
-    fprintf(log_file_people_, "%9.4f\n", timestamp);
-    fprintf(log_file_groups_, "%9.4f\n", timestamp);
+    std::stringstream ss;
+    ss.setf(std::ios::fixed);
+    ss << std::setw(9) << std::setprecision(4) << timestamp << std::endl;
+    log_file_people_ << ss.str();
+    log_file_groups_ << ss.str();
     return;
   }
 
   for (const auto& person: people_) {
-    if (log_file_people_ == nullptr) {
+    if (!log_file_people_) {
         throw std::runtime_error("People file descriptor for PeopleLogger was not properly created!");
     }
-    fprintf(log_file_people_, "%9.4f %s\n", timestamp, personToString(person).c_str());
+    std::stringstream ss;
+    ss.setf(std::ios::fixed);
+    ss << std::setw(9) << std::setprecision(4) << timestamp << " ";
+    ss << personToString(person) << std::endl;
+    log_file_people_ << ss.str();
   }
+
   for (const auto& group: groups_) {
-    if (log_file_groups_ == nullptr) {
+    if (!log_file_groups_) {
         throw std::runtime_error("Groups file descriptor for PeopleLogger was not properly created!");
     }
-    fprintf(log_file_groups_, "%9.4f %s\n", timestamp, groupToString(group).c_str());
+    std::stringstream ss;
+    ss.setf(std::ios::fixed);
+    ss << std::setw(9) << std::setprecision(4) << timestamp << " ";
+    ss << groupToString(group) << std::endl;
+    log_file_groups_ << ss.str();
   }
 }
 
 void PeopleLogger::finish() {
-  BenchmarkLogger::finish(&log_file_people_);
-  BenchmarkLogger::finish(&log_file_groups_);
+  BenchmarkLogger::finish(log_file_people_);
+  BenchmarkLogger::finish(log_file_groups_);
 }
 
 std::string PeopleLogger::personToString(const people_msgs_utils::Person& person) {
