@@ -10,6 +10,7 @@
 #include <people_msgs_utils/group.h>
 
 #include <mutex>
+#include <utility>
 
 namespace srpb {
 namespace logger {
@@ -36,7 +37,7 @@ public:
     static std::string personToString(const people_msgs_utils::Person& person);
 
     /// Converts given @ref str string description into instance of @ref people_msgs_utils::Person
-    static people_msgs_utils::Person personFromString(const std::string& str);
+    static std::pair<bool, people_msgs_utils::Person> personFromString(const std::string& str);
 
     /// Converts given @ref group instance into string description
     static std::string groupToString(const people_msgs_utils::Group& group);
@@ -49,7 +50,7 @@ public:
      * as joining 2 tables, where the primary key is the person ID. After collecting all people and groups,
      * see @ref people_msgs_utils::fillGroupsWithMembers
      */
-    static people_msgs_utils::Group groupFromString(const std::string& str);
+    static std::pair<bool, people_msgs_utils::Group> groupFromString(const std::string& str);
 
 protected:
 	/// Literal to use once person is not assigned to any group (to maintain the same size of logged entries)

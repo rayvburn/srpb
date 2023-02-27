@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <people_msgs_utils/utils.h>
@@ -28,7 +29,10 @@ std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
  */
 // string to pair (first = timestamp, second = logged state)
 template <typename T>
-static std::vector<std::pair<double, T>> parseFile(const std::string& filepath, std::function<T(const std::string&)> from_string_fun) {
+static std::vector<std::pair<double, T>> parseFile(
+    const std::string& filepath,
+    std::function<std::pair<bool, T>(const std::string&)> from_string_fun
+) {
     std::ifstream file(filepath);
     if (file.bad()) {
         throw std::runtime_error("Could not open the log file");
@@ -57,10 +61,16 @@ static std::vector<std::pair<double, T>> parseFile(const std::string& filepath, 
         timestamp_str = timestamp_str.substr(0, ts_end);
 
         // extract logged state
+        auto entity = from_string_fun(line.substr(ts_end + 1));
+        // check if conversion from string was successful
+        if (!entity.first) {
+            continue;
+        }
+
         data_log.push_back(
             std::make_pair(
-            std::stod(timestamp_str),
-            from_string_fun(line.substr(ts_end + 1))
+                std::stod(timestamp_str),
+                entity.second
             )
         );
     }

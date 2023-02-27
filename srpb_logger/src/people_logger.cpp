@@ -88,11 +88,26 @@ std::string PeopleLogger::personToString(const people_msgs_utils::Person& person
   return ss.str();
 }
 
-people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str) {
+std::pair<bool, people_msgs_utils::Person> PeopleLogger::personFromString(const std::string& str) {
   auto vals = people_msgs_utils::parseString<std::string>(str, " ");
 
   // value indexes dictionary can be found in @ref personToString method
-  assert(vals.size() == 25);
+  if (vals.size() != 25) {
+    std::cout << "\x1B[31mFound corrupted data of a person:\r\n\t" << str << "\x1B[0m" << std::endl;
+    // return a dummy person
+    auto dummy_person = people_msgs_utils::Person(
+      "",
+      geometry_msgs::PoseWithCovariance(),
+      geometry_msgs::PoseWithCovariance(),
+      0.0,
+      true,
+      false,
+      std::numeric_limits<unsigned int>::max(),
+      std::numeric_limits<unsigned long int>::max(),
+      ""
+    );
+    return {false, dummy_person};
+  }
 
   // IDs are numbers in reality
   std::string name = vals.at(0);
@@ -143,7 +158,7 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
     group_name = vals.at(24);
   }
 
-  return people_msgs_utils::Person(
+  auto person = people_msgs_utils::Person(
     name,
     pose,
     vel,
@@ -154,6 +169,7 @@ people_msgs_utils::Person PeopleLogger::personFromString(const std::string& str)
     track_age,
     group_name
   );
+  return {true, person};
 }
 
 std::string PeopleLogger::groupToString(const people_msgs_utils::Group& group) {
@@ -186,7 +202,7 @@ std::string PeopleLogger::groupToString(const people_msgs_utils::Group& group) {
   return ss.str();
 }
 
-people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
+std::pair<bool, people_msgs_utils::Group> PeopleLogger::groupFromString(const std::string& str) {
   // divide into 2 parts considering separator
   size_t separator = str.find("/");
   auto vals1 = people_msgs_utils::parseString<std::string>(str.substr(0, separator - 1), " ");
@@ -194,11 +210,15 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
 
   if (vals1.empty()) {
     // return a dummy group without any IDs of tracked people
-    return people_msgs_utils::EMPTY_GROUP;
+    return {false, people_msgs_utils::EMPTY_GROUP};
   }
 
   // 5 static entries and `group` must contain at least 2 IDs
-  assert(vals1.size() >= 7);
+  if (vals1.size() < 7) {
+    std::cout << "\x1B[31mFound corrupted data of a group:\r\n\t" << str << "\x1B[0m" << std::endl;
+    // return a dummy group
+    return {false, people_msgs_utils::EMPTY_GROUP};
+  }
 
   std::string name = vals1.at(0);
   geometry_msgs::Point cog;
@@ -233,7 +253,7 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
    * NOTE: members with their attributes are not available here so this is kinda dummy group,
    * needs further association with people set, see @ref people_msgs_utils::fillGroupsWithMembers
    */
-  return people_msgs_utils::Group(
+  auto group = people_msgs_utils::Group(
     name,
     age,
     std::vector<people_msgs_utils::Person>(),
@@ -241,6 +261,7 @@ people_msgs_utils::Group PeopleLogger::groupFromString(const std::string& str) {
     relations,
     cog
   );
+  return {true, group};
 }
 
 void PeopleLogger::peopleCB(const people_msgs::PeopleConstPtr& msg) {

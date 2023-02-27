@@ -85,9 +85,20 @@ std::string RobotLogger::robotToString(const RobotData& robot) {
     return ss.str();
 }
 
-RobotData RobotLogger::robotFromString(const std::string& str) {
+std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) {
     auto vals = people_msgs_utils::parseString<double>(str, " ");
-    assert(vals.size() == 23);
+    if (vals.size() != 23) {
+        std::cout << "\x1B[31mFound corrupted data of a robot:\r\n\t" << str << "\x1B[0m" << std::endl;
+        // dummy robot data
+        auto dummy_robot = RobotData(
+            geometry_msgs::PoseWithCovariance(),
+            geometry_msgs::PoseWithCovariance(),
+            geometry_msgs::Pose(),
+            0.0,
+            0.0
+        );
+        return {false, dummy_robot};
+    }
 
     geometry_msgs::PoseWithCovariance pose;
     pose.pose.position.x = vals.at(0);
@@ -140,7 +151,8 @@ RobotData RobotLogger::robotFromString(const std::string& str) {
     double obst_dist = vals.at(21);
     double exec_time = vals.at(22);
 
-    return RobotData(pose, vel, goal, obst_dist, exec_time);
+    auto robot = RobotData(pose, vel, goal, obst_dist, exec_time);
+    return {true, robot};
 }
 
 void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {

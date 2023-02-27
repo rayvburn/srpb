@@ -9,6 +9,7 @@
 #include <people_msgs_utils/utils.h>
 
 #include <mutex>
+#include <utility>
 
 namespace srpb {
 namespace logger {
@@ -33,7 +34,7 @@ public:
     static std::string robotToString(const RobotData& robot);
 
     /// Converts given @ref str string description into robot data
-    static RobotData robotFromString(const std::string& str);
+    static std::pair<bool, RobotData> robotFromString(const std::string& str);
 
 protected:
     void localizationCB(const nav_msgs::OdometryConstPtr& msg);

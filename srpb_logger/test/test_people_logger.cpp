@@ -60,7 +60,9 @@ TEST(ConversionTest, person) {
         group_name
     );
     std::string p_str = PeopleLogger::personToString(p_in);
-    auto p_out = PeopleLogger::personFromString(p_str);
+    auto p_out_pair = PeopleLogger::personFromString(p_str);
+    ASSERT_TRUE(p_out_pair.first);
+    auto p_out = p_out_pair.second;
 
     // 1, check if p_in's attributes are saved correctly
     ASSERT_EQ(p_in.getName(), name);
@@ -153,7 +155,9 @@ TEST(ConversionTest, group) {
         cog
     );
     std::string g_str = PeopleLogger::groupToString(g_in);
-    auto g_out = PeopleLogger::groupFromString(g_str);
+    auto g_out_pair = PeopleLogger::groupFromString(g_str);
+    ASSERT_TRUE(g_out_pair.first);
+    auto g_out = g_out_pair.second;
 
     // 1, check if g_in's attributes are saved correctly
     ASSERT_EQ(g_in.getAge(), age);
