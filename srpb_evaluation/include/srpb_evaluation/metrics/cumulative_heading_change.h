@@ -23,7 +23,8 @@ protected:
     rewinder_.setHandlerNextTimestamp(
       [&]() {
         double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
-        chc += (std::abs(rewinder_.getRobotNext().getOrientationYaw() - rewinder_.getRobotCurr().getOrientationYaw()) / dt);
+        double dtheta = rewinder_.getRobotNext().getVelocityTheta() - rewinder_.getRobotCurr().getVelocityTheta();
+        chc += (std::abs(dtheta) / dt);
       }
     );
     rewinder_.perform();
