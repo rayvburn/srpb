@@ -13,23 +13,50 @@ const std::string PeopleLogger::GROUP_NAME_EMPTY = "none";
 
 void PeopleLogger::init(ros::NodeHandle& nh) {
   BenchmarkLogger::init(nh);
-
-  auto log_path_base = log_filename_.substr(0, log_filename_.find_last_of(EXTENSION_SEPARATOR));
-  auto log_extension = log_filename_.substr(log_filename_.find_last_of(EXTENSION_SEPARATOR) + 1);
-
-  log_filename_people_ = log_path_base + "_people" + EXTENSION_SEPARATOR + log_extension;
-  log_filename_groups_ = log_path_base + "_groups" + EXTENSION_SEPARATOR + log_extension;
+  log_filename_people_ = BenchmarkLogger::appendToFilename(log_filename_, "people");
+  log_filename_groups_ = BenchmarkLogger::appendToFilename(log_filename_, "groups");
 
   // social navigation benchmark utils
   people_sub_ = nh.subscribe<people_msgs::People>("/people", 1, boost::bind(&PeopleLogger::peopleCB, this, _1));
 }
 
 void PeopleLogger::start() {
-  BenchmarkLogger::start(log_file_people_, log_filename_people_);
-  BenchmarkLogger::start(log_file_groups_, log_filename_groups_);
+  // people file management
+  if (!log_file_people_.is_open()) {
+    BenchmarkLogger::start(log_file_people_, log_filename_people_);
+    std::cout << "[ SRPB] Started the first log file for people" << std::endl;
+  } else {
+    BenchmarkLogger::finish(log_file_people_);
+    std::cout << "[ SRPB] Finishing a people log file" << std::endl;
+    BenchmarkLogger::startNextPart(log_file_people_, log_filename_people_);
+    std::cout << "[ SRPB] Started next log file for people" << std::endl;
+  }
+
+  // group file management
+  if (!log_file_groups_.is_open()) {
+    BenchmarkLogger::start(log_file_groups_, log_filename_groups_);
+    std::cout << "[ SRPB] Started the first log file for groups" << std::endl;
+  } else {
+    BenchmarkLogger::finish(log_file_groups_);
+    std::cout << "[ SRPB] Finishing a groups log file" << std::endl;
+    BenchmarkLogger::startNextPart(log_file_groups_, log_filename_groups_);
+    std::cout << "[ SRPB] Started next log file for groups" << std::endl;
+  }
+
+  // increment the counter used for numbering goals
+  incrementLogPartCounter();
 }
 
 void PeopleLogger::update(double timestamp) {
+  // make sure that the log files are OK
+  if (!log_file_people_) {
+    throw std::runtime_error("File for PeopleLogger (people) was not properly created!");
+  }
+
+  if (!log_file_groups_) {
+    throw std::runtime_error("File for PeopleLogger (groups) was not properly created!");
+  }
+
   // no people -> no groups
   // fill up people and group entries with timestamp (indicating that no detections and tracks were present then)
   if (people_.empty()) {
@@ -41,10 +68,8 @@ void PeopleLogger::update(double timestamp) {
     return;
   }
 
+  // log received data
   for (const auto& person: people_) {
-    if (!log_file_people_) {
-        throw std::runtime_error("People file descriptor for PeopleLogger was not properly created!");
-    }
     std::stringstream ss;
     ss.setf(std::ios::fixed);
     ss << std::setw(9) << std::setprecision(4) << timestamp << " ";
@@ -52,10 +77,15 @@ void PeopleLogger::update(double timestamp) {
     log_file_people_ << ss.str();
   }
 
+  // mark the timestamp of groups even if no valid data is available
+  if (groups_.empty()) {
+    std::stringstream ss;
+    ss.setf(std::ios::fixed);
+    ss << std::setw(9) << std::setprecision(4) << timestamp << std::endl;
+    log_file_groups_ << ss.str();
+    return;
+  }
   for (const auto& group: groups_) {
-    if (!log_file_groups_) {
-        throw std::runtime_error("Groups file descriptor for PeopleLogger was not properly created!");
-    }
     std::stringstream ss;
     ss.setf(std::ios::fixed);
     ss << std::setw(9) << std::setprecision(4) << timestamp << " ";

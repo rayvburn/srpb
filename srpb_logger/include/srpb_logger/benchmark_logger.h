@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 
 namespace srpb {
 namespace logger {
@@ -23,11 +24,15 @@ public:
         nh.param("log_filename", log_filename_, std::string("log.txt"));
         // ID of the frame that poses will be expressed in
         nh.param("log_frame_id", target_frame_, target_frame_);
+        // append the timestamp to filename
+        log_filename_ = BenchmarkLogger::appendToFilename(log_filename_, BenchmarkLogger::timeToString());
+    }
 
-        auto log_path_base = log_filename_.substr(0, log_filename_.find_last_of(EXTENSION_SEPARATOR));
-        auto log_extension = log_filename_.substr(log_filename_.find_last_of(EXTENSION_SEPARATOR) + 1);
-
-        log_filename_ = log_path_base + "_" + BenchmarkLogger::timeToString() + EXTENSION_SEPARATOR + log_extension;
+    /**
+     * @brief Returns the part number of the log
+     */
+    int getLogPart() const {
+        return part_num_;
     }
 
     /**
@@ -40,6 +45,15 @@ public:
         std::ostringstream oss;
         oss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
         return oss.str();
+    }
+
+    /**
+     * @brief Appends @ref suffix to the @ref filename and returns new instance of string
+     */
+    static std::string appendToFilename(const std::string& filename, const std::string& suffix) {
+        auto path_base = filename.substr(0, filename.find_last_of(EXTENSION_SEPARATOR));
+        auto extension = filename.substr(filename.find_last_of(EXTENSION_SEPARATOR) + 1);
+        return path_base + "_" + suffix + EXTENSION_SEPARATOR + extension;
     }
 
     /**
@@ -94,15 +108,17 @@ public:
     }
 
 protected:
-    BenchmarkLogger(): target_frame_("odom"), tf_listener_(tf_buffer_) {}
+    BenchmarkLogger(): part_num_(1), target_frame_("odom"), tf_listener_(tf_buffer_) {}
 
-    void start(std::fstream& log_file, std::string log_filename) {
+    void start(std::fstream& log_file, const std::string& log_filename) {
         //open the file to record the navigation data
         log_file.open(log_filename, std::ios::out);
         if (log_file.is_open()) {
             return;
         }
-        ROS_ERROR("Failed to open the log file `%s` for benchmarking `move_base`", log_filename.c_str());
+        throw std::runtime_error(
+            "Failed to open the log file " + log_filename + " for benchmarking `move_base`"
+        );
     }
 
     void finish(std::fstream& log_file) {
@@ -111,11 +127,23 @@ protected:
         if (!log_file.is_open()) {
             return;
         }
-        ROS_ERROR("Failed to close the log file for benchmarking `move_base`");
+        throw std::runtime_error("Failed to close the log file for benchmarking `move_base`");
+    }
+
+    void startNextPart(std::fstream& log_file, const std::string& log_filename) {
+        auto suffix = std::string("part") + std::to_string(part_num_);
+        auto log_filename_mod = BenchmarkLogger::appendToFilename(log_filename, suffix);
+        start(log_file, log_filename_mod);
+    }
+
+    void incrementLogPartCounter() {
+        part_num_++;
     }
 
     static constexpr auto EXTENSION_SEPARATOR = ".";
     std::string log_filename_;
+    // Useful when a single log consists of multiple files; incremented in each @ref incrementLogPartCounter
+    int part_num_;
 
     // For transforming poses to a common frame
     std::string target_frame_;

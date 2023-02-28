@@ -10,11 +10,7 @@ namespace logger {
 
 void RobotLogger::init(ros::NodeHandle& nh) {
     BenchmarkLogger::init(nh);
-
-    auto log_path_base = log_filename_.substr(0, log_filename_.find_last_of(EXTENSION_SEPARATOR));
-    auto log_extension = log_filename_.substr(log_filename_.find_last_of(EXTENSION_SEPARATOR) + 1);
-
-    log_filename_ = log_path_base + "_robot" + EXTENSION_SEPARATOR + log_extension;
+    log_filename_ = BenchmarkLogger::appendToFilename(log_filename_, "robot");
 
     localization_sub_ = nh.subscribe<nav_msgs::Odometry>(
         "/odom",
@@ -24,12 +20,23 @@ void RobotLogger::init(ros::NodeHandle& nh) {
 }
 
 void RobotLogger::start() {
-    BenchmarkLogger::start(log_file_, log_filename_);
+    if (!log_file_.is_open()) {
+        BenchmarkLogger::start(log_file_, log_filename_);
+        std::cout << "[ SRPB] Started the first log file for a robot" << std::endl;
+    } else if (log_file_.is_open()) {
+        BenchmarkLogger::finish(log_file_);
+        std::cout << "[ SRPB] Finishing a robot log file" << std::endl;
+        BenchmarkLogger::startNextPart(log_file_, log_filename_);
+        std::cout << "[ SRPB] Started next log file for a robot" << std::endl;
+    }
+
+    // increment the counter used for numbering goals
+    incrementLogPartCounter();
 }
 
 void RobotLogger::update(double timestamp, const RobotData& robot) {
     if (!log_file_) {
-        throw std::runtime_error("File descriptor for RobotLogger was not properly created!");
+        throw std::runtime_error("File for RobotLogger was not properly created!");
     }
 
     // check if given RobotData should be extended with odometry data from logger
