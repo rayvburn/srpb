@@ -11,6 +11,11 @@ public:
     compute();
   }
 
+  /// Returns value in m/s^2
+  virtual double getValue() const override {
+    return velocity_smoothness_;
+  }
+
   void printResults() const override {
     printf("Velocity smoothness = %.4f [m/s^2]\n", velocity_smoothness_);
   }

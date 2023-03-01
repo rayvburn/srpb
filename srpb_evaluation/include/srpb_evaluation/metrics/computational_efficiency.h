@@ -11,6 +11,11 @@ public:
     compute();
   }
 
+  /// Returns efficiency in milliseconds
+  virtual double getValue() const override {
+    return computational_efficiency_ * 1e3;
+  }
+
   void printResults() const override {
     printf("Computational efficiency = %.4f [msecs]\n", computational_efficiency_ * 1e3);
   }

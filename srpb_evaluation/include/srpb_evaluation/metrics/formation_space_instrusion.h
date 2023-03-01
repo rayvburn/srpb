@@ -27,6 +27,26 @@ public:
     compute();
   }
 
+  /// Returns total percentage throughout the scenario
+  virtual double getValue() const override {
+    return intrusion_total_ * 100.0;
+  }
+
+  /// Returns minimum percentage throughout the scenario
+  virtual double getValueMin() const override {
+    return intrusion_min_ * 100.0;
+  }
+
+  /// Returns maximum percentage throughout the scenario
+  virtual double getValueMax() const override {
+    return intrusion_max_ * 100.0;
+  }
+
+  /// Returns percentage of violations throughout the scenario (regarding threshold)
+  virtual double getViolations() const override {
+    return violations_percentage_ * 100.0;
+  }
+
   void printResults() const override {
     printf(
       "Formation space intrusion = %.4f [%%] (min = %.4f [%%], max = %.4f [%%], violations %.4f [%%])\n",

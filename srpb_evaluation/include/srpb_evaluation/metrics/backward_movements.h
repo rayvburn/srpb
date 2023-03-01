@@ -19,6 +19,11 @@ public:
     compute();
   }
 
+  /// Returns percentage of backward motions
+  virtual double getValue() const override {
+    return bwd_ * 100.0;
+  }
+
   void printResults() const override {
     printf("Backward movements = %.4f [%%]\n", bwd_ * 100.0);
   }

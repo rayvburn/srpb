@@ -25,6 +25,16 @@ public:
       const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
   ): Metric(robot_data, people_data, groups_data) {}
 
+  /// Returns minimum value of Gaussian throughout the scenario
+  virtual double getValueMin() const = 0;
+
+  /// Returns maximum value of Gaussian throughout the scenario
+  virtual double getValueMax() const = 0;
+
+  /// Returns percentage of violations of Gaussian throughout the scenario (considering the threshold value)
+  virtual double getViolations() const = 0;
+
+  /// Prints results
   virtual void printResults() const = 0;
 
   /**

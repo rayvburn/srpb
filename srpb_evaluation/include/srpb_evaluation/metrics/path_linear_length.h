@@ -11,6 +11,11 @@ public:
     compute();
   }
 
+  /// Returns value in meters
+  virtual double getValue() const override {
+    return path_length_linear_;
+  }
+
   void printResults() const override {
     printf("Path linear length = %.4f [m]\n", path_length_linear_);
   }

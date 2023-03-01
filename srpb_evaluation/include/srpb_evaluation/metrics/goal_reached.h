@@ -23,6 +23,11 @@ public:
     compute();
   }
 
+  /// Returns boolean value
+  virtual double getValue() const override {
+    return static_cast<double>(!tolerance_xy_violated_ && !tolerance_yaw_violated_);
+  }
+
   void printResults() const override {
     printf(
       "Goal reached = %d [bool] (tolerance violations: position %d, orientation %d)\n",

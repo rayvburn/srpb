@@ -11,6 +11,11 @@ public:
     compute();
   }
 
+  /// Returns motion efficiency in seconds
+  virtual double getValue() const override {
+    return motion_efficiency_;
+  }
+
   void printResults() const override {
     printf("Motion efficiency = %.4f [secs]\n", motion_efficiency_);
   }

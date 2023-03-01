@@ -13,6 +13,11 @@ public:
     compute();
   }
 
+  /// Returns repeatability in milliseconds
+  virtual double getValue() const override {
+    return time_repeatability_ * 1e3;
+  }
+
   void printResults() const override {
     printf("Computational time repeatability = ±%.4f [msecs]\n", time_repeatability_ * 1e3);
   }

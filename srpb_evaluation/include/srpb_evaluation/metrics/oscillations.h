@@ -23,6 +23,11 @@ public:
     compute();
   }
 
+  /// Returns percentage of oscillations throughout the scenario
+  virtual double getValue() const override {
+    return osc_ * 100.0;
+  }
+
   void printResults() const override {
     printf("Oscillations = %.4f [%%]\n", osc_ * 100.0);
   }

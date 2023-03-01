@@ -11,6 +11,11 @@ public:
     compute();
   }
 
+  /// Returns value in rad/s^2
+  virtual double getValue() const override {
+    return chc_;
+  }
+
   void printResults() const override {
     printf("Cumulative Heading Change = %.4f [rad/s^2]\n", chc_);
   }

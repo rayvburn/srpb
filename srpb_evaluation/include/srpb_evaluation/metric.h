@@ -29,6 +29,10 @@ public:
         const std::vector<std::pair<double, people_msgs_utils::Group>>& groups_data
     ): rewinder_(robot_data, people_data, groups_data) {}
 
+    /// Returns a value of a metric throughout the scenario
+    virtual double getValue() const = 0;
+
+    /// Prints results
 	virtual void printResults() const = 0;
 
 protected:

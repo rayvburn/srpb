@@ -25,6 +25,11 @@ public:
     compute();
   }
 
+  /// Returns percentage of in-place rotations throughout the scenario
+  virtual double getValue() const override {
+    return in_place_rotations_ * 100.0;
+  }
+
   void printResults() const override {
     printf("In-place rotations = %.4f [%%]\n", in_place_rotations_ * 100.0);
   }

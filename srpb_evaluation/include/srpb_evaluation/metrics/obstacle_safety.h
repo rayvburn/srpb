@@ -18,6 +18,11 @@ public:
     compute();
   }
 
+  /// Returns total percentage of obstacle safety
+  virtual double getValue() const override {
+    return obstacle_safety_ * 1e2;
+  }
+
   void printResults() const override {
     printf("Obstacle safety = %.4f [%%]\n", obstacle_safety_ * 1e2);
   }
