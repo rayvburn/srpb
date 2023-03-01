@@ -10,6 +10,21 @@
 
 #include <people_msgs_utils/utils.h>
 
+#include "srpb_evaluation/metrics/backward_movements.h"
+#include "srpb_evaluation/metrics/computational_efficiency.h"
+#include "srpb_evaluation/metrics/computational_time_repeatability.h"
+#include "srpb_evaluation/metrics/cumulative_heading_change.h"
+#include "srpb_evaluation/metrics/formation_space_instrusion.h"
+#include "srpb_evaluation/metrics/goal_reached.h"
+#include "srpb_evaluation/metrics/heading_direction_disturbance.h"
+#include "srpb_evaluation/metrics/inplace_rotations.h"
+#include "srpb_evaluation/metrics/motion_efficiency.h"
+#include "srpb_evaluation/metrics/obstacle_safety.h"
+#include "srpb_evaluation/metrics/oscillations.h"
+#include "srpb_evaluation/metrics/path_linear_length.h"
+#include "srpb_evaluation/metrics/personal_space_instrusion.h"
+#include "srpb_evaluation/metrics/velocity_smoothness.h"
+
 namespace srpb {
 namespace evaluation {
 
@@ -21,6 +36,30 @@ namespace evaluation {
 std::vector<std::pair<double, people_msgs_utils::Group>> fillGroupsWithMembers(
     const std::vector<std::pair<double, people_msgs_utils::Group>>& timed_groups,
     const std::vector<std::pair<double, people_msgs_utils::Person>>& timed_people
+);
+
+/**
+ * @brief Creates a CSV file with results
+ */
+void createResultsFile(
+    const std::string& filename,
+    const size_t& samples_robot,
+    const size_t& samples_people,
+    const size_t& samples_groups,
+    const GoalReached& goal_reached,
+    const ObstacleSafety& obstacle_safety,
+    const MotionEfficiency& motion_efficiency,
+    const ComputationalEfficiency& computational_efficiency,
+    const ComputationalTimeRepeatability& computational_time_repeatability,
+    const VelocitySmoothness& velocity_smoothness,
+    const PathLinearLength& path_linear_length,
+    const CumulativeHeadingChange& cumulative_heading_change,
+    const Oscillations& oscillations,
+    const BackwardMovements& backward_movements,
+    const InplaceRotations& inplace_rotations,
+    const PersonalSpaceIntrusion& personal_space_intrusion,
+    const FormationSpaceIntrusion& formation_space_intrusion,
+    const HeadingDirectionDisturbance& heading_direction_disturbance
 );
 
 /**

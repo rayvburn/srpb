@@ -4,21 +4,6 @@
 
 #include "srpb_evaluation/utils.h"
 
-#include "srpb_evaluation/metrics/backward_movements.h"
-#include "srpb_evaluation/metrics/computational_efficiency.h"
-#include "srpb_evaluation/metrics/computational_time_repeatability.h"
-#include "srpb_evaluation/metrics/cumulative_heading_change.h"
-#include "srpb_evaluation/metrics/formation_space_instrusion.h"
-#include "srpb_evaluation/metrics/goal_reached.h"
-#include "srpb_evaluation/metrics/heading_direction_disturbance.h"
-#include "srpb_evaluation/metrics/inplace_rotations.h"
-#include "srpb_evaluation/metrics/motion_efficiency.h"
-#include "srpb_evaluation/metrics/obstacle_safety.h"
-#include "srpb_evaluation/metrics/oscillations.h"
-#include "srpb_evaluation/metrics/path_linear_length.h"
-#include "srpb_evaluation/metrics/personal_space_instrusion.h"
-#include "srpb_evaluation/metrics/velocity_smoothness.h"
-
 using namespace srpb::logger;
 using namespace srpb::evaluation;
 
@@ -153,6 +138,29 @@ int main(int argc, char* argv[]) {
     robot_max_speed
   );
   heading_direction.printResults();
+
+  // save results file
+  auto file_results = file_robot.substr(0, file_robot.find_last_of('_')) + "_results.txt";
+  createResultsFile(
+    file_results,
+    timed_robot_data.size(),
+    timed_people_data.size(),
+    timed_groups_data.size(),
+    mgoal,
+    safety,
+    mef,
+    cef,
+    cre,
+    vsm,
+    plen,
+    chc,
+    osc,
+    bwd,
+    inplace,
+    psi,
+    fsi,
+    heading_direction
+  );
 
   return 0;
 }
