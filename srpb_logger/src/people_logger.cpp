@@ -334,7 +334,7 @@ void PeopleLogger::peopleCB(const people_msgs::PeopleConstPtr& msg) {
 
     people.emplace_back(
       person.getName(),
-      pose.pose,
+      pose_transformed.pose,
       vel.pose,
       person.getReliability(),
       person.isOccluded(),
