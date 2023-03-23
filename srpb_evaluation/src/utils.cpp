@@ -129,6 +129,7 @@ void createResultsFile(
     const ComputationalEfficiency& computational_efficiency,
     const ComputationalTimeRepeatability& computational_time_repeatability,
     const VelocitySmoothness& velocity_smoothness,
+    const HeadingChangeSmoothness& heading_change_smoothness,
     const PathLinearLength& path_linear_length,
     const CumulativeHeadingChange& cumulative_heading_change,
     const Oscillations& oscillations,
@@ -156,6 +157,7 @@ void createResultsFile(
     ss << "m_cef  ," << std::setw(9) << std::setprecision(4) << computational_efficiency.getValue() << std::endl;
     ss << "m_cre  ," << std::setw(9) << std::setprecision(4) << computational_time_repeatability.getValue() << std::endl;
     ss << "m_vsm  ," << std::setw(9) << std::setprecision(4) << velocity_smoothness.getValue() << std::endl;
+    ss << "m_hsm  ," << std::setw(9) << std::setprecision(4) << heading_change_smoothness.getValue() << std::endl;
     ss << "m_path ," << std::setw(9) << std::setprecision(4) << path_linear_length.getValue() << std::endl;
     ss << "m_chc  ," << std::setw(9) << std::setprecision(4) << cumulative_heading_change.getValue() << std::endl;
     ss << "m_osc  ," << std::setw(9) << std::setprecision(4) << oscillations.getValue() << std::endl;
