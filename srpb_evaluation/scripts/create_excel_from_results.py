@@ -91,6 +91,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
     m_cef_row = []
     m_cre_row = []
     m_vsm_row = []
+    m_hsm_row = []
     m_path_row = []
     m_chc_row = []
     m_osc_row = []
@@ -112,6 +113,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
     m_cef_row.append('m_cef')
     m_cre_row.append('m_cre')
     m_vsm_row.append('m_vsm')
+    m_hsm_row.append('m_hsm')
     m_path_row.append('m_path')
     m_chc_row.append('m_chc')
     m_osc_row.append('m_osc')
@@ -136,6 +138,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
             m_cef_row.append(result['m_cef'])
             m_cre_row.append(result['m_cre'])
             m_vsm_row.append(result['m_vsm'])
+            m_hsm_row.append(result['m_hsm'])
             m_path_row.append(result['m_path'])
             m_chc_row.append(result['m_chc'])
             m_osc_row.append(result['m_osc'])
@@ -158,6 +161,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
         m_cef_row,
         m_cre_row,
         m_vsm_row,
+        m_hsm_row,
         m_path_row,
         m_chc_row,
         m_osc_row,

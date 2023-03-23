@@ -17,6 +17,7 @@
 #include "srpb_evaluation/metrics/formation_space_instrusion.h"
 #include "srpb_evaluation/metrics/goal_reached.h"
 #include "srpb_evaluation/metrics/heading_direction_disturbance.h"
+#include "srpb_evaluation/metrics/heading_change_smoothness.h"
 #include "srpb_evaluation/metrics/inplace_rotations.h"
 #include "srpb_evaluation/metrics/motion_efficiency.h"
 #include "srpb_evaluation/metrics/obstacle_safety.h"
@@ -52,6 +53,7 @@ void createResultsFile(
     const ComputationalEfficiency& computational_efficiency,
     const ComputationalTimeRepeatability& computational_time_repeatability,
     const VelocitySmoothness& velocity_smoothness,
+    const HeadingChangeSmoothness& heading_change_smoothness,
     const PathLinearLength& path_linear_length,
     const CumulativeHeadingChange& cumulative_heading_change,
     const Oscillations& oscillations,

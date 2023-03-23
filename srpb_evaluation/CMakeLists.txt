@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME}_lib
     include/${PROJECT_NAME}/metrics/cumulative_heading_change.h
     include/${PROJECT_NAME}/metrics/formation_space_instrusion.h
     include/${PROJECT_NAME}/metrics/goal_reached.h
+    include/${PROJECT_NAME}/metrics/heading_change_smoothness.h
     include/${PROJECT_NAME}/metrics/heading_direction_disturbance.h
     include/${PROJECT_NAME}/metrics/inplace_rotations.h
     include/${PROJECT_NAME}/metrics/motion_efficiency.h

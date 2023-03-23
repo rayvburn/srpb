@@ -89,6 +89,9 @@ int main(int argc, char* argv[]) {
   VelocitySmoothness vsm(timed_robot_data);
   vsm.printResults();
 
+  HeadingChangeSmoothness hsm(timed_robot_data);
+  hsm.printResults();
+
   PathLinearLength plen(timed_robot_data);
   plen.printResults();
 
@@ -152,6 +155,7 @@ int main(int argc, char* argv[]) {
     cef,
     cre,
     vsm,
+    hsm,
     plen,
     chc,
     osc,
