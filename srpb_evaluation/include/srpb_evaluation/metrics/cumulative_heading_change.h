@@ -11,13 +11,13 @@ public:
     compute();
   }
 
-  /// Returns value in rad/s^2
+  /// Returns value in rad
   virtual double getValue() const override {
     return chc_;
   }
 
   void printResults() const override {
-    printf("Cumulative Heading Change = %.4f [rad/s^2]\n", chc_);
+    printf("Cumulative Heading Change = %.4f [rad]\n", chc_);
   }
 
 protected:
@@ -28,8 +28,8 @@ protected:
     rewinder_.setHandlerNextTimestamp(
       [&]() {
         double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
-        double dtheta = rewinder_.getRobotNext().getVelocityTheta() - rewinder_.getRobotCurr().getVelocityTheta();
-        chc += (std::abs(dtheta) / dt);
+        double dtheta = rewinder_.getRobotNext().getOrientationYaw() - rewinder_.getRobotCurr().getOrientationYaw();
+        chc += std::abs(dtheta);
       }
     );
     rewinder_.perform();
