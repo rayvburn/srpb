@@ -34,11 +34,6 @@ int main(int argc, char* argv[]) {
   double osc_vel_y_threshold = 0.05;
   double osc_vel_ang_z_threshold = 0.15;
 
-  // personal space Gaussian model parameters
-  // values from Kirby, 2010, Fig. A.1
-  double personal_space_var_h = std::pow(2.00, 2);
-  double personal_space_var_r = std::pow(1.00, 2);
-  double personal_space_var_s = std::pow(1.33, 2);
   /*
    * Threshold of Gaussian value to detect space violations.
    * With Kirby's parameters PS in the center is approx. 0.14 (without uncertainty accounted in).
@@ -116,9 +111,6 @@ int main(int argc, char* argv[]) {
   PersonalSpaceIntrusion psi(
     timed_robot_data,
     timed_people_data,
-    personal_space_var_h,
-    personal_space_var_r,
-    personal_space_var_s,
     personal_space_threshold
   );
   psi.printResults();

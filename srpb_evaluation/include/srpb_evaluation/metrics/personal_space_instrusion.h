@@ -18,9 +18,6 @@ namespace evaluation {
  *
  * @param robot_data
  * @param people_data
- * @param var_h variance to the heading direction of the person (Gaussian)
- * @param var_r variance to the rear (Gaussian)
- * @param var_s variance to the side (Gaussian)
  * @param personal_space_threshold Gaussian values bigger than that will be considered as violation of personal space
  * @param max_method set to true (default) to use max element from Gaussians to normalize metrics;
  * false means averaging over all Gaussian occurrences in a current time step
@@ -37,16 +34,10 @@ public:
   PersonalSpaceIntrusion(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     const std::vector<std::pair<double, people_msgs_utils::Person>>& people_data,
-    double var_h,
-    double var_r,
-    double var_s,
     double personal_space_threshold,
     bool max_method = true
   ):
     MetricGaussian(robot_data, people_data),
-    var_front_(var_h),
-    var_rear_(var_r),
-    var_side_(var_s),
     personal_space_threshold_(personal_space_threshold),
     max_method_(max_method)
   {
@@ -88,9 +79,6 @@ public:
 
 protected:
   // parameters
-  double var_front_;
-  double var_rear_;
-  double var_side_;
   double personal_space_threshold_;
   bool max_method_;
 
@@ -116,6 +104,11 @@ protected:
     // on event 'iterating through next person in the timestamp' - compute Gaussian of Personal Zone at robot position
     rewinder_.setHandlerNextPersonTimestamp(
       [&]() {
+        // values according to Kirby's thesis (4.5 - 4.7)
+        double vel_lin = std::hypot(rewinder_.getPersonCurr().getVelocityX(), rewinder_.getPersonCurr().getVelocityY());
+        double var_heading = std::max(2.0 * vel_lin, 0.5);
+        double var_side = (2.0 / 3.0) * var_heading;
+        double var_rear = (1.0 / 2.0) * var_heading;
         // compute gaussian at position of robot
         social_nav_utils::PersonalSpaceIntrusion psi(
           rewinder_.getPersonCurr().getPositionX(),
@@ -125,9 +118,9 @@ protected:
           rewinder_.getPersonCurr().getCovariancePoseXY(),
           rewinder_.getPersonCurr().getCovariancePoseYX(),
           rewinder_.getPersonCurr().getCovariancePoseYY(),
-          var_front_,
-          var_rear_,
-          var_side_,
+          var_heading,
+          var_rear,
+          var_side,
           rewinder_.getRobotCurr().getPositionX(),
           rewinder_.getRobotCurr().getPositionY(),
           true
