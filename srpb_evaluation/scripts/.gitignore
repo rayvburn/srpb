@@ -1,0 +1,4 @@
+# ignore outputs of visualisation scripts
+*.pdf
+# ignore python byte code
+__pycache__/
