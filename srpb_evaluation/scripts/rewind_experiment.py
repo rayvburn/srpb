@@ -120,6 +120,10 @@ def main(
         c = ptch.Circle(center, radius=radius, linestyle='-', fill=True, edgecolor=ec, facecolor=fc)
         plt.gca().add_patch(c)
 
+    # disable axes scales showing image coordinates
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+
     # save figure with the experiment data
     output_filename = vis_name + '.pdf'
     fig.savefig(output_filename, bbox_inches='tight', pad_inches=0)
