@@ -42,6 +42,7 @@ from rewind_experiment_utils import get_colormap
 def main(
     timestamps: np.array,
     log_data: Dict[str, List],
+    extra_pts: List[List[float]],
     tf_map_logged: List[float],
     map,
     map_origin: List[float],
@@ -122,6 +123,13 @@ def main(
         c = ptch.Circle(center, radius=radius, linestyle='-', fill=True, edgecolor=ec, facecolor=fc)
         plt.gca().add_patch(c)
 
+    # debugging or finding map reference points
+    for pt in extra_pts:
+        pt_map = transform_logged_pos_to_map(np.array([pt[0], pt[1], 0.0]), R, t)
+        img_pt_map = world_to_map_no_bounds_image(pt_map[0], pt_map[1], map_origin[0], map_origin[1], map_resolution)
+        # small circles but drawn on top of other entities
+        plt.plot(img_pt_map[0], img_pt_map[1], 'o', ms=3)
+
     # disable axes scales showing image coordinates
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -178,6 +186,8 @@ if __name__ == '__main__':
     map_resolution = config['map']['resolution']
     # coordinate systems transformation to align map
     tf_map_rot = config['map']['tf_rot']
+    # additional points to be drawn
+    extra_pts = config['map']['additional_pts']
 
     log_file_basename = config['log']['file_basename']
     # coordinate systems transform from global to logged (odom)
@@ -296,4 +306,4 @@ if __name__ == '__main__':
     print(f"Prepared timestamps from {timestamps[0]} to {timestamps[-1]} with {len(timestamps)} entries")
 
     # visualise entities on the map
-    main(timestamps, log_entities, tf_map_img_logged, map, map_origin, map_resolution, visuals, vis_name)
+    main(timestamps, log_entities, extra_pts, tf_map_img_logged, map, map_origin, map_resolution, visuals, vis_name)

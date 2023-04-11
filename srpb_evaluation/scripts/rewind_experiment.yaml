@@ -23,6 +23,8 @@ map:
     # upper left bottom right - use when resultant map should be smaller - [origin x, origin y, width, height]
     # left an empty list when cropping is not needed
     crop_area: []
+    # map coordinates (x and y) of additional points to be drawn (list of 2-element lists)
+    additional_pts: []
 vis:
     people:
         # full RGBA
