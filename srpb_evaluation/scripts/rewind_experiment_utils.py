@@ -260,6 +260,45 @@ def rotz(theta):
                       [0           , 0            , 1 ]])
 
 
+def rot_mat_to_euler_angles(R: np.matrix):
+    # Ref: https://learnopencv.com/rotation-matrix-to-euler-angles/
+    sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+    singular = sy < 1e-6
+
+    if not singular :
+        x = math.atan2(R[2,1] , R[2,2])
+        y = math.atan2(-R[2,0], sy)
+        z = math.atan2(R[1,0], R[0,0])
+    else :
+        x = math.atan2(-R[1,2], R[1,1])
+        y = math.atan2(-R[2,0], sy)
+        z = 0
+
+    return np.array([x, y, z])
+
+
+'''
+Computes resultant homogenous transform using yaw angles of rpy0 and rpy1 and translations of t0 and t1
+'''
+def compute_transform(t0: np.array, rpy0: np.array, t1: np.array, rpy1: np.array) -> np.matrix:
+    R0 = rotz(rpy0[-1])
+    R1 = rotz(rpy1[-1])
+    T0 = [
+        [R0[0,0], R0[0,1], R0[0,2], t0[0]],
+        [R0[1,0], R0[1,1], R0[1,2], t0[1]],
+        [R0[2,0], R0[2,1], R0[2,2], t0[2]],
+        [0,       0,       0,       1]
+    ]
+    T1 = [
+        [R1[0,0], R1[0,1], R1[0,2], t1[0]],
+        [R1[1,0], R1[1,1], R1[1,2], t1[1]],
+        [R1[2,0], R1[2,1], R1[2,2], t1[2]],
+        [0,       0,       0,       1]
+    ]
+    # mind the order of the operation
+    return np.matmul(T0, T1)
+
+
 def transform_logged_pos_to_map(p_in: np.array, R: np.matrix, t: np.array) -> List[float]:
     T = [
         [R[0,0], R[0,1], R[0,2], t[0]],

@@ -29,7 +29,9 @@ from rewind_experiment_utils import Group
 from rewind_experiment_utils import read_csv_with_multiple_delimiters_in_line
 from rewind_experiment_utils import recompute_group_cog
 from rewind_experiment_utils import extract_timestamps
+from rewind_experiment_utils import rot_mat_to_euler_angles
 from rewind_experiment_utils import transform_logged_pos_to_map
+from rewind_experiment_utils import compute_transform
 from rewind_experiment_utils import rotz
 from rewind_experiment_utils import compute_map_origin
 from rewind_experiment_utils import world_to_map_no_bounds_image
@@ -231,6 +233,15 @@ if __name__ == '__main__':
     print(f"Shape of the cropped map: ({len(map)}, {len(map[0])}) px")
     map_origin = compute_map_origin(map_rot, crop_area)
 
+    # knowing rotation of the map image, adjust the logged->map image frame TF
+    T = compute_transform(tf_map_rot[0:3], tf_map_rot[3:6], tf_map_logged[0:3], tf_map_logged[3:6])
+    rpy = rot_mat_to_euler_angles(T[0:3,0:3])
+    if abs(rpy[0]) >= 1e-05 or abs(rpy[1]) >= 1e-05:
+        print("Resultant roll and pitch angles are far from 0.0, drawings will not be accurate!")
+    # save TF from logged frame to the map frame (regarding rotation of the map image too)
+    tf_map_img_logged = [T[0,3], T[1,3], T[2,3], rpy[0], rpy[1], rpy[2]]
+    print(f"Resultant transform of logged points onto map image is: {tf_map_img_logged} (X-Y-Z-R-P-Y)")
+
     # load logged data
     log_data = {}
     log_data['robot']  = read_csv_with_multiple_delimiters_in_line(log_file_robot)
@@ -285,4 +296,4 @@ if __name__ == '__main__':
     print(f"Prepared timestamps from {timestamps[0]} to {timestamps[-1]} with {len(timestamps)} entries")
 
     # visualise entities on the map
-    main(timestamps, log_entities, tf_map_logged, map, map_origin, map_resolution, visuals, vis_name)
+    main(timestamps, log_entities, tf_map_img_logged, map, map_origin, map_resolution, visuals, vis_name)

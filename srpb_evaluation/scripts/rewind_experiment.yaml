@@ -2,7 +2,7 @@ log:
     # full path with only basename of the file logged during the experiment,
     # people' and groups' are assumed to be available in the same directory
     file_basename: ""
-    # coordinate systems transform from global to logged (odom) - [x y z roll pitch yaw]
+    # coordinate systems transform from global to logged - [x y z roll pitch yaw]
     # this will usually stand for AMCL's initial pose estimate
     tf_to_map: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     # hide perception's false-positives on the visualisation
@@ -17,6 +17,8 @@ map:
     # how long is 1 pixel of the map
     resolution: 0.05
     # coordinate systems transformation to align map - [x y z roll pitch yaw]
+    # possibly use "yaw" to align map to the rectangular image (only when the map is rotated in the image)
+    # then use "x","y" to align the map with some known reference point, e.g., corner (may be necessary when cropped)
     tf_rot: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     # upper left bottom right - use when resultant map should be smaller - [origin x, origin y, width, height]
     # left an empty list when cropping is not needed
