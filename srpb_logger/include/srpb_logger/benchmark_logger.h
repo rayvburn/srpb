@@ -58,21 +58,16 @@ public:
 
     /**
      * @brief Transform poses to the frame given by @ref target_frame_
+     *
+     * @note calling simply:
+     *   tf_buffer_.transform(pose_in, pose_out, target_frame_);
+     * does not force time source to use so, e.g., for goal poses received from external tool it may happen
+     * that wrong time source will be used and transform is not found (wall vs sim time difference).
      */
     geometry_msgs::PoseWithCovarianceStamped transformPose(const geometry_msgs::PoseWithCovarianceStamped& pose_in) {
+        auto transform_stamped = getTransform(pose_in.header.frame_id);
         geometry_msgs::PoseWithCovarianceStamped pose_out;
-        try {
-            /*
-             * NOTE: simply calling
-             *   tf_buffer_.transform(pose_in, pose_out, target_frame_);
-             * does not force time source to use so, e.g., for goal poses received from external tool it may happen
-             * that wrong time source will be used and transform is not found (wall vs sim time difference).
-             */
-            auto transform_stamped = tf_buffer_.lookupTransform(target_frame_, pose_in.header.frame_id, ros::Time(0));
-            tf2::doTransform(pose_in, pose_out, transform_stamped);
-        } catch (tf2::TransformException &ex) {
-            ROS_WARN("Failure %s\n", ex.what());
-        }
+        tf2::doTransform(pose_in, pose_out, transform_stamped);
         return pose_out;
     }
 
@@ -107,8 +102,24 @@ public:
         return output;
     }
 
+    /// @brief Retrieves transform from the @ref source_frame to the @ref target_frame_
+    geometry_msgs::TransformStamped getTransform(const std::string& source_frame) {
+        return getTransform(source_frame, target_frame_);
+    }
+
+    /// @brief Retrieves transform from the @ref source_frame to the @ref target_frame
+    geometry_msgs::TransformStamped getTransform(const std::string& source_frame, const std::string& target_frame) {
+        geometry_msgs::TransformStamped tf;
+        try {
+            tf = tf_buffer_.lookupTransform(target_frame, source_frame, ros::Time(0));
+        } catch (tf2::TransformException &ex) {
+            ROS_WARN("Failure %s\n", ex.what());
+        }
+        return tf;
+    }
+
 protected:
-    BenchmarkLogger(): part_num_(1), target_frame_("odom"), tf_listener_(tf_buffer_) {}
+    BenchmarkLogger(): part_num_(1), target_frame_("map"), tf_listener_(tf_buffer_) {}
 
     void start(std::fstream& log_file, const std::string& log_filename) {
         //open the file to record the navigation data

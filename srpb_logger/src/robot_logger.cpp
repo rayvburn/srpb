@@ -42,6 +42,7 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
     // check if given RobotData should be extended with odometry data from logger
     RobotData robot_data = robot;
     if (robot.hasPartialData()) {
+        // NOTE: goal from the RobotData is assumed to be represented in the logger's frame
         robot_data = RobotData(
             robot_pose_,
             robot_vel_,
@@ -163,9 +164,10 @@ std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) 
 
 void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {
     std::lock_guard<std::mutex> l(cb_mutex_);
-    // save pose
+    // pose should be transformed to the logger's frame
     robot_pose_ = transformPose(msg->pose, msg->header.frame_id).pose;
-    // prepare velocity
+    // prepare velocity of the robot;
+    // velocity of the robot is expressed in its body frame (local frame) and is stored in that form
     geometry_msgs::PoseWithCovariance vel;
     vel.pose.position.x = msg->twist.twist.linear.x;
     vel.pose.position.y = msg->twist.twist.linear.y;
