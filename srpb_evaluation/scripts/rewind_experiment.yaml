@@ -36,6 +36,6 @@ vis:
         radius: 12
     legend:
         # dimensions in inches
-        width: 0.5
+        width: 0.25
         height: 5
-        fontsize: 20
+        fontsize: 17
