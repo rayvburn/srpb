@@ -75,21 +75,20 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
 def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) -> str:
     # only keys from this map will be put into the LaTeX table; keys must match the ones used in the Excel sheet
     metric_latex_map = {
-        # TODO: change to raw symbols instead of commands
-        'm_obs':  r"$\benchmetricsobssafety{}$ \\ $\left[ \% \right]$",
-        'm_mef':  r"$\benchmetricsmotionefficiency{}$ \\ $\left[ s \right]$",
-        'm_path': r"$\benchmetricspathlinearlength{}$ \\ $\left[ m \right]$",
-        'm_chc':  r"$\benchmetricscumulativeheadingchange{}$ \\ $\left[ rad \right]$",
-        'm_cef':  r"$\benchmetricscomputefficiency{}$ \\ $\left[ 10^{-3} \cdot s \right]$",
-        'm_cre':  r"$\benchmetricscomputrepeatability{}$ \\ $\left[ 10^{-3} \cdot s \right]$",
-        'm_vsm':  r"$\benchmetricsvelsmoothness{}$ \\ $\left[ \frac{m}{s^2} \right]$",
-        'm_hsm':  r"$\benchmetricsheadingsmoothness{}$ \\ $\left[ \frac{rad}{s^2} \right]$",
-        'm_osc':  r"$\benchmetricsoscillations{}$ \\ $\left[ \% \right]$",
-        'm_bwd':  r"$\benchmetricsbackwardmovements{}$ \\ $\left[ \% \right]$",
-        'm_inp':  r"$\benchmetricsinplacerotations{}$ \\ $\left[ \% \right]$",
-        'm_psi':  r"$\benchmetricspersonalspaceintrusion{}$ \\ $\left[ \% \right]$",
-        'm_fsi':  r"$\benchmetricsformationspaceintrusion{}$ \\ $\left[ \% \right]$",
-        'm_dir':  r"$\benchmetricspersondisturbance{}$ \\ $\left[ \% \right]$"
+        'm_obs':  r"$m_{obs}$ \\ $\left[ \% \right]$",
+        'm_mef':  r"$m_{mef}$ \\ $\left[ s \right]$",
+        'm_path': r"$m_{plin}$ \\ $\left[ m \right]$",
+        'm_chc':  r"$m_{chc}$ \\ $\left[ rad \right]$",
+        'm_cef':  r"$m_{cef}$ \\ $\left[ 10^{-3} \cdot s \right]$",
+        'm_cre':  r"$m_{cre}$ \\ $\left[ 10^{-3} \cdot s \right]$",
+        'm_vsm':  r"$m_{vsm}$ \\ $\left[ \frac{m}{s^2} \right]$",
+        'm_hsm':  r"$m_{hsm}$ \\ $\left[ \frac{rad}{s^2} \right]$",
+        'm_osc':  r"$m_{osc}$ \\ $\left[ \% \right]$",
+        'm_bwd':  r"$m_{bwd}$ \\ $\left[ \% \right]$",
+        'm_inp':  r"$m_{iprot}$ \\ $\left[ \% \right]$",
+        'm_psi':  r"$m_{psi}$ \\ $\left[ \% \right]$",
+        'm_fsi':  r"$m_{fsi}$ \\ $\left[ \% \right]$",
+        'm_dir':  r"$m_{dir}$ \\ $\left[ \% \right]$"
     }
 
     # retrieve names of planners assuming that all scenarios results have the same planner entries;
