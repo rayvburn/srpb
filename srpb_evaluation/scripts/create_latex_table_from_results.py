@@ -75,20 +75,20 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
 def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) -> str:
     # only keys from this map will be put into the LaTeX table; keys must match the ones used in the Excel sheet
     metric_latex_map = {
-        'm_obs':  r"$m_{obs}$ \\ $\left[ \% \right]$",
-        'm_mef':  r"$m_{mef}$ \\ $\left[ s \right]$",
-        'm_path': r"$m_{plin}$ \\ $\left[ m \right]$",
-        'm_chc':  r"$m_{chc}$ \\ $\left[ rad \right]$",
-        'm_cef':  r"$m_{cef}$ \\ $\left[ 10^{-3} \cdot s \right]$",
-        'm_cre':  r"$m_{cre}$ \\ $\left[ 10^{-3} \cdot s \right]$",
-        'm_vsm':  r"$m_{vsm}$ \\ $\left[ \frac{m}{s^2} \right]$",
-        'm_hsm':  r"$m_{hsm}$ \\ $\left[ \frac{rad}{s^2} \right]$",
-        'm_osc':  r"$m_{osc}$ \\ $\left[ \% \right]$",
-        'm_bwd':  r"$m_{bwd}$ \\ $\left[ \% \right]$",
-        'm_inp':  r"$m_{iprot}$ \\ $\left[ \% \right]$",
-        'm_psi':  r"$m_{psi}$ \\ $\left[ \% \right]$",
-        'm_fsi':  r"$m_{fsi}$ \\ $\left[ \% \right]$",
-        'm_dir':  r"$m_{dir}$ \\ $\left[ \% \right]$"
+        'm_obs':  r"$m_{\mathrm{obs}}$    \\ $\left[ \% \right]$",
+        'm_mef':  r"$m_{\mathrm{mef}}$    \\ $\left[ \mathrm{s} \right]$",
+        'm_path': r"$m_{\mathrm{plin}}$   \\ $\left[ \mathrm{m} \right]$",
+        'm_chc':  r"$m_{\mathrm{chc}}$    \\ $\left[ \mathrm{rad} \right]$",
+        'm_cef':  r"$m_{\mathrm{cef}}$    \\ $\left[ 10^{-3} \cdot \mathrm{s} \right]$",
+        'm_cre':  r"$m_{\mathrm{cre}}$    \\ $\left[ 10^{-3} \cdot \mathrm{s} \right]$",
+        'm_vsm':  r"$m_{\mathrm{vsm}}$    \\ $\left[ \mathrm{\frac{m}{s^2}} \right]$",
+        'm_hsm':  r"$m_{\mathrm{hsm}}$    \\ $\left[ \mathrm{\frac{rad}{s^2}} \right]$",
+        'm_osc':  r"$m_{\mathrm{osc}}$    \\ $\left[ \% \right]$",
+        'm_bwd':  r"$m_{\mathrm{bwd}}$    \\ $\left[ \% \right]$",
+        'm_inp':  r"$m_{\mathrm{iprot}}$  \\ $\left[ \% \right]$",
+        'm_psi':  r"$m_{\mathrm{psi}}$    \\ $\left[ \% \right]$",
+        'm_fsi':  r"$m_{\mathrm{fsi}}$    \\ $\left[ \% \right]$",
+        'm_dir':  r"$m_{\mathrm{dir}}$    \\ $\left[ \% \right]$"
     }
 
     # retrieve names of planners assuming that all scenarios results have the same planner entries;
