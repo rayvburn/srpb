@@ -1,0 +1,12 @@
+- git:
+    local-name: srpb/srpb_move_base
+    uri: git@github.com:rayvburn/srpb_move_base.git  # private repo
+    version: melodic-devel-srpb
+- git:
+    local-name: srpb/people_msgs_utils
+    uri: git@github.com:rayvburn/people_msgs_utils.git  # private repo
+    version: covariances-support
+- git:
+    local-name: srpb/social_nav_utils
+    uri: git@github.com:rayvburn/social_nav_utils.git  # private repo
+    version: devel
