@@ -5,8 +5,8 @@
 - git:
     local-name: srpb/people_msgs_utils
     uri: git@github.com:rayvburn/people_msgs_utils.git  # private repo
-    version: covariances-support
+    version: master
 - git:
     local-name: srpb/social_nav_utils
     uri: git@github.com:rayvburn/social_nav_utils.git  # private repo
-    version: devel
+    version: master

@@ -31,7 +31,7 @@ Follow the steps below to clone SRPB-related packages:
 
 ```sh
 cd <WS_DIR>/src
-git clone --recurse-submodules git@github.com:rayvburn/srpb.git -b srpb-melodic-devel srpb/srpb
+git clone --recurse-submodules git@github.com:rayvburn/srpb.git -b melodic-devel srpb/srpb
 rosinstall -n . srpb/srpb/srpb.rosinstall
 ```
 
