@@ -57,6 +57,9 @@ void PeopleLogger::update(double timestamp) {
     throw std::runtime_error("File for PeopleLogger (groups) was not properly created!");
   }
 
+  // we'll be processing the data that may be updated asynchronously
+  std::lock_guard<std::mutex> l(cb_mutex_);
+
   // no people -> no groups
   // fill up people and group entries with timestamp (indicating that no detections and tracks were present then)
   if (people_.empty()) {
