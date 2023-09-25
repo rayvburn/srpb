@@ -42,6 +42,9 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
     // check if given RobotData should be extended with odometry data from logger
     RobotData robot_data = robot;
     if (robot.hasPartialData()) {
+        // we'll be processing the data that may be updated asynchronously
+        std::lock_guard<std::mutex> l(cb_mutex_);
+
         // NOTE: goal from the RobotData is assumed to be represented in the logger's frame
         robot_data = RobotData(
             robot_pose_,
