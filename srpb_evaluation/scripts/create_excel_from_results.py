@@ -100,6 +100,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
     m_psi_row = []
     m_fsi_row = []
     m_dir_row = []
+    m_psd_row = []
 
     planners_row.append('Planner')
     trials_row.append('Trial')
@@ -122,6 +123,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
     m_psi_row.append('m_psi')
     m_fsi_row.append('m_fsi')
     m_dir_row.append('m_dir')
+    m_psd_row.append('m_psd')
 
     # iterate over keys
     for planner_key in results_total:
@@ -147,6 +149,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
             m_psi_row.append(result['m_psi'])
             m_fsi_row.append(result['m_fsi'])
             m_dir_row.append(result['m_dir'])
+            m_psd_row.append(result['m_psd'])
 
     return [
         planners_row,
@@ -169,7 +172,8 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
         m_irot_row,
         m_psi_row,
         m_fsi_row,
-        m_dir_row
+        m_dir_row,
+        m_psd_row
     ]
 
 def cell_coords_to_sheet_cell_id(row: int, col: int):

@@ -52,6 +52,8 @@ int main(int argc, char* argv[]) {
   double robot_max_speed = 0.55;
   // threshold of Gaussian value to detect significant disturbance caused by robot location or motion direction
   double heading_disturbance_threshold = 0.20;
+  // threshold of the discomfort value that defines a significant violation
+  double passing_speed_discomfort_threshold = 0.40;
 
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
@@ -134,6 +136,15 @@ int main(int argc, char* argv[]) {
   );
   heading_direction.printResults();
 
+  PassingSpeedDiscomfort psd(
+    timed_robot_data,
+    timed_people_data,
+    robot_circumradius,
+    robot_max_speed,
+    passing_speed_discomfort_threshold
+  );
+  psd.printResults();
+
   // save results file
   auto file_results = file_robot.substr(0, file_robot.find_last_of('_')) + "_results.txt";
   createResultsFile(
@@ -155,7 +166,8 @@ int main(int argc, char* argv[]) {
     inplace,
     psi,
     fsi,
-    heading_direction
+    heading_direction,
+    psd
   );
 
   return 0;

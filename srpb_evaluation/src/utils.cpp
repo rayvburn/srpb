@@ -137,7 +137,8 @@ void createResultsFile(
     const InplaceRotations& inplace_rotations,
     const PersonalSpaceIntrusion& personal_space_intrusion,
     const FormationSpaceIntrusion& formation_space_intrusion,
-    const HeadingDirectionDisturbance& heading_direction_disturbance
+    const HeadingDirectionDisturbance& heading_direction_disturbance,
+    const PassingSpeedDiscomfort& passing_speed_discomfort
 ) {
     std::fstream file_results;
     file_results.open(filename, std::ios::out);
@@ -166,6 +167,7 @@ void createResultsFile(
     ss << "m_psi  ," << std::setw(9) << std::setprecision(4) << personal_space_intrusion.getValue() << std::endl;
     ss << "m_fsi  ," << std::setw(9) << std::setprecision(4) << formation_space_intrusion.getValue() << std::endl;
     ss << "m_dir  ," << std::setw(9) << std::setprecision(4) << heading_direction_disturbance.getValue() << std::endl;
+    ss << "m_psd  ," << std::setw(9) << std::setprecision(4) << passing_speed_discomfort.getValue() << std::endl;
     file_results << ss.str();
     printf("Results CSV file saved at `%s`\r\n", filename.c_str());
 }

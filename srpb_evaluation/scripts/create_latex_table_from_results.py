@@ -88,7 +88,8 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
         'm_inp':  r"$m_{\mathrm{iprot}}$  \\ $\left[ \% \right]$",
         'm_psi':  r"$m_{\mathrm{psi}}$    \\ $\left[ \% \right]$",
         'm_fsi':  r"$m_{\mathrm{fsi}}$    \\ $\left[ \% \right]$",
-        'm_dir':  r"$m_{\mathrm{dir}}$    \\ $\left[ \% \right]$"
+        'm_dir':  r"$m_{\mathrm{dir}}$    \\ $\left[ \% \right]$",
+        'm_psd':  r"$m_{\mathrm{psd}}$    \\ $\left[ \% \right]$"
     }
 
     # retrieve names of planners assuming that all scenarios results have the same planner entries;
