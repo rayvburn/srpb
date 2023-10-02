@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
     <name>srpb_evaluation</name>
-    <version>0.9.4</version>
+    <version>0.9.5</version>
     <description>
 
         The srpb_evaluation package provides implementation of metrics that allow evaluation of robot behaviour during navigation
