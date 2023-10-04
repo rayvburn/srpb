@@ -5,6 +5,7 @@ Dependency:
 sudo apt install python3-openpyxl
 '''
 
+import excel_sheet_defines
 import json
 import sys
 
@@ -21,10 +22,10 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
     # NOTE: data_only allows to read values instead of formulas
     wb = load_workbook(filename = str(path), data_only=True)
     # access specific sheet
-    sheet = wb["Sheet"]
+    sheet = wb[excel_sheet_defines.SHEET_NAME]
     # upper left cell - cell that initiates results table
-    col_init = 'A'
-    row_init = '28'
+    col_init = excel_sheet_defines.RESULT_INIT_COL
+    row_init = excel_sheet_defines.RESULT_INIT_ROW
 
     col_metric_ids = col_init
 
