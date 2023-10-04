@@ -84,9 +84,11 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
 
     return data
 
-def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) -> str:
+# results: results of a specific scenarios aggregated into a single structure
+# metrics: names (keys) of metrics to include in the LaTeX table
+def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], metric_names: List[str]) -> str:
     # only keys from this map will be put into the LaTeX table; keys must match the ones used in the Excel sheet
-    metric_latex_map = {
+    METRIC_LATEX_MAP = {
         'm_obs':  r"$m_{\mathrm{obs}}$    \\ $\left[ \% \right]$",
         'm_mef':  r"$m_{\mathrm{mef}}$    \\ $\left[ \mathrm{s} \right]$",
         'm_path': r"$m_{\mathrm{plin}}$   \\ $\left[ \mathrm{m} \right]$",
@@ -103,6 +105,25 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
         'm_dir':  r"$m_{\mathrm{dir}}$    \\ $\left[ \% \right]$",
         'm_psd':  r"$m_{\mathrm{psd}}$    \\ $\left[ \% \right]$"
     }
+    # select metrics from the predefined set, i.e., METRIC_LATEX_MAP
+    metrics_map = {}
+    # by default, all metrics are included
+    if not len(metric_names):
+        metrics_map = METRIC_LATEX_MAP
+    else:
+        for name in metric_names:
+            if not name in METRIC_LATEX_MAP.keys():
+                raise Exception(
+                    f"Could not find {name} in the SRPB metrics map. Available metric names are: {METRIC_LATEX_MAP.keys()}"
+                )
+            metrics_map[name] = METRIC_LATEX_MAP[name]
+
+    if not len(metrics_map):
+        raise Exception(
+            f"Aborting further execution as no metrics were selected to include in the LaTeX table. "
+            f"See the script's usage instruction."
+        )
+    print(f"Selected `{len(metrics_map)}` metrics to include in the LaTeX table: `{metrics_map.keys()}`")
 
     # retrieve names of planners assuming that all scenarios results have the same planner entries;
     # choose from the first scenario
@@ -174,7 +195,7 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
     tex += (r"				% =============================== entries" + "\r\n")
 
     # iterate over metrics
-    for metric_id in metric_latex_map.keys():
+    for metric_id in metrics_map.keys():
         tex += (r"" + "\r\n")
         tex += (r"				\multirow" + "\r\n")
         # total number of scenarios
@@ -183,7 +204,7 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
         tex += (r"				{" + "\r\n")
         tex += (r"					\shortstack{" + "\r\n")
         # ID of the metric and its unit
-        tex += (r"						" + str(metric_latex_map[metric_id]) + "\r\n")
+        tex += (r"						" + str(metrics_map[metric_id]) + "\r\n")
         tex += (r"					}" + "\r\n")
         tex += (r"				}" + "\r\n")
         tex += (r"				% =========" + "\r\n")
@@ -249,16 +270,24 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
 ###########################
 if __name__ == "__main__":
     # command line arguments
-    if len(sys.argv) != 3:
+    if len(sys.argv) == 1:
         print(f'Usage: ')
-        print(f'  python3 {sys.argv[0]} <JSON string with scenario identifiers and paths to SRPB results sheets> <output .tex file path>')
+        print(
+              f'  python3 {sys.argv[0]}  '
+              f'<JSON string with scenario identifiers and paths to SRPB results sheets>  '
+              f'<path to the generated .tex file>  <space-separated list of metrics to include in the LaTeX table '
+              f'(all available are included by default)>'
+            )
         print(f'')
         print(f'Example:')
-        print(f'  python3 {sys.argv[0]} "{{"static": {{"sim": "path_static_sim", "real": "path_static_real"}}, "dynamic": {{"sim": "path_dynamic_sim", "real": "path_dynamic_real"}}}}" ~/table.tex')
+        print(f'  python3 {sys.argv[0]} "{{"static": {{"sim": "path_static_sim", "real": "path_static_real"}}, "dynamic": {{"sim": "path_dynamic_sim", "real": "path_dynamic_real"}}}}" ~/table.tex m_obs m_chc')
         exit(0)
 
     # location of the output file
     output_path = sys.argv[2]
+
+    # metrics to include in the table
+    metric_names = sys.argv[3:]
 
     # list of dicts {<name>, <path to excel>}
     inputs = []
@@ -278,8 +307,8 @@ if __name__ == "__main__":
         scenario_results = load_data_from_excel(input_file['path'])
         results_total.append({'name': input_file['name'], 'results': scenario_results})
 
-    # generates a string representing LaTeX command that can be
-    results_table = create_latex_table(results_total)
+    # generates a string representing LaTeX command that can be directly included and used in a LaTeX document
+    results_table = create_latex_table(results_total, metric_names)
 
     # save results to a file
     f = open(output_path, "w")
