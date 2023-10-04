@@ -147,6 +147,7 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
 
     # r forces to parse as raw string, ref: https://stackoverflow.com/a/46011113
     tex += (r"% Dependencies of the 'results' table" + "\r\n")
+    tex += (r"\usepackage{graphicx} % \rotatebox" + "\r\n")
     tex += (r"\usepackage{multirow}" + "\r\n")
     tex += (r"\usepackage{diagbox}" + "\r\n")
     tex += ("\r\n")
