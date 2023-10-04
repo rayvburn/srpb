@@ -335,3 +335,10 @@ output_path = Path(logs_dir).parent.absolute() / output_filename
 wb.save(str(output_path))
 
 print(f'Results saved in: {output_path}')
+print("")
+# When the sheet with the results is not opened and saved by the Excel or LibreOffice Calc, then reading a non-empty
+# cell will probably return None
+# Ref1: https://itecnote.com/tecnote/python-openpyxl-data_onlytrue-returning-none/
+# Ref2: https://groups.google.com/g/openpyxl-users/c/GbBOnOa8g7Y
+print(f'Consider opening the results file and saving it in Excel/LibreOffice Calc (without any modifications).')
+print(f'It will produce cached values based on formulas written (`openpyxl` library is not able to do so).')
