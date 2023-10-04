@@ -287,7 +287,14 @@ def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict,
 # command line arguments
 if len(sys.argv) == 1:
     print(f'Usage: ')
-    print(f'  {sys.argv[0]}  <path to the main directory with SRPB logs>  <(OPTIONAL) names of planners, must be part of corresponding filenames>')
+    print(f'')
+    print(f'  python3 {sys.argv[0]}  <path to the main directory with SRPB logs>  <(OPTIONAL) space-separated planner names>')
+    print(f'')
+    print(f'  1. The main directory with logs should store the log files grouped into separate directories, ')
+    print(f'     each containing a robot, people and group data.')
+    print(f'  2. In order to detect which planners to include into results sheet, each name of a planner ')
+    print(f'     must be a part of log filenames.')
+    print(f'')
     exit()
 
 logs_dir = str(sys.argv[1])
