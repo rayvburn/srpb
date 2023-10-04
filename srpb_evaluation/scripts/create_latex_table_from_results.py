@@ -139,6 +139,7 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
         raise Exception(
             f"Aborting further execution as no planners are found in the results. "
         )
+    print(f"Selected {planners_num} planners with names `{planner_names}` for `{scenarios_num}` scenarios")
 
     tex = str("")
 
