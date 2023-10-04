@@ -80,51 +80,28 @@ def collect_results_planners(dir_path: str, planner_name: List[str]) -> Dict:
 
 
 def prepare_sheet_rows(results_total: Dict) -> List[List]:
-    planners_row = []
-    trials_row = []
-    file_row = []
-    spls_robot_row = []
-    spls_ppl_row = []
-    spls_grp_row = []
-    m_goal_row = []
-    m_obs_row = []
-    m_eff_row = []
-    m_cef_row = []
-    m_cre_row = []
-    m_vsm_row = []
-    m_hsm_row = []
-    m_path_row = []
-    m_chc_row = []
-    m_osc_row = []
-    m_bwd_row = []
-    m_irot_row = []
-    m_psi_row = []
-    m_fsi_row = []
-    m_dir_row = []
-    m_psd_row = []
-
-    planners_row.append('Planner')
-    trials_row.append('Trial')
-    file_row.append('File')
-    spls_robot_row.append('Samples robot')
-    spls_ppl_row.append('Samples people')
-    spls_grp_row.append('Samples groups')
-    m_goal_row.append('m_goal')
-    m_obs_row.append('m_obs')
-    m_eff_row.append('m_eff')
-    m_cef_row.append('m_cef')
-    m_cre_row.append('m_cre')
-    m_vsm_row.append('m_vsm')
-    m_hsm_row.append('m_hsm')
-    m_path_row.append('m_path')
-    m_chc_row.append('m_chc')
-    m_osc_row.append('m_osc')
-    m_bwd_row.append('m_bwd')
-    m_irot_row.append('m_irot')
-    m_psi_row.append('m_psi')
-    m_fsi_row.append('m_fsi')
-    m_dir_row.append('m_dir')
-    m_psd_row.append('m_psd')
+    planners_row = ['Planner']
+    trials_row = ['Trial']
+    file_row = ['File']
+    spls_robot_row = ['Samples robot']
+    spls_ppl_row = ['Samples people']
+    spls_grp_row = ['Samples groups']
+    m_goal_row = ['m_goal']
+    m_obs_row = ['m_obs']
+    m_eff_row = ['m_eff']
+    m_cef_row = ['m_cef']
+    m_cre_row = ['m_cre']
+    m_vsm_row = ['m_vsm']
+    m_hsm_row = ['m_hsm']
+    m_path_row = ['m_path']
+    m_chc_row = ['m_chc']
+    m_osc_row = ['m_osc']
+    m_bwd_row = ['m_bwd']
+    m_irot_row = ['m_irot']
+    m_psi_row = ['m_psi']
+    m_fsi_row = ['m_fsi']
+    m_dir_row = ['m_dir']
+    m_psd_row = ['m_psd']
 
     # iterate over keys
     for planner_key in results_total:
