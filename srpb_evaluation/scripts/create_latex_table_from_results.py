@@ -54,8 +54,20 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
         metric_names = []
         metric_values = []
         while not sheet_cell_empty(sheet=sheet, row=row_iter, col=col_metric_ids):
-            metric_names.append(str(get_sheet_val(sheet=sheet, row=row_iter, col=col_metric_ids)))
-            metric_values.append(float(get_sheet_val(sheet=sheet, row=row_iter, col=col_iter)))
+            # obtain sheet values
+            metric_name = get_sheet_val(sheet=sheet, row=row_iter, col=col_metric_ids)
+            metric_value = get_sheet_val(sheet=sheet, row=row_iter, col=col_iter)
+            # evaluate the correctness of read data
+            if metric_name == None or metric_value == None:
+                raise Exception(
+                    f"The metric ID cell `{col_metric_ids}{row_iter}` contains `{metric_name}` "
+                    f"and the metric value cell `{col_iter}{row_iter}` contains `{metric_value}`. "
+                    f"Cannot proceed with such values. Check whether the cells in your spreadsheet are empty. "
+                    f"If they aren't, try to open the sheet and simply save it using Excel or LibreOffice Calc."
+                )
+            # collect
+            metric_names.append(str(metric_name))
+            metric_values.append(float(metric_value))
             # try to proceed to the next metric
             row_iter = increment_row(row_iter)
 
@@ -99,6 +111,12 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
     planners_num = len(planner_names)
     # retrieve number of evaluated scenarios
     scenarios_num = len(results)
+
+    # evaluate whether valid data are available
+    if not len(planner_names) or not planners_num:
+        raise Exception(
+            f"Aborting further execution as no planners are found in the results. "
+        )
 
     tex = str("")
 
