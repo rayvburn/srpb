@@ -90,21 +90,21 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
 def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], metric_names: List[str]) -> str:
     # only keys from this map will be put into the LaTeX table; keys must match the ones used in the Excel sheet
     METRIC_LATEX_MAP = {
-        'm_obs':  r"$m_{\mathrm{obs}}$    \\ $\left[ \% \right]$",
-        'm_mef':  r"$m_{\mathrm{mef}}$    \\ $\left[ \mathrm{s} \right]$",
-        'm_path': r"$m_{\mathrm{plin}}$   \\ $\left[ \mathrm{m} \right]$",
-        'm_chc':  r"$m_{\mathrm{chc}}$    \\ $\left[ \mathrm{rad} \right]$",
-        'm_cef':  r"$m_{\mathrm{cef}}$    \\ $\left[ 10^{-3} \cdot \mathrm{s} \right]$",
-        'm_cre':  r"$m_{\mathrm{cre}}$    \\ $\left[ 10^{-3} \cdot \mathrm{s} \right]$",
-        'm_vsm':  r"$m_{\mathrm{vsm}}$    \\ $\left[ \mathrm{\frac{m}{s^2}} \right]$",
-        'm_hsm':  r"$m_{\mathrm{hsm}}$    \\ $\left[ \mathrm{\frac{rad}{s^2}} \right]$",
-        'm_osc':  r"$m_{\mathrm{osc}}$    \\ $\left[ \% \right]$",
-        'm_bwd':  r"$m_{\mathrm{bwd}}$    \\ $\left[ \% \right]$",
-        'm_inp':  r"$m_{\mathrm{iprot}}$  \\ $\left[ \% \right]$",
-        'm_psi':  r"$m_{\mathrm{psi}}$    \\ $\left[ \% \right]$",
-        'm_fsi':  r"$m_{\mathrm{fsi}}$    \\ $\left[ \% \right]$",
-        'm_dir':  r"$m_{\mathrm{dir}}$    \\ $\left[ \% \right]$",
-        'm_psd':  r"$m_{\mathrm{psd}}$    \\ $\left[ \% \right]$"
+        'm_obs':  {'name': r"$m_{\mathrm{obs}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_mef':  {'name': r"$m_{\mathrm{mef}}$",   'unit': r"$\left[ \mathrm{s} \right]$"},
+        'm_path': {'name': r"$m_{\mathrm{plin}}$",  'unit': r"$\left[ \mathrm{m} \right]$"},
+        'm_chc':  {'name': r"$m_{\mathrm{chc}}$",   'unit': r"$\left[ \mathrm{rad} \right]$"},
+        'm_cef':  {'name': r"$m_{\mathrm{cef}}$",   'unit': r"$\left[ 10^{-3} \cdot \mathrm{s} \right]$"},
+        'm_cre':  {'name': r"$m_{\mathrm{cre}}$",   'unit': r"$\left[ 10^{-3} \cdot \mathrm{s} \right]$"},
+        'm_vsm':  {'name': r"$m_{\mathrm{vsm}}$",   'unit': r"$\left[ \mathrm{\frac{m}{s^2}} \right]$"},
+        'm_hsm':  {'name': r"$m_{\mathrm{hsm}}$",   'unit': r"$\left[ \mathrm{\frac{rad}{s^2}} \right]$"},
+        'm_osc':  {'name': r"$m_{\mathrm{osc}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_bwd':  {'name': r"$m_{\mathrm{bwd}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_inp':  {'name': r"$m_{\mathrm{iprot}}$", 'unit': r"$\left[ \% \right]$"},
+        'm_psi':  {'name': r"$m_{\mathrm{psi}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_fsi':  {'name': r"$m_{\mathrm{fsi}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_dir':  {'name': r"$m_{\mathrm{dir}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_psd':  {'name': r"$m_{\mathrm{psd}}$",   'unit': r"$\left[ \% \right]$"}
     }
     # select metrics from the predefined set, i.e., METRIC_LATEX_MAP
     metrics_map = {}
@@ -206,7 +206,12 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
         tex += (r"				{" + "\r\n")
         tex += (r"					\shortstack{" + "\r\n")
         # ID of the metric and its unit
-        tex += (r"						" + str(metrics_map[metric_id]) + "\r\n")
+        # whether to put the unit in a new line or not (when there are too few rows)
+        if scenarios_num > 2:
+            metric_name_and_unit = f"{metrics_map[metric_id]['name']} \\ {metrics_map[metric_id]['unit']}"
+        else:
+            metric_name_and_unit = f"{metrics_map[metric_id]['name']} {metrics_map[metric_id]['unit']}"
+        tex += (r"						" + str(metric_name_and_unit) + "\r\n")
         tex += (r"					}" + "\r\n")
         tex += (r"				}" + "\r\n")
         tex += (r"				% =========" + "\r\n")
