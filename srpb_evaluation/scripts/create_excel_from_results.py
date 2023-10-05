@@ -10,6 +10,7 @@ sudo apt install python3-openpyxl
 import csv
 import excel_sheet_defines
 import glob
+import re
 import sys
 
 from string import ascii_uppercase
@@ -25,8 +26,17 @@ def get_log_dirs_planner(dir_path: str, planner_name: str, min_logs=3):
     dirnames = dirnames_underscore
     dirnames.extend(dirnames_dash)
     if len(dirnames) < min_logs:
-        exit(f'Too few data entries for {planner_name} planner. Got: \r\n{dirnames}')
-    return dirnames
+        exit(f'Too few data entries for {planner_name} planner. Got {len(dirnames)}/{min_logs}: \r\n{dirnames}')
+
+    # got rid of the dirs that are marked to be ignored
+    dirnames_valid = []
+    for dirname in dirnames:
+        if re.search('ignore', dirname, re.IGNORECASE):
+            print(f'Ignoring a directory `{dirname}` from including to the overall `{planner_name}` planner results')
+            continue
+        dirnames_valid.append(dirname)
+
+    return dirnames_valid
 
 
 def get_log_result_files(log_dirs: str):
@@ -34,9 +44,11 @@ def get_log_result_files(log_dirs: str):
     for log_dir in log_dirs:
         results_file = glob.glob(log_dir + '/' + '*results.txt*')
         if len(results_file) == 0:
-            exit(f'Lack of results file at {log_dir}')
+            print(f'Lack of results file at `{log_dir}` dir, skipping')
+            continue
         elif len(results_file) > 1:
-            exit(f'Multiple results files at {log_dir}')
+            print(f'Multiple results files at `{log_dir}` dir, skipping')
+            continue
         result_files.append(results_file[0])
     return result_files
 
@@ -53,10 +65,17 @@ def read_results_file(results_file: str):
         for row in csv_result:
             key = str(row[0]).lstrip().rstrip()
             value_str = str(row[1])
-            if value_str.find('.') != -1:
-                value = float(value_str)
-            else:
-                value = int(value_str)
+            try:
+                if 'nan' in value_str:
+                    value = None
+                    print(f"NaN value detected for the key `{key}` in the results file `{results_file}`")
+                elif value_str.find('.') != -1:
+                    value = float(value_str)
+                else:
+                    value = int(value_str)
+            except ValueError:
+                print(f"Cannot convert a value `{value_str}` of a key `{key}` to a numeric, skipping `{results_file}`")
+                return {}
             dict[key] = value
         return dict
 
@@ -168,14 +187,21 @@ def cell_coords_to_sheet_cell_id(row: int, col: int):
             found_col = True
             break
         it_col = it_col + 1
-    # repeat once again if required (doubling letters)
+    # repeat once again if required (doubling letters) - columns A - ZZ cover a sufficient number of cases
     if not found_col:
-        for c in ascii_uppercase:
-            if it_col == col_w_offset:
-                cell_col = 'A' + str(c)
-                found_col = True
+        # first letter of the cell address
+        for first in ascii_uppercase:
+            # second letter of the cell address
+            for second in ascii_uppercase:
+                # print(f'[cell_coords_to_sheet_cell_id] row {row}, col {col}, cell row {cell_row} | it col {it_col}, ADDR `{first}{second}`')
+                if it_col == col_w_offset:
+                    cell_col = str(first) + str(second)
+                    found_col = True
+                    break
+                it_col = it_col + 1
+            # break the outer loop if possible
+            if found_col:
                 break
-            it_col = it_col + 1
     if not found_col:
         exit(f"Could not find a valid column ID for ({row}, {col}) configuration")
 
@@ -205,9 +231,17 @@ def get_sheet_datacell(planner: str, trial: int, result_key: str, results_total:
 
     # counting rows from the start - exemplary key to iterate through metrics
     metric_counter = 0
-    results_example = results_total[planner][0]
+    try:
+        results_example = results_total[planner][0]
+    except IndexError:
+        print(
+            f'The planner `{planner}` does not seem to contain any keys with metric names. '
+            f'Got `{results_total[planner]}` while searching for the metric `{result_key}` for the trial `{trial}`'
+        )
+        return None
+
     if not result_key in results_example.keys():
-        exit(f'Cannot proceed as results do not contain that key: {result_key}. Available keys: {results_example.keys()}')
+        exit(f'Cannot proceed as results do not contain that key: `{result_key}`. Available keys: `{results_example.keys()}`')
 
     found = False
     for key in results_example:
@@ -251,6 +285,8 @@ def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict,
             planner_trial_last_id = planner_trials - 1
             cell_begin = get_sheet_datacell(planner, 0, metric, results)
             cell_end = get_sheet_datacell(planner, planner_trial_last_id, metric, results)
+            if cell_begin == None or cell_end == None:
+                continue
             # fill spreadsheet
             ws[col_header  + str(row_metric_start + m_index)] = metric
             ws[col_planner + str(row_start)] = planner
@@ -307,7 +343,7 @@ for row in rows:
 calculate_sheet(ws, planners, results, 'MEDIAN')
 
 # Prepare name of the output file
-output_filename = 'results'
+output_filename = 'results' + '_' + Path(logs_dir).name
 for planner in planners:
     output_filename = output_filename + '_' + planner
 output_filename = output_filename.rstrip('_') + '.xlsx'
@@ -322,5 +358,6 @@ print("")
 # cell will probably return None
 # Ref1: https://itecnote.com/tecnote/python-openpyxl-data_onlytrue-returning-none/
 # Ref2: https://groups.google.com/g/openpyxl-users/c/GbBOnOa8g7Y
-print(f'Consider opening the results file and saving it in Excel/LibreOffice Calc (without any modifications).')
+print(f'Consider opening the results file and saving it with Excel/LibreOffice Calc (without any modifications).')
 print(f'It will produce cached values based on formulas written (`openpyxl` library is not able to do so).')
+print(f'This is a necessary step when one wants to use the script that creates a LaTeX table from a spreadsheet')
