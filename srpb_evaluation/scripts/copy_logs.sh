@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copies newest log files (robot/people/groups) from the one directory to the directory given by argument.
+# Copies newest log files (robot/people/groups/gplanner) from the one directory to the directory given by argument.
 #
 # Usage looks like:
 #
@@ -8,7 +8,7 @@
 #
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     echo "Wrong usage. Script args:"
-    echo "  (1) [required] path to the source directory with logs ('*_robot.txt', '*_people.txt', and '*_groups.txt')"
+    echo "  (1) [required] path to the source directory with logs ('*_robot.txt', '*_people.txt', '*_groups.txt', and '*_gplanner.txt')"
     echo "  (2) [required] path to the target directory with copied logs; relative paths will be considered as relative to the source directory"
     exit 0
 fi
@@ -31,11 +31,13 @@ fi
 newest_robot=$(ls -t $logs_dir/log_*_robot.txt | head -1)
 newest_people=$(ls -t $logs_dir/log_*_people.txt | head -1)
 newest_groups=$(ls -t $logs_dir/log_*_groups.txt | head -1)
+newest_gplanner=$(ls -t $logs_dir/log_*_gplanner.txt | head -1)
 
 # Extract the timestamp from the selected file (note that they may differ slightly)
 timestamp_robot=$(echo "$newest_robot" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}')
 timestamp_people=$(echo "$newest_people" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}')
 timestamp_groups=$(echo "$newest_groups" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}')
+timestamp_gplanner=$(echo "$newest_gplanner" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}')
 
 # Indicates whether logs for a certain session consists of multiple parts
 max_part='1'
@@ -60,6 +62,7 @@ done < <(find "$logs_dir" -maxdepth 1 -type f \
         -name "log_*_${timestamp_robot}_*.txt" \
         -o -name "log_*_${timestamp_people}_*.txt" \
         -o -name "log_*_${timestamp_groups}_*.txt" \
+        -o -name "log_*_${timestamp_gplanner}_*.txt" \
     \) \
     -print0 \
 )

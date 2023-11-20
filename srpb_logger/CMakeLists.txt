@@ -36,8 +36,10 @@ add_library(${PROJECT_NAME}_lib
   include/${PROJECT_NAME}/people_logger.h
   include/${PROJECT_NAME}/robot_data.h
   include/${PROJECT_NAME}/robot_logger.h
+  include/${PROJECT_NAME}/global_planner_logger.h
   src/people_logger.cpp
   src/robot_logger.cpp
+  src/global_planner_logger.cpp
 )
 target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
@@ -62,5 +64,10 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_people_logger test/test_people_logger.cpp)
   if(TARGET test_people_logger)
     target_link_libraries(test_people_logger ${PROJECT_NAME}_lib)
+  endif()
+
+  catkin_add_gtest(test_global_planner_logger test/test_global_planner_logger.cpp)
+  if(TARGET test_global_planner_logger)
+    target_link_libraries(test_global_planner_logger ${PROJECT_NAME}_lib)
   endif()
 endif()

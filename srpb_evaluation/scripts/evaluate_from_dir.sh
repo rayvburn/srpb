@@ -33,12 +33,14 @@ fi
 newest_robot=$(ls -t $logs_dir/log_*_robot*.txt | grep -v "results" | head -1)
 newest_people=$(ls -t $logs_dir/log_*_people*.txt | grep -v "results" | head -1)
 newest_groups=$(ls -t $logs_dir/log_*_groups*.txt | grep -v "results" | head -1)
+newest_gplanner=$(ls -t $logs_dir/log_*_gplanner*.txt | grep -v "results" | head -1)
 
 echo "Evaluating:"
 echo ""
 echo "robot  data: $newest_robot"
 echo "people data: $newest_people"
 echo "groups data: $newest_groups"
+echo "global planner data: $newest_gplanner"
 echo ""
 
 rosrun srpb_evaluation srpb_evaluation $newest_robot $newest_people $newest_groups $safety_dist
