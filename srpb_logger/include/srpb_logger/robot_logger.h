@@ -8,6 +8,7 @@
 // helper functions
 #include <people_msgs_utils/utils.h>
 
+#include <atomic>
 #include <mutex>
 #include <utility>
 
@@ -24,6 +25,16 @@ public:
     void init(ros::NodeHandle& nh);
 
     void start();
+
+    /**
+     * Should be called before @ref update when a significant timing offset is expected (see details)
+     *
+     * The timing offset is related to the the duration between the "timestamp" passed to the @ref update and
+     * the actual timestamp of the localization data that are updated asynchronously and stored as class members.
+     *
+     * Each "latch" should be renewed after every @ref update call.
+     */
+    void latch();
 
     /// Performs writes to files that this class handles, most recent robot data is used
     void update(double timestamp, const RobotData& robot);
@@ -44,6 +55,8 @@ protected:
     std::mutex cb_mutex_;
     ros::Subscriber localization_sub_;
 
+    /// When this flag is true, any incoming updates of robot pose and velocity will not be accepted
+    std::atomic<bool> latched_;
     /// Newest pose with covariance of the robot (expressed in coordinate system given by 'target_frame_')
     geometry_msgs::PoseWithCovariance robot_pose_;
     /// Newest velocity with covariance of the robot (expressed in local coordinate system)

@@ -12,6 +12,8 @@ void RobotLogger::init(ros::NodeHandle& nh) {
     BenchmarkLogger::init(nh);
     log_filename_ = BenchmarkLogger::appendToFilename(log_filename_, "robot");
 
+    // by default, latching is disabled = async updates are allowed
+    latched_.store(false);
     localization_sub_ = nh.subscribe<nav_msgs::Odometry>(
         "/odom",
         1,
@@ -55,11 +57,18 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
         );
     }
 
+    // (enable the asynchronous updates of pose and velocity
+    latched_.store(false);
+
     std::stringstream ss;
     ss.setf(std::ios::fixed);
     ss << std::setw(9) << std::setprecision(4) << timestamp << " ";
     ss << RobotLogger::robotToString(robot_data) << std::endl;
     log_file_ << ss.str();
+}
+
+void RobotLogger::latch() {
+    latched_.store(true);
 }
 
 void RobotLogger::finish() {
@@ -166,6 +175,11 @@ std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) 
 }
 
 void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {
+    // check if any updates should be accepted
+    if (latched_.load()) {
+        return;
+    }
+
     std::lock_guard<std::mutex> l(cb_mutex_);
     // pose should be transformed to the logger's frame
     robot_pose_ = transformPose(msg->pose, msg->header.frame_id).pose;
