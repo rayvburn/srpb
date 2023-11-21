@@ -43,4 +43,4 @@ echo "groups data: $newest_groups"
 echo "global planner data: $newest_gplanner"
 echo ""
 
-rosrun srpb_evaluation srpb_evaluation $newest_robot $newest_people $newest_groups $safety_dist
+rosrun srpb_evaluation srpb_evaluation $newest_robot $newest_people $newest_groups $newest_gplanner $safety_dist

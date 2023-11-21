@@ -1,6 +1,7 @@
 #include <angles/angles.h>
 #include <srpb_logger/robot_logger.h>
 #include <srpb_logger/people_logger.h>
+#include <srpb_logger/global_planner_logger.h>
 
 #include "srpb_evaluation/utils.h"
 
@@ -8,12 +9,13 @@ using namespace srpb::logger;
 using namespace srpb::evaluation;
 
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
+  if (argc != 6) {
     printf(
       "Please input\r\n"
       "\t* the path to the log file of the robot\r\n"
       "\t* the path to the log file of the people\r\n"
       "\t* the path to the log file of the people groups\r\n"
+      "\t* the path to the log file of the global planner\r\n"
       "\t* and value of the safety distance [m].\r\n"
     );
     return 1;
@@ -22,7 +24,8 @@ int main(int argc, char* argv[]) {
   auto file_robot = std::string(argv[1]);
   auto file_people = std::string(argv[2]);
   auto file_groups = std::string(argv[3]);
-  auto safety_distance = std::atof(argv[4]);
+  auto file_gplanner = std::string(argv[4]);
+  auto safety_distance = std::atof(argv[5]);
 
   // goal reached values
   double goal_tolerance_xy = 0.2;
@@ -58,6 +61,7 @@ int main(int argc, char* argv[]) {
   auto timed_robot_data = parseFile<RobotData>(file_robot, &RobotLogger::robotFromString);
   auto timed_people_data = parseFile<people_msgs_utils::Person>(file_people, &PeopleLogger::personFromString);
   auto timed_groups_data = parseFile<people_msgs_utils::Group>(file_groups, &PeopleLogger::groupFromString);
+  auto timed_gplanner_data = parseFile<GlobalPlannerData>(file_gplanner, &GlobalPlannerLogger::plannerFromString);
   // since Person and Group are logged in separation, so by default Group does not contain members, only their IDs
   timed_groups_data = fillGroupsWithMembers(timed_groups_data, timed_people_data);
 
