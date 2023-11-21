@@ -29,9 +29,10 @@ if [ "$#" -eq 2 ]; then
 fi
 
 # https://stackoverflow.com/a/54910963
-newest_robot=$(ls -t $logs_dir/log_*_robot.txt | head -1)
-newest_people=$(ls -t $logs_dir/log_*_people.txt | head -1)
-newest_groups=$(ls -t $logs_dir/log_*_groups.txt | head -1)
+# exclude results file(s)
+newest_robot=$(ls -t $logs_dir/log_*_robot*.txt | grep -v "results" | head -1)
+newest_people=$(ls -t $logs_dir/log_*_people*.txt | grep -v "results" | head -1)
+newest_groups=$(ls -t $logs_dir/log_*_groups*.txt | grep -v "results" | head -1)
 
 echo "Evaluating:"
 echo ""
