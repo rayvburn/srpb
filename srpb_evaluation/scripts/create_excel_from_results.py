@@ -107,7 +107,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
     spls_grp_row = ['Samples groups']
     m_goal_row = ['m_goal']
     m_obs_row = ['m_obs']
-    m_eff_row = ['m_eff']
+    m_mef_row = ['m_mef']
     m_cef_row = ['m_cef']
     m_cre_row = ['m_cre']
     m_vsm_row = ['m_vsm']
@@ -133,7 +133,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
             spls_grp_row.append(result['s_grp'])
             m_goal_row.append(result['m_goal'])
             m_obs_row.append(result['m_obs'])
-            m_eff_row.append(result['m_mef'])
+            m_mef_row.append(result['m_mef'])
             m_cef_row.append(result['m_cef'])
             m_cre_row.append(result['m_cre'])
             m_vsm_row.append(result['m_vsm'])
@@ -157,7 +157,7 @@ def prepare_sheet_rows(results_total: Dict) -> List[List]:
         spls_grp_row,
         m_goal_row,
         m_obs_row,
-        m_eff_row,
+        m_mef_row,
         m_cef_row,
         m_cre_row,
         m_vsm_row,
