@@ -69,6 +69,7 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
             robot_pose_,
             robot_vel_,
             robot.getGoal(),
+            robot.getVelocityCommand(),
             robot.getDistToObstacle(),
             robot.getLocalPlanningTime()
         );
@@ -79,6 +80,7 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
             robot_data.getPoseWithCovariance(),
             robot_data.getVelocityWithCovariance(),
             robot_data.getGoal(),
+            robot_data.getVelocityCommand(),
             robot_data.getDistToObstacle(),
             external_comp_time_.load()
         );
@@ -126,20 +128,24 @@ std::string RobotLogger::robotToString(const RobotData& robot) {
     /* 18 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalPositionX() << " ";
     /* 19 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalPositionY() << " ";
     /* 20 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalOrientationYaw() << " ";
-    /* 21 */ ss << std::setw(9) << std::setprecision(4) << robot.getDistToObstacle() << " ";
-    /* 22 */ ss << std::setw(9) << std::setprecision(4) << robot.getLocalPlanningTime();
+    /* 21 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityCommandLinearX() << " ";
+    /* 22 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityCommandLinearY() << " ";
+    /* 23 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityCommandAngularZ() << " ";
+    /* 24 */ ss << std::setw(9) << std::setprecision(4) << robot.getDistToObstacle() << " ";
+    /* 25 */ ss << std::setw(9) << std::setprecision(4) << robot.getLocalPlanningTime();
     return ss.str();
 }
 
 std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) {
     auto vals = people_msgs_utils::parseString<double>(str, " ");
-    if (vals.size() != 23) {
+    if (vals.size() != 26) {
         std::cout << "\x1B[31mFound corrupted data of a robot:\r\n\t" << str << "\x1B[0m" << std::endl;
         // dummy robot data
         auto dummy_robot = RobotData(
             geometry_msgs::PoseWithCovariance(),
             geometry_msgs::PoseWithCovariance(),
             geometry_msgs::Pose(),
+            geometry_msgs::Twist(),
             0.0,
             0.0
         );
@@ -194,10 +200,15 @@ std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) 
     goal.orientation.z = quat.getZ();
     goal.orientation.w = quat.getW();
 
-    double obst_dist = vals.at(21);
-    double exec_time = vals.at(22);
+    geometry_msgs::Twist cmd_vel;
+    cmd_vel.linear.x = vals.at(21);
+    cmd_vel.linear.y = vals.at(22);
+    cmd_vel.angular.z = vals.at(23);
 
-    auto robot = RobotData(pose, vel, goal, obst_dist, exec_time);
+    double obst_dist = vals.at(24);
+    double exec_time = vals.at(25);
+
+    auto robot = RobotData(pose, vel, goal, cmd_vel, obst_dist, exec_time);
     return {true, robot};
 }
 
