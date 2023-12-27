@@ -21,9 +21,9 @@ class BenchmarkLogger {
 public:
     virtual void init(ros::NodeHandle& nh) {
         //path to save the recorded data
-        nh.param("log_filename", log_filename_, std::string("log.txt"));
+        nh.param("srpb/log_filename", log_filename_, std::string("log.txt"));
         // ID of the frame that poses will be expressed in
-        nh.param("log_frame_id", target_frame_, target_frame_);
+        nh.param("srpb/log_frame_id", target_frame_, target_frame_);
         // append the timestamp to filename
         log_filename_ = BenchmarkLogger::appendToFilename(log_filename_, BenchmarkLogger::timeToString());
     }
