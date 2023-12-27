@@ -5,6 +5,7 @@ find_package(catkin REQUIRED
     COMPONENTS
         cmake_modules
         roscpp
+        std_msgs
         geometry_msgs
         people_msgs
         people_msgs_utils
@@ -19,6 +20,7 @@ catkin_package(
         ${PROJECT_NAME}_lib
     CATKIN_DEPENDS
         roscpp
+        std_msgs
         geometry_msgs
         people_msgs
         people_msgs_utils

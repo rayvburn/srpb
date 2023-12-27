@@ -4,6 +4,7 @@
 #include "robot_data.h"
 
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/Float64MultiArray.h>
 
 // helper functions
 #include <people_msgs_utils/utils.h>
@@ -50,10 +51,14 @@ public:
 protected:
     void localizationCB(const nav_msgs::OdometryConstPtr& msg);
 
+    void externalComputationTimesCB(const std_msgs::Float64MultiArrayConstPtr& msg);
+
     std::fstream log_file_;
 
     std::mutex cb_mutex_;
     ros::Subscriber localization_sub_;
+    /// Subscriber that is valid once the given topic param is non-empty
+    ros::Subscriber external_comp_times_sub_;
 
     /// When this flag is true, any incoming updates of robot pose and velocity will not be accepted
     std::atomic<bool> latched_;
@@ -61,6 +66,11 @@ protected:
     geometry_msgs::PoseWithCovariance robot_pose_;
     /// Newest velocity with covariance of the robot (expressed in local coordinate system)
     geometry_msgs::PoseWithCovariance robot_vel_;
+
+    /// Data index of the multi-dimension array that a computation time is stored under
+    size_t external_comp_time_array_index_;
+    /// Stores the newest value of the computation time obtained via the @ref external_comp_times_sub_ subscriber
+    std::atomic<double> external_comp_time_;
 };
 
 } // namespace logger

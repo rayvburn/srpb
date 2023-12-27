@@ -19,6 +19,23 @@ void RobotLogger::init(ros::NodeHandle& nh) {
         1,
         boost::bind(&RobotLogger::localizationCB, this, _1)
     );
+
+    // obtain the name of the topic to retrieve the computation times of the external local planner (not a navstack
+    // plugin); if empty, computation times obtained via the @ref update call will be used (default)
+    external_comp_time_.store(NAN);
+    std::string computation_time_topic("");
+    int computation_time_array_idx = -1;
+    nh.param("srpb/external_computation_times_topic", computation_time_topic, computation_time_topic);
+    nh.param("srpb/external_computation_times_array_index", computation_time_array_idx, computation_time_array_idx);
+
+    if (!computation_time_topic.empty() && computation_time_array_idx >= 0) {
+        external_comp_time_array_index_ = static_cast<size_t>(computation_time_array_idx);
+        external_comp_times_sub_ = nh.subscribe<std_msgs::Float64MultiArray>(
+            computation_time_topic,
+            10,
+            boost::bind(&RobotLogger::externalComputationTimesCB, this, _1)
+        );
+    }
 }
 
 void RobotLogger::start() {
@@ -54,6 +71,16 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
             robot.getGoal(),
             robot.getDistToObstacle(),
             robot.getLocalPlanningTime()
+        );
+    }
+    // modify local planning time, if required and valid data was received
+    if (!std::isnan(external_comp_time_.load())) {
+        robot_data = RobotData(
+            robot_data.getPoseWithCovariance(),
+            robot_data.getVelocityWithCovariance(),
+            robot_data.getGoal(),
+            robot_data.getDistToObstacle(),
+            external_comp_time_.load()
         );
     }
 
@@ -199,6 +226,23 @@ void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {
     vel.covariance = msg->twist.covariance;
     // save velocity
     robot_vel_ = vel;
+}
+
+void RobotLogger::externalComputationTimesCB(const std_msgs::Float64MultiArrayConstPtr& msg) {
+    size_t required_elems = external_comp_time_array_index_ + 1;
+    // verify that sufficient number of elements is available
+    if (msg->data.size() < required_elems) {
+        std::cout <<
+            "\x1B[31m" <<
+            "[ SRPB] RobotLogger did not receive a proper multi array at the " <<
+            "`" << external_comp_times_sub_.getTopic().c_str() << "` topic. " <<
+            "Got " << msg->data.size() << " data elements, whereas at least " <<
+            required_elems << " are required" <<
+            "\x1B[0m" <<
+        std::endl;
+        return;
+    }
+    external_comp_time_.store(static_cast<double>(msg->data.at(external_comp_time_array_index_)));
 }
 
 } // namespace srpb
