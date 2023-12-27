@@ -101,77 +101,34 @@ def collect_results_planners(dir_path: str, planner_name: List[str]) -> Dict:
 def prepare_sheet_rows(results_total: Dict) -> List[List]:
     planners_row = ['Planner']
     trials_row = ['Trial']
-    file_row = ['File']
-    spls_robot_row = ['Samples robot']
-    spls_ppl_row = ['Samples people']
-    spls_grp_row = ['Samples groups']
-    m_goal_row = ['m_goal']
-    m_obs_row = ['m_obs']
-    m_mef_row = ['m_mef']
-    m_cef_row = ['m_cef']
-    m_cre_row = ['m_cre']
-    m_vsm_row = ['m_vsm']
-    m_hsm_row = ['m_hsm']
-    m_path_row = ['m_path']
-    m_chc_row = ['m_chc']
-    m_osc_row = ['m_osc']
-    m_bwd_row = ['m_bwd']
-    m_irot_row = ['m_irot']
-    m_psi_row = ['m_psi']
-    m_fsi_row = ['m_fsi']
-    m_dir_row = ['m_dir']
-    m_psd_row = ['m_psd']
+
+    # Dict[str, List]
+    rows_dict = {}
 
     # iterate over keys
     for planner_key in results_total:
         for i, result in enumerate(results_total[planner_key]):
             planners_row.append(planner_key)
             trials_row.append(i + 1)
-            file_row.append(result['file'])
-            spls_robot_row.append(result['s_rbt'])
-            spls_ppl_row.append(result['s_ppl'])
-            spls_grp_row.append(result['s_grp'])
-            m_goal_row.append(result['m_goal'])
-            m_obs_row.append(result['m_obs'])
-            m_mef_row.append(result['m_mef'])
-            m_cef_row.append(result['m_cef'])
-            m_cre_row.append(result['m_cre'])
-            m_vsm_row.append(result['m_vsm'])
-            m_hsm_row.append(result['m_hsm'])
-            m_path_row.append(result['m_path'])
-            m_chc_row.append(result['m_chc'])
-            m_osc_row.append(result['m_osc'])
-            m_bwd_row.append(result['m_bwd'])
-            m_irot_row.append(result['m_inp'])
-            m_psi_row.append(result['m_psi'])
-            m_fsi_row.append(result['m_fsi'])
-            m_dir_row.append(result['m_dir'])
-            m_psd_row.append(result['m_psd'])
+            # `result` is a dict with:
+            # - keys indicating individual metric names for the planner `planner_key`
+            # - values - corresponding values
+            for i, metric_key in enumerate(result.keys()):
+                if not metric_key in rows_dict.keys():
+                    # start with metric name, append the result in the first iteration (sheet's row)
+                    rows_dict[str(metric_key)] = [metric_key, result[metric_key]]
+                else:
+                    # continue with appending to an initialized list
+                    rows_dict[str(metric_key)].append(result[metric_key])
 
-    return [
-        planners_row,
-        trials_row,
-        file_row,
-        spls_robot_row,
-        spls_ppl_row,
-        spls_grp_row,
-        m_goal_row,
-        m_obs_row,
-        m_mef_row,
-        m_cef_row,
-        m_cre_row,
-        m_vsm_row,
-        m_hsm_row,
-        m_path_row,
-        m_chc_row,
-        m_osc_row,
-        m_bwd_row,
-        m_irot_row,
-        m_psi_row,
-        m_fsi_row,
-        m_dir_row,
-        m_psd_row
-    ]
+    # 2 special rows are prepared separately
+    metrics_rows = [planners_row, trials_row]
+    # metric-related rows are dicts - key is the metric ID, value is the list with the metric ID and values for
+    # subsequent trials; the loop below extracts the lists
+    for row_key in rows_dict.keys():
+        metrics_rows.append(rows_dict[row_key])
+    return metrics_rows
+
 
 def cell_coords_to_sheet_cell_id(row: int, col: int):
     row_w_offset = row + 1 + 2
