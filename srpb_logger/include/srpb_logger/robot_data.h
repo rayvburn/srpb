@@ -73,6 +73,10 @@ public:
         vel_ = pose_;
     }
 
+    inline geometry_msgs::PoseWithCovariance getPoseWithCovariance() const {
+        return pose_;
+    }
+
     inline geometry_msgs::Pose getPose() const {
         return pose_.pose;
     }
@@ -126,6 +130,10 @@ public:
 
     inline double getCovariancePoseYawYaw() const {
         return pose_.covariance.at(COV_YAWYAW_INDEX);
+    }
+
+    inline geometry_msgs::PoseWithCovariance getVelocityWithCovariance() const {
+        return vel_;
     }
 
     inline geometry_msgs::Pose getVelocity() const {
