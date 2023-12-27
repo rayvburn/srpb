@@ -10,6 +10,7 @@ const logger::RobotData DUMMY_ROBOT(
     geometry_msgs::PoseWithCovarianceStamped(),
     geometry_msgs::PoseWithCovarianceStamped(),
     geometry_msgs::PoseStamped(),
+    geometry_msgs::TwistStamped(),
     0.5,
     0.1
 );
