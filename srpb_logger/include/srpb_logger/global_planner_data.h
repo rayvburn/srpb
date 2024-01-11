@@ -3,6 +3,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2/utils.h>
 
+#include <vector>
+
 namespace srpb {
 namespace logger {
 
@@ -13,21 +15,21 @@ public:
         const geometry_msgs::PoseStamped& goal_pose,
         bool planning_success,
         double planning_time,
-        size_t plan_size
-    ): GlobalPlannerData(robot_pose.pose, goal_pose.pose, planning_success, planning_time, plan_size) {}
+        const std::vector<geometry_msgs::PoseStamped>& plan
+    ): GlobalPlannerData(robot_pose.pose, goal_pose.pose, planning_success, planning_time, plan) {}
 
     GlobalPlannerData(
         const geometry_msgs::Pose& robot_pose,
         const geometry_msgs::Pose& goal_pose,
         bool planning_success,
         double planning_time,
-        size_t plan_size
+        const std::vector<geometry_msgs::PoseStamped>& plan
     ):
         pose_(robot_pose),
         goal_(goal_pose),
         planning_success_(planning_success),
         planning_time_(planning_time),
-        plan_size_(plan_size)
+        plan_(plan)
     {}
 
     inline geometry_msgs::Pose getPose() const {
@@ -88,9 +90,19 @@ public:
         return planning_time_;
     }
 
-    /// Number of poses the global path plan consists of
+    /// Returns a copy of a container with the global path plan @ref plan_
+    inline std::vector<geometry_msgs::PoseStamped> getPlan() const {
+        return plan_;
+    }
+
+    /// Returns a const reference to a container with the global path plan @ref plan_
+    inline const std::vector<geometry_msgs::PoseStamped>& getPlanCref() const {
+        return plan_;
+    }
+
+    /// Number of poses the global path plan @ref plan_ is expected to contain
     inline size_t getPlanSize() const {
-        return plan_size_;
+        return plan_.size();
     }
 
 protected:
@@ -98,7 +110,7 @@ protected:
     geometry_msgs::Pose pose_;
     geometry_msgs::Pose goal_;
     double planning_time_;
-    size_t plan_size_;
+    std::vector<geometry_msgs::PoseStamped> plan_;
 };
 
 } // namespace logger
