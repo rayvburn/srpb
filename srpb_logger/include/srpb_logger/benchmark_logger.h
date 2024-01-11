@@ -65,6 +65,10 @@ public:
      * that wrong time source will be used and transform is not found (wall vs sim time difference).
      */
     geometry_msgs::PoseWithCovarianceStamped transformPose(const geometry_msgs::PoseWithCovarianceStamped& pose_in) {
+        // transforming might not be necessary
+        if (pose_in.header.frame_id == target_frame_) {
+            return pose_in;
+        }
         auto transform_stamped = getTransform(pose_in.header.frame_id);
         geometry_msgs::PoseWithCovarianceStamped pose_out;
         tf2::doTransform(pose_in, pose_out, transform_stamped);
