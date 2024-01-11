@@ -56,12 +56,27 @@ std::string GlobalPlannerLogger::plannerToString(const GlobalPlannerData& planne
     /*  8 */ ss << std::setw(4) << std::setprecision(1) << static_cast<double>(planner.getPlanningStatus()) << " ";
     /*  9 */ ss << std::setw(9) << std::setprecision(4) << planner.getPlanningTime() << " ";
     /* 10 */ ss << std::setw(9) << std::setprecision(1) << planner.getPlanSize();
+
+    // dynamic size of the plan
+    ss << " / ";
+    const auto& plan = planner.getPlanCref();
+    for (const auto& pose_stamped: plan) {
+        ss << " " << std::setw(9) << std::setprecision(4) << pose_stamped.pose.position.x;
+        ss << " " << std::setw(9) << std::setprecision(4) << pose_stamped.pose.position.y;
+        ss << " " << std::setw(9) << std::setprecision(4) << tf2::getYaw(pose_stamped.pose.orientation);
+    }
     return ss.str();
 }
 
 std::pair<bool, GlobalPlannerData> GlobalPlannerLogger::plannerFromString(const std::string& str) {
-    auto vals = people_msgs_utils::parseString<double>(str, " ");
-    if (vals.size() != 11) {
+    // divide into 2 parts considering separator
+    size_t separator = str.find("/");
+    auto vals = people_msgs_utils::parseString<double>(str.substr(0, separator - 1), " ");
+    auto vals_plan_poses = people_msgs_utils::parseString<double>(str.substr(separator + 1), " ");
+
+    // static part of the entry has always the same length; a dynamic part must have 3 elements for each pose
+    bool plan_poses_in_triplets = vals_plan_poses.size() % 3 != 0;
+    if (vals.size() != 11 || plan_poses_in_triplets) {
         std::cout << "\x1B[31mFound corrupted data of a global planner:\r\n\t" << str << "\x1B[0m" << std::endl;
         // dummy planner data
         auto dummy_planner = GlobalPlannerData(
@@ -69,7 +84,7 @@ std::pair<bool, GlobalPlannerData> GlobalPlannerLogger::plannerFromString(const 
             geometry_msgs::Pose(),
             false,
             0.0,
-            0
+            std::vector<geometry_msgs::PoseStamped>()
         );
         return {false, dummy_planner};
     }
@@ -97,9 +112,31 @@ std::pair<bool, GlobalPlannerData> GlobalPlannerLogger::plannerFromString(const 
 
     bool planning_status = static_cast<bool>(static_cast<int>(vals.at(8)));
     double planning_time = vals.at(9);
-    double plan_size = vals.at(10);
 
-    auto planner = GlobalPlannerData(pose, goal, planning_status, planning_time, plan_size);
+    double plan_size = vals.at(10);
+    std::vector<geometry_msgs::PoseStamped> plan;
+    // each pose is represented by a triplet
+    for (
+        auto it = vals_plan_poses.cbegin();
+        it != vals_plan_poses.cend();
+        it = it + 3
+    ) {
+        double x = *it;
+        double y = *(it+1);
+        double yaw = *(it+2);
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.x = x;
+        pose.pose.position.y = y;
+
+        // NOTE: ctor of tf2::Quaternion using Euler angles is deprecated
+        tf2::Quaternion quat;
+        quat.setEuler(0.0, 0.0, yaw);
+        pose.pose.orientation = tf2::toMsg(quat);
+
+        plan.push_back(pose);
+    }
+
+    auto planner = GlobalPlannerData(pose, goal, planning_status, planning_time, plan);
     return {true, planner};
 }
 
