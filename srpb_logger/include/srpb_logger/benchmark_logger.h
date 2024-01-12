@@ -21,9 +21,9 @@ class BenchmarkLogger {
 public:
     virtual void init(ros::NodeHandle& nh) {
         //path to save the recorded data
-        nh.param("log_filename", log_filename_, std::string("log.txt"));
+        nh.param("srpb/log_filename", log_filename_, std::string("log.txt"));
         // ID of the frame that poses will be expressed in
-        nh.param("log_frame_id", target_frame_, target_frame_);
+        nh.param("srpb/log_frame_id", target_frame_, target_frame_);
         // append the timestamp to filename
         log_filename_ = BenchmarkLogger::appendToFilename(log_filename_, BenchmarkLogger::timeToString());
     }
@@ -65,6 +65,10 @@ public:
      * that wrong time source will be used and transform is not found (wall vs sim time difference).
      */
     geometry_msgs::PoseWithCovarianceStamped transformPose(const geometry_msgs::PoseWithCovarianceStamped& pose_in) {
+        // transforming might not be necessary
+        if (pose_in.header.frame_id == target_frame_) {
+            return pose_in;
+        }
         auto transform_stamped = getTransform(pose_in.header.frame_id);
         geometry_msgs::PoseWithCovarianceStamped pose_out;
         tf2::doTransform(pose_in, pose_out, transform_stamped);

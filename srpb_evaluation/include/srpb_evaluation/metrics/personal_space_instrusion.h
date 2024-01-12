@@ -39,7 +39,11 @@ public:
   ):
     MetricGaussian(robot_data, people_data),
     personal_space_threshold_(personal_space_threshold),
-    max_method_(max_method)
+    max_method_(max_method),
+    intrusion_min_(0.0),
+    intrusion_max_(0.0),
+    intrusion_total_(0.0),
+    violations_percentage_(0.0)
   {
     if (people_data.empty()) {
       return;

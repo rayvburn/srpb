@@ -26,7 +26,11 @@ public:
     person_fov_(person_fov),
     robot_circumradius_(robot_circumradius),
     robot_max_speed_(robot_max_speed),
-    max_method_(max_method)
+    max_method_(max_method),
+    disturbance_min_(0.0),
+    disturbance_max_(0.0),
+    disturbance_total_(0.0),
+    violations_percentage_(0.0)
   {
     if (people_data.empty()) {
       return;

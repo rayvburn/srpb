@@ -5,6 +5,7 @@ Dependency:
 sudo apt install python3-openpyxl
 '''
 
+import excel_sheet_defines
 import json
 import sys
 
@@ -21,10 +22,10 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
     # NOTE: data_only allows to read values instead of formulas
     wb = load_workbook(filename = str(path), data_only=True)
     # access specific sheet
-    sheet = wb["Sheet"]
+    sheet = wb[excel_sheet_defines.SHEET_NAME]
     # upper left cell - cell that initiates results table
-    col_init = 'A'
-    row_init = '28'
+    col_init = excel_sheet_defines.RESULT_INIT_COL
+    row_init = excel_sheet_defines.RESULT_INIT_ROW
 
     col_metric_ids = col_init
 
@@ -54,8 +55,20 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
         metric_names = []
         metric_values = []
         while not sheet_cell_empty(sheet=sheet, row=row_iter, col=col_metric_ids):
-            metric_names.append(str(get_sheet_val(sheet=sheet, row=row_iter, col=col_metric_ids)))
-            metric_values.append(float(get_sheet_val(sheet=sheet, row=row_iter, col=col_iter)))
+            # obtain sheet values
+            metric_name = get_sheet_val(sheet=sheet, row=row_iter, col=col_metric_ids)
+            metric_value = get_sheet_val(sheet=sheet, row=row_iter, col=col_iter)
+            # evaluate the correctness of read data
+            if metric_name == None or metric_value == None:
+                raise Exception(
+                    f"The metric ID cell `{col_metric_ids}{row_iter}` contains `{metric_name}` "
+                    f"and the metric value cell `{col_iter}{row_iter}` contains `{metric_value}`. "
+                    f"Cannot proceed with such values. Check whether the cells in your spreadsheet are empty. "
+                    f"If they aren't, try to open the sheet and simply save it using Excel or LibreOffice Calc."
+                )
+            # collect
+            metric_names.append(str(metric_name))
+            metric_values.append(float(metric_value))
             # try to proceed to the next metric
             row_iter = increment_row(row_iter)
 
@@ -72,24 +85,46 @@ def load_data_from_excel(path: Path) -> Dict[str, Dict[str, float]]:
 
     return data
 
-def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) -> str:
+# results: results of a specific scenarios aggregated into a single structure
+# metrics: names (keys) of metrics to include in the LaTeX table
+def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], metric_names: List[str]) -> str:
     # only keys from this map will be put into the LaTeX table; keys must match the ones used in the Excel sheet
-    metric_latex_map = {
-        'm_obs':  r"$m_{\mathrm{obs}}$    \\ $\left[ \% \right]$",
-        'm_mef':  r"$m_{\mathrm{mef}}$    \\ $\left[ \mathrm{s} \right]$",
-        'm_path': r"$m_{\mathrm{plin}}$   \\ $\left[ \mathrm{m} \right]$",
-        'm_chc':  r"$m_{\mathrm{chc}}$    \\ $\left[ \mathrm{rad} \right]$",
-        'm_cef':  r"$m_{\mathrm{cef}}$    \\ $\left[ 10^{-3} \cdot \mathrm{s} \right]$",
-        'm_cre':  r"$m_{\mathrm{cre}}$    \\ $\left[ 10^{-3} \cdot \mathrm{s} \right]$",
-        'm_vsm':  r"$m_{\mathrm{vsm}}$    \\ $\left[ \mathrm{\frac{m}{s^2}} \right]$",
-        'm_hsm':  r"$m_{\mathrm{hsm}}$    \\ $\left[ \mathrm{\frac{rad}{s^2}} \right]$",
-        'm_osc':  r"$m_{\mathrm{osc}}$    \\ $\left[ \% \right]$",
-        'm_bwd':  r"$m_{\mathrm{bwd}}$    \\ $\left[ \% \right]$",
-        'm_inp':  r"$m_{\mathrm{iprot}}$  \\ $\left[ \% \right]$",
-        'm_psi':  r"$m_{\mathrm{psi}}$    \\ $\left[ \% \right]$",
-        'm_fsi':  r"$m_{\mathrm{fsi}}$    \\ $\left[ \% \right]$",
-        'm_dir':  r"$m_{\mathrm{dir}}$    \\ $\left[ \% \right]$"
+    METRIC_LATEX_MAP = {
+        'm_obs':  {'name': r"$m_{\mathrm{obs}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_mef':  {'name': r"$m_{\mathrm{mef}}$",   'unit': r"$\left[ \mathrm{s} \right]$"},
+        'm_path': {'name': r"$m_{\mathrm{plin}}$",  'unit': r"$\left[ \mathrm{m} \right]$"},
+        'm_chc':  {'name': r"$m_{\mathrm{chc}}$",   'unit': r"$\left[ \mathrm{rad} \right]$"},
+        'm_cef':  {'name': r"$m_{\mathrm{cef}}$",   'unit': r"$\left[ 10^{-3} \cdot \mathrm{s} \right]$"},
+        'm_cre':  {'name': r"$m_{\mathrm{cre}}$",   'unit': r"$\left[ 10^{-3} \cdot \mathrm{s} \right]$"},
+        'm_vsm':  {'name': r"$m_{\mathrm{vsm}}$",   'unit': r"$\left[ \mathrm{\frac{m}{s^2}} \right]$"},
+        'm_hsm':  {'name': r"$m_{\mathrm{hsm}}$",   'unit': r"$\left[ \mathrm{\frac{rad}{s^2}} \right]$"},
+        'm_osc':  {'name': r"$m_{\mathrm{osc}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_bwd':  {'name': r"$m_{\mathrm{bwd}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_inp':  {'name': r"$m_{\mathrm{iprot}}$", 'unit': r"$\left[ \% \right]$"},
+        'm_psi':  {'name': r"$m_{\mathrm{psi}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_fsi':  {'name': r"$m_{\mathrm{fsi}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_dir':  {'name': r"$m_{\mathrm{dir}}$",   'unit': r"$\left[ \% \right]$"},
+        'm_psd':  {'name': r"$m_{\mathrm{psd}}$",   'unit': r"$\left[ \% \right]$"}
     }
+    # select metrics from the predefined set, i.e., METRIC_LATEX_MAP
+    metrics_map = {}
+    # by default, all metrics are included
+    if not len(metric_names):
+        metrics_map = METRIC_LATEX_MAP
+    else:
+        for name in metric_names:
+            if not name in METRIC_LATEX_MAP.keys():
+                raise Exception(
+                    f"Could not find {name} in the SRPB metrics map. Available metric names are: {METRIC_LATEX_MAP.keys()}"
+                )
+            metrics_map[name] = METRIC_LATEX_MAP[name]
+
+    if not len(metrics_map):
+        raise Exception(
+            f"Aborting further execution as no metrics were selected to include in the LaTeX table. "
+            f"See the script's usage instruction."
+        )
+    print(f"Selected `{len(metrics_map)}` metrics to include in the LaTeX table: `{metrics_map.keys()}`")
 
     # retrieve names of planners assuming that all scenarios results have the same planner entries;
     # choose from the first scenario
@@ -99,6 +134,13 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
     # retrieve number of evaluated scenarios
     scenarios_num = len(results)
 
+    # evaluate whether valid data are available
+    if not len(planner_names) or not planners_num:
+        raise Exception(
+            f"Aborting further execution as no planners are found in the results. "
+        )
+    print(f"Selected {planners_num} planners with names `{planner_names}` for `{scenarios_num}` scenarios")
+
     tex = str("")
 
     tex += ("% !TeX spellcheck = en_GB" + "\r\n")
@@ -107,6 +149,7 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
 
     # r forces to parse as raw string, ref: https://stackoverflow.com/a/46011113
     tex += (r"% Dependencies of the 'results' table" + "\r\n")
+    tex += (r"\usepackage{graphicx} % \rotatebox" + "\r\n")
     tex += (r"\usepackage{multirow}" + "\r\n")
     tex += (r"\usepackage{diagbox}" + "\r\n")
     tex += ("\r\n")
@@ -155,7 +198,7 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
     tex += (r"				% =============================== entries" + "\r\n")
 
     # iterate over metrics
-    for metric_id in metric_latex_map.keys():
+    for metric_id in metrics_map.keys():
         tex += (r"" + "\r\n")
         tex += (r"				\multirow" + "\r\n")
         # total number of scenarios
@@ -164,7 +207,12 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
         tex += (r"				{" + "\r\n")
         tex += (r"					\shortstack{" + "\r\n")
         # ID of the metric and its unit
-        tex += (r"						" + str(metric_latex_map[metric_id]) + "\r\n")
+        # whether to put the unit in a new line or not (when there are too few rows)
+        if scenarios_num > 2:
+            metric_name_and_unit = f"{metrics_map[metric_id]['name']} \\ {metrics_map[metric_id]['unit']}"
+        else:
+            metric_name_and_unit = f"{metrics_map[metric_id]['name']} {metrics_map[metric_id]['unit']}"
+        tex += (r"						" + str(metric_name_and_unit) + "\r\n")
         tex += (r"					}" + "\r\n")
         tex += (r"				}" + "\r\n")
         tex += (r"				% =========" + "\r\n")
@@ -230,16 +278,24 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]]) ->
 ###########################
 if __name__ == "__main__":
     # command line arguments
-    if len(sys.argv) != 3:
+    if len(sys.argv) == 1:
         print(f'Usage: ')
-        print(f'  python3 {sys.argv[0]} <JSON string with scenario identifiers and paths to SRPB results sheets> <output .tex file path>')
+        print(
+              f'  python3 {sys.argv[0]}  '
+              f'<JSON string with scenario identifiers and paths to SRPB results sheets>  '
+              f'<path to the generated .tex file>  <space-separated list of metrics to include in the LaTeX table '
+              f'(all available are included by default)>'
+            )
         print(f'')
         print(f'Example:')
-        print(f'  python3 {sys.argv[0]} "{{"static": {{"sim": "path_static_sim", "real": "path_static_real"}}, "dynamic": {{"sim": "path_dynamic_sim", "real": "path_dynamic_real"}}}}" ~/table.tex')
+        print(f'  python3 {sys.argv[0]} "{{"static": {{"sim": "path_static_sim", "real": "path_static_real"}}, "dynamic": {{"sim": "path_dynamic_sim", "real": "path_dynamic_real"}}}}" ~/table.tex m_obs m_chc')
         exit(0)
 
     # location of the output file
     output_path = sys.argv[2]
+
+    # metrics to include in the table
+    metric_names = sys.argv[3:]
 
     # list of dicts {<name>, <path to excel>}
     inputs = []
@@ -259,8 +315,8 @@ if __name__ == "__main__":
         scenario_results = load_data_from_excel(input_file['path'])
         results_total.append({'name': input_file['name'], 'results': scenario_results})
 
-    # generates a string representing LaTeX command that can be
-    results_table = create_latex_table(results_total)
+    # generates a string representing LaTeX command that can be directly included and used in a LaTeX document
+    results_table = create_latex_table(results_total, metric_names)
 
     # save results to a file
     f = open(output_path, "w")
