@@ -8,7 +8,7 @@ sudo apt install python3-openpyxl
 '''
 
 import csv
-import excel_sheet_defines
+import excel_sheet_utils
 import glob
 import re
 import sys
@@ -216,8 +216,8 @@ def increment_char(c: chr):
 
 
 def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict, calc_fun='MEDIAN'):
-    row_start = int(excel_sheet_defines.RESULT_INIT_ROW)
-    col_header = str(excel_sheet_defines.RESULT_INIT_COL)
+    row_start = int(excel_sheet_utils.RESULT_INIT_ROW)
+    col_header = str(excel_sheet_utils.RESULT_INIT_COL)
     ws[col_header + str(row_start)] = 'Planner'
     ws[col_header + str(row_start + 1)] = 'Trials'
     row_metric_start = row_start + 1
@@ -287,7 +287,7 @@ wb = Workbook()
 # grab the active worksheet (workbook always creates an arbitrary sheet)
 ws_init = wb.active
 # create a sheet with a custom name
-ws = wb.create_sheet(title=excel_sheet_defines.SHEET_NAME)
+ws = wb.create_sheet(title=excel_sheet_utils.SHEET_NAME)
 # delete the sheet initially created
 wb.remove_sheet(worksheet=ws_init)
 
