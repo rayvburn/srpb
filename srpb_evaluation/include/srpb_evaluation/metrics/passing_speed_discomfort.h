@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srpb_evaluation/metric_gaussian.h"
+#include "srpb_evaluation/metric_statistics.h"
 
 #include <social_nav_utils/passing_speed_comfort.h>
 
@@ -16,9 +16,6 @@ namespace evaluation {
  * Refer to the social_nav_utils::PassingSpeedComfort implementation for a detailed description of the underlying
  * bivariate model that fits the published data best.
  *
- * @note The class inherits from the @ref MetricGaussian class but in fact @ref PassingSpeedDiscomfort is
- * not a Gaussian metric. It just uses min/max and violations calculation methods from the base class.
- *
  * @param robot_data
  * @param people_data
  * @param distance_min minimum distance between the center of the robot and a human at which (when robot speed
@@ -28,7 +25,7 @@ namespace evaluation {
  * @param max_method whether to use the maximum discomfort in a given timestamp as an indicator (true); the average
  * is used when set to false
  */
-class PassingSpeedDiscomfort: public MetricGaussian {
+class PassingSpeedDiscomfort: public MetricStatistics {
 public:
   PassingSpeedDiscomfort(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
@@ -38,7 +35,7 @@ public:
     double discomfort_threshold = 0.4,
     bool max_method = true
   ):
-    MetricGaussian(robot_data, people_data),
+    MetricStatistics(robot_data, people_data),
     distance_min_(distance_min),
     robot_speed_max_(speed_max),
     discomfort_threshold_(discomfort_threshold),
@@ -148,12 +145,13 @@ protected:
     );
     rewinder_.perform();
 
+    // Gaussian is computed as a "cost"; hence, "violation_above_threshold" is hard-coded to true
     std::tie(
       discomfort_min_,
       discomfort_max_,
       discomfort_total_,
       violations_percentage_
-    ) = MetricGaussian::calculateGaussianStatistics(timed_discomforts, discomfort_threshold_, max_method_);
+    ) = MetricStatistics::calculateStatistics(timed_discomforts, discomfort_threshold_, true, max_method_);
   }
 };
 

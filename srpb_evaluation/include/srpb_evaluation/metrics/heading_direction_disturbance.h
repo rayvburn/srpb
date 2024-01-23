@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srpb_evaluation/metric_gaussian.h"
+#include "srpb_evaluation/metric_statistics.h"
 
 #include <social_nav_utils/heading_direction_disturbance.h>
 
@@ -8,7 +8,7 @@ namespace srpb {
 namespace evaluation {
 
 /// Related to velocity and direction of the robot movement towards person
-class HeadingDirectionDisturbance: public MetricGaussian {
+class HeadingDirectionDisturbance: public MetricStatistics {
 public:
   HeadingDirectionDisturbance(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
@@ -20,7 +20,7 @@ public:
     double robot_max_speed = social_nav_utils::HeadingDirectionDisturbance::MAX_SPEED_DEFAULT,
     bool max_method = true
   ):
-    MetricGaussian(robot_data, people_data),
+    MetricStatistics(robot_data, people_data),
     disturbance_threshold_(disturbance_threshold),
     person_occupancy_radius_(person_occupancy_radius),
     person_fov_(person_fov),
@@ -131,12 +131,13 @@ protected:
     );
     rewinder_.perform();
 
+    // Gaussian is computed as a "cost"; hence, "violation_above_threshold" is hard-coded to true
     std::tie(
       disturbance_min_,
       disturbance_max_,
       disturbance_total_,
       violations_percentage_
-    ) = MetricGaussian::calculateGaussianStatistics(timed_disturbances, disturbance_threshold_, max_method_);
+    ) = MetricStatistics::calculateStatistics(timed_disturbances, disturbance_threshold_, true, max_method_);
   }
 };
 
