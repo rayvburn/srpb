@@ -12,7 +12,7 @@
 #
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     echo "Wrong usage. Script args:"
-    echo "  (1) [required] full path to the main directory with grouped logs (3 logs in each separate directory)"
+    echo "  (1) [required] full path to the main directory with grouped logs (4 logs in each separate directory)"
     echo "  (2) [optional] safety distance for m_obs metric, 0.55 by default"
     exit 0
 fi
