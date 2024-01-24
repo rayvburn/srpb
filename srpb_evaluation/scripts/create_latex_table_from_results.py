@@ -6,9 +6,11 @@ sudo apt install python3-openpyxl
 '''
 
 from excel_sheet_utils import load_data_from_excel
+from srpb_metrics import SrpbMetrics
 
+import argparse
 import json
-import sys
+import math
 
 from pathlib import Path
 from typing import List
@@ -17,37 +19,21 @@ from typing import Dict
 
 # results: results of a specific scenarios aggregated into a single structure
 # metrics: names (keys) of metrics to include in the LaTeX table
-def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], metric_names: List[str]) -> str:
-    # only keys from this map will be put into the LaTeX table; keys must match the ones used in the Excel sheet
-    METRIC_LATEX_MAP = {
-        'm_obs':  {'name': r"$m_{\mathrm{obs}}$",   'unit': r"$\left[ \% \right]$"},
-        'm_mef':  {'name': r"$m_{\mathrm{mef}}$",   'unit': r"$\left[ \mathrm{s} \right]$"},
-        'm_path': {'name': r"$m_{\mathrm{plin}}$",  'unit': r"$\left[ \mathrm{m} \right]$"},
-        'm_chc':  {'name': r"$m_{\mathrm{chc}}$",   'unit': r"$\left[ \mathrm{rad} \right]$"},
-        'm_cef':  {'name': r"$m_{\mathrm{cef}}$",   'unit': r"$\left[ 10^{-3} \cdot \mathrm{s} \right]$"},
-        'm_cre':  {'name': r"$m_{\mathrm{cre}}$",   'unit': r"$\left[ 10^{-3} \cdot \mathrm{s} \right]$"},
-        'm_vsm':  {'name': r"$m_{\mathrm{vsm}}$",   'unit': r"$\left[ \mathrm{\frac{m}{s^2}} \right]$"},
-        'm_hsm':  {'name': r"$m_{\mathrm{hsm}}$",   'unit': r"$\left[ \mathrm{\frac{rad}{s^2}} \right]$"},
-        'm_osc':  {'name': r"$m_{\mathrm{osc}}$",   'unit': r"$\left[ \% \right]$"},
-        'm_bwd':  {'name': r"$m_{\mathrm{bwd}}$",   'unit': r"$\left[ \% \right]$"},
-        'm_inp':  {'name': r"$m_{\mathrm{iprot}}$", 'unit': r"$\left[ \% \right]$"},
-        'm_psi':  {'name': r"$m_{\mathrm{psi}}$",   'unit': r"$\left[ \% \right]$"},
-        'm_fsi':  {'name': r"$m_{\mathrm{fsi}}$",   'unit': r"$\left[ \% \right]$"},
-        'm_dir':  {'name': r"$m_{\mathrm{dir}}$",   'unit': r"$\left[ \% \right]$"},
-        'm_psd':  {'name': r"$m_{\mathrm{psd}}$",   'unit': r"$\left[ \% \right]$"}
-    }
-    # select metrics from the predefined set, i.e., METRIC_LATEX_MAP
+def create_latex_table(
+    results: List[Dict[str, Dict[str, Dict[str, float]]]],
+    metric_names: List[str],
+    planner_names: List[str]
+) -> str:
+    # only keys known by the SrpbMetrics will be put into the LaTeX table; keys must match the ones used in the sheet
+    srpb_metrics = SrpbMetrics()
+    # select metrics from the predefined set stored in SrpbMetrics
     metrics_map = {}
+
     # by default, all metrics are included
     if not len(metric_names):
-        metrics_map = METRIC_LATEX_MAP
+        metrics_map = srpb_metrics.get()
     else:
-        for name in metric_names:
-            if not name in METRIC_LATEX_MAP.keys():
-                raise Exception(
-                    f"Could not find {name} in the SRPB metrics map. Available metric names are: {METRIC_LATEX_MAP.keys()}"
-                )
-            metrics_map[name] = METRIC_LATEX_MAP[name]
+        metrics_map = srpb_metrics.get_metrics(metric_names)
 
     if not len(metrics_map):
         raise Exception(
@@ -56,20 +42,46 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
         )
     print(f"Selected `{len(metrics_map)}` metrics to include in the LaTeX table: `{metrics_map.keys()}`")
 
-    # retrieve names of planners assuming that all scenarios results have the same planner entries;
-    # choose from the first scenario
-    planner_names = results[0]['results'].keys()
-    # save number of checked planners
+    # save the number of considered planners
     planners_num = len(planner_names)
-    # retrieve number of evaluated scenarios
-    scenarios_num = len(results)
+    if not planners_num:
+        # choose the set from the first scenario
+        print(f"The input list of selected planners is empty! Selecting the planners appearing in the first scenario.")
+        planner_names = results[0]['results'].keys()
+        planners_num = len(planner_names)
 
     # evaluate whether valid data are available
     if not len(planner_names) or not planners_num:
         raise Exception(
-            f"Aborting further execution as no planners are found in the results. "
+            f"Aborting further execution since no planners were selected or appeared in the first scenario."
         )
-    print(f"Selected {planners_num} planners with names `{planner_names}` for `{scenarios_num}` scenarios")
+
+    # retrieve number of evaluated scenarios
+    scenarios_num = len(results)
+    print(f"Selected '{planners_num}' planners with names `{planner_names}` for `{scenarios_num}` scenarios")
+
+
+    def get_metric_value_for_planner(
+        scenario_results: Dict[str, Dict[str, Dict[str, float]]],
+        planner_name: str,
+        metric_id: str
+    ) -> float:
+        """
+        A nested function that returns a unified value once the required planner is nonexistent in the results.
+        It is assumed that the nested dict given in scenario_results contains keys defining: planner name
+        and dict nested further - a metric ID
+        """
+        metric_val = math.nan
+        try:
+            metric_val = scenario_results[planner_name][metric_id]
+        except KeyError:
+            print(
+                f"Could not find a '{planner_name}' in a given results set. "
+                f"Available planners are: '{scenario_results.keys()}'. "
+                f"This might be intentional, returning NaN."
+            )
+        return metric_val
+
 
     tex = str("")
 
@@ -139,9 +151,9 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
         # ID of the metric and its unit
         # whether to put the unit in a new line or not (when there are too few rows)
         if scenarios_num > 2:
-            metric_name_and_unit = f"{metrics_map[metric_id]['name']} \\ {metrics_map[metric_id]['unit']}"
+            metric_name_and_unit = f"{metrics_map[metric_id]['tex_name']} \\ {metrics_map[metric_id]['tex_unit']}"
         else:
-            metric_name_and_unit = f"{metrics_map[metric_id]['name']} {metrics_map[metric_id]['unit']}"
+            metric_name_and_unit = f"{metrics_map[metric_id]['tex_name']} {metrics_map[metric_id]['tex_unit']}"
         tex += (r"						" + str(metric_name_and_unit) + "\r\n")
         tex += (r"					}" + "\r\n")
         tex += (r"				}" + "\r\n")
@@ -163,10 +175,14 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
             # find the best value among checked planners
             metric_values_among_planners = []
             for planner_name in planner_names:
-                metric_val = results[scenario_num]['results'][planner_name][metric_id]
+                metric_val = get_metric_value_for_planner(results[scenario_num]['results'], planner_name, metric_id)
                 metric_values_among_planners.append(metric_val)
-            # NOTE: by default, the best metric is the one with the smallest value
-            metric_best_val = min(metric_values_among_planners)
+
+            # select the best metric - the one with the smallest or largest value (excluding NaNs)
+            if srpb_metrics.is_minimum_best(metric_id):
+                metric_best_val = min(metric_values_among_planners)
+            else:
+                metric_best_val = max(metric_values_among_planners)
 
             # if all metric values are equal to the best - let's mark the best as 'invalid'
             if all(x == metric_best_val for x in metric_values_among_planners):
@@ -174,9 +190,15 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
 
             # iterate over values of a specific metric for each planner
             for planner_name in planner_names:
-                metric_val = results[scenario_num]['results'][planner_name][metric_id]
-                # format to 2 decimal points
-                metric_val_str = "{:.2f}".format(metric_val)
+                metric_val = get_metric_value_for_planner(results[scenario_num]['results'], planner_name, metric_id)
+                # check for correctness/availability
+                if not math.isnan(metric_val):
+                    # format to 2 decimal points
+                    metric_val_str = "{:.2f}".format(metric_val)
+                else:
+                    # indicate lack of valid data
+                    metric_val_str = srpb_metrics.get_latex_missing_metric_value()
+
                 # mark the best value unless it is equal to 0
                 if metric_val == metric_best_val and metric_best_val != None:
                     # bold
@@ -207,33 +229,52 @@ def create_latex_table(results: List[Dict[str, Dict[str, Dict[str, float]]]], me
 #         main            #
 ###########################
 if __name__ == "__main__":
-    # command line arguments
-    if len(sys.argv) == 1:
-        print(f'Usage: ')
-        print(
-              f'  python3 {sys.argv[0]}  '
-              f'<JSON string with scenario identifiers and paths to SRPB results sheets>  '
-              f'<path to the generated .tex file>  <space-separated list of metrics to include in the LaTeX table '
-              f'(all available are included by default)>'
-            )
-        print(f'')
-        print(f'Example:')
-        print(f'  python3 {sys.argv[0]} "{{"static": {{"sim": "path_static_sim", "real": "path_static_real"}}, "dynamic": {{"sim": "path_dynamic_sim", "real": "path_dynamic_real"}}}}" ~/table.tex m_obs m_chc')
-        exit(0)
+    # Ref: https://stackoverflow.com/a/32763023
+    cli = argparse.ArgumentParser()
+    # positional arguments
+    cli.add_argument("input", help="JSON string with scenario identifiers and paths to SRPB results sheets")
+    cli.add_argument("output", help="path to the generated .tex file")
+    # optional arguments
+    cli.add_argument(
+        "--metrics",
+        nargs="*",
+        type=str,
+        default=[],
+        help="space-separated list of metrics to include in the LaTeX table (all available are included by default)"
+    )
+    cli.add_argument(
+        "--planners",
+        nargs="*",
+        type=str,
+        default=[],
+        help="space-separated list of planners to include in the LaTeX table (all appearing in the first results file \
+            are included by default)"
+    )
+    # Usage example
+    #   python3 create_latex_table_from_results.py \
+    #     "{{"static": {{"sim": "path_static_sim", "real": "path_static_real"}}, "dynamic": {{"sim": "path_dynamic_sim", "real": "path_dynamic_real"}}}}" \
+    #     ~/table.tex \
+    #     --metrics m_obs m_chc \
+    #     --planners dwa teb
+
+    # parse the command line
+    args = cli.parse_args()
 
     # location of the output file
-    output_path = sys.argv[2]
+    output_path = args.output
 
     # metrics to include in the table
-    metric_names = sys.argv[3:]
+    metric_names = args.metrics
+
+    # selected planner set
+    planner_names = args.planners
 
     # list of dicts {<name>, <path to excel>}
     inputs = []
 
-    cmd_json = json.loads(sys.argv[1])
+    cmd_json = json.loads(args.input)
     for key in cmd_json.keys():
         inputs.append({'name': str(key), 'path': Path(cmd_json[key])})
-
     print("\tScript inputs:")
     print(*inputs, sep='\n')
 
@@ -246,7 +287,7 @@ if __name__ == "__main__":
         results_total.append({'name': input_file['name'], 'results': scenario_results})
 
     # generates a string representing LaTeX command that can be directly included and used in a LaTeX document
-    results_table = create_latex_table(results_total, metric_names)
+    results_table = create_latex_table(results_total, metric_names, planner_names)
 
     # save results to a file
     f = open(output_path, "w")
