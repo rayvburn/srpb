@@ -153,7 +153,11 @@ void createResultsFile(
     ss << "s_ppl        ," << std::setw(9) << std::setprecision(4) << samples_people << std::endl;
     ss << "s_grp        ," << std::setw(9) << std::setprecision(4) << samples_groups << std::endl;
     ss << "m_goal       ," << std::setw(9) << std::setprecision(4) << goal_reached.getValue() << std::endl;
+    // NOTE: legacy m_obs (before making m_obs inherit from MetricStatistics) was equal to the current m_obs_viol
     ss << "m_obs        ," << std::setw(9) << std::setprecision(4) << obstacle_safety.getValue() << std::endl;
+    ss << "m_obs_min    ," << std::setw(9) << std::setprecision(4) << obstacle_safety.getValueMin() << std::endl;
+    ss << "m_obs_max    ," << std::setw(9) << std::setprecision(4) << obstacle_safety.getValueMax() << std::endl;
+    ss << "m_obs_viol   ," << std::setw(9) << std::setprecision(4) << obstacle_safety.getViolations() << std::endl;
     ss << "m_mef        ," << std::setw(9) << std::setprecision(4) << motion_efficiency.getValue() << std::endl;
     ss << "m_cef        ," << std::setw(9) << std::setprecision(4) << computational_efficiency.getValue() << std::endl;
     ss << "m_cre        ," << std::setw(9) << std::setprecision(4) << computational_time_repeatability.getValue() << std::endl;

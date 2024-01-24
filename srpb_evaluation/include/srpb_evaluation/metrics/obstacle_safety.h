@@ -1,77 +1,91 @@
 #pragma once
 
-#include "srpb_evaluation/metric.h"
+#include "srpb_evaluation/metric_statistics.h"
+
+#include <numeric>
 
 namespace srpb {
 namespace evaluation {
 
-/// @details Originally implemented in MRPB 1.0 (https://github.com/NKU-MobFly-Robotics/local-planning-benchmark)
-class ObstacleSafety: public Metric {
+class ObstacleSafety: public MetricStatistics {
 public:
   ObstacleSafety(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
     double safety_distance
   ):
-    Metric(robot_data),
+    MetricStatistics(robot_data),
     safety_distance_(safety_distance)
   {
     compute();
   }
 
-  /// Returns total percentage of obstacle safety
+  /// Returns the time-corrected mean distance to the closest obstacle in subsequent time steps of the scenario
   virtual double getValue() const override {
-    return obstacle_safety_ * 1e2;
+    return obstacle_distance_total_;
   }
 
-  void printResults() const override {
-    printf("Obstacle safety = %.4f [%%]\n", obstacle_safety_ * 1e2);
+  /// Returns minimum value obtained throughout the scenario
+  virtual double getValueMin() const override {
+    return obstacle_distance_min_;
+  }
+
+  /// Returns maximum value obtained throughout the scenario
+  virtual double getValueMax() const override {
+    return obstacle_distance_max_;
+  }
+
+  /**
+   * Returns the percentage of violations obtained throughout the scenario (considering the threshold value)
+   * The value according to the metric originally implemented in MRPB 1.0
+   * See https://github.com/NKU-MobFly-Robotics/local-planning-benchmark for details
+   */
+  virtual double getViolations() const override {
+    return violations_percentage_ * 100.0;
+  }
+
+  virtual void printResults() const override {
+    printf(
+      "Obstacle safety = %.4f [m] (min = %.4f [m], max = %.4f [m], violations %.4f [%%])\n",
+      obstacle_distance_total_,
+      obstacle_distance_min_,
+      obstacle_distance_max_,
+      violations_percentage_ * 100.0
+    );
   }
 
 protected:
   double safety_distance_;
-  double obstacle_safety_;
+
+  double obstacle_distance_min_;
+  double obstacle_distance_max_;
+  double obstacle_distance_total_;
+  /// "Obstacle safety" in MRPB 1.0
+  double violations_percentage_;
 
   void compute() override {
-    // timestamps to sum up time
-    const double TS_NOT_SET = std::numeric_limits<double>::min();
-    double ts_start = TS_NOT_SET;
-    double ts_end = TS_NOT_SET;
+    // container to compute, i.a., min and max values of distances to obstacles
+    std::vector<std::pair<double, std::vector<double>>> timed_obs_distances;
 
-    double ts_sum = 0.0;
-    auto calc_next = [&]() {
-      // compute how long robot traveled near obstacles located within safety distance
-      if (rewinder_.getRobotCurr().getDistToObstacle() < safety_distance_) {
-        if (ts_start == TS_NOT_SET) {
-          ts_start = rewinder_.getTimestampCurr();
-        } else {
-          // save timestamp
-          ts_end = rewinder_.getTimestampCurr();
-        }
-      } else {
-        if (ts_end != TS_NOT_SET) {
-          // robot started to maintain safety distance again
-          ts_sum += (ts_end - ts_start);
-
-          // reset timestamps for incoming counts
-          ts_start = TS_NOT_SET;
-          ts_end = TS_NOT_SET;
-        }
+    rewinder_.setHandlerNextTimestamp(
+      [&]() {
+        timed_obs_distances.push_back({
+          // step duration
+          rewinder_.getTimestampNext() - rewinder_.getTimestampCurr(),
+          // single value container (there is only 1 closest obstacle)
+          std::vector<double>{rewinder_.getRobotCurr().getDistToObstacle()}
+        });
       }
-    };
-    // NOTE: external lambda must be explicitly passed to capture
-    auto calc_last = [&, calc_next]() {
-      calc_next();
-      // sum up the last period (if robot finished course not maintaining the safety distance)
-      if (ts_start != TS_NOT_SET && ts_end != TS_NOT_SET) {
-        ts_sum += ts_end - ts_start;
-      }
-    };
-    rewinder_.setHandlerNextTimestamp(calc_next);
-    rewinder_.setHandlerLastTimestamp(calc_last);
+    );
     rewinder_.perform();
 
-    // save result
-    obstacle_safety_ = ts_sum / rewinder_.getDuration();
+    // NOTE1: a violation is regarded when distance is less than the threshold
+    // NOTE2: max method does not matter here as only 1 observation in each step is available
+    std::tie(
+      obstacle_distance_min_,
+      obstacle_distance_max_,
+      obstacle_distance_total_,
+      violations_percentage_
+    ) = MetricStatistics::calculateStatistics(timed_obs_distances, safety_distance_, false, true);
   }
 };
 
