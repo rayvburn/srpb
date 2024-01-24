@@ -21,31 +21,35 @@ std::tuple<double, double, double, double> MetricStatistics::calculateStatistics
     duration += tg.first;
   }
 
-  // find the number of violations of, e.g., personal space / f-formation's O-space
-  unsigned int threshold_violations = 0;
-  unsigned int values_total = 0;
-
   // find the values and recompute according to, e.g., recognized people/groups (max/sum)
   double metrics = 0.0;
   double min_elem = std::numeric_limits<double>::max();
   double max_elem = std::numeric_limits<double>::min();
+  // find the timing-corrected percentage of threshold violations of, e.g., personal space
+  double violations_duration = 0.0;
 
   // rollout values to compute the score (metrics)
   for (const auto& tvalue: timed_values) {
     double dt = tvalue.first;
     if (tvalue.second.empty()) {
-      std::cout << "The value container is empty for at least 1 sample. The metrics will be 0.0" << std::endl;
+      std::cout
+        << "\x1B[33m"
+        << "The value container is empty for at least 1 sample. The metrics will be 0.0"
+        << "\x1B[0m"
+        << std::endl;
       return std::make_tuple(0.0, 0.0, 0.0, 0);
     }
 
-    // count timestamps when violations ocurred
-    threshold_violations += std::count_if(
+    /*
+     * Count the duration when violations ocurred, i.e., it does not matter whether there are ten people whose
+     * personal spaces the robot intruded, but rather in it happened in a single time step, it will be regarded
+     * in a sum of "violating" time steps (durations)
+     */
+    size_t threshold_violations_num = std::count_if(
       tvalue.second.cbegin(),
       tvalue.second.cend(),
-      [&](double g) {
-        // count total numbers to find percentage
-        values_total++;
-        return violation_above_threshold ? (g > violation_threshold) : (g < violation_threshold);
+      [=](double val) {
+        return violation_above_threshold ? (val > violation_threshold) : (val < violation_threshold);
       }
     );
 
@@ -74,14 +78,15 @@ std::tuple<double, double, double, double> MetricStatistics::calculateStatistics
       ) / static_cast<double>(tvalue.second.size());
     }
 
-    // values must be referenced to timestamps when, e.g., people were actually detected
+    // values must be referenced to a duration of time steps when, e.g., people were actually detected
     metrics += (metrics_elem * (dt / duration));
+
+    // sum up the percentage of time when the threshold value of, e.g., personal space was violated
+    if (threshold_violations_num > 0) {
+      violations_duration += (dt / duration);
+    }
   }
-
-  // find the percentage of time when thresholds of, e.g., personal space / f-formation's O-space etc. were violated
-  double threshold_violations_percentage = threshold_violations / static_cast<double>(values_total);
-
-  return std::make_tuple(min_elem, max_elem, metrics, threshold_violations_percentage);
+  return std::make_tuple(min_elem, max_elem, metrics, violations_duration);
 }
 
 } // namespace evaluation

@@ -45,8 +45,11 @@ public:
    * @param max_method set to true (default) so the max element is used to normalize metrics;
    * false means averaging over all values/occurrences in a current time step
    *
-   * @return std::tuple<double, double, double, double> tuple with scores: min, max and normalized to execution
-   * time and percentage of violation of, e.g., personal space violations (according to given threshold and values)
+   * @return std::tuple<double, double, double, double> tuple with scores:
+   * 1) min value,
+   * 2) max value,
+   * 3) a metric value normalized according to the duration/execution time,
+   * 4) timing-corrected percentage of the threshold value violations
    */
   static std::tuple<double, double, double, double> calculateStatistics(
     std::vector<std::pair<double, std::vector<double>>> timed_values,
