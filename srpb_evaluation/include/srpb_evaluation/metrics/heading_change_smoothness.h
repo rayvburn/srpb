@@ -28,6 +28,11 @@ protected:
     rewinder_.setHandlerNextTimestamp(
       [&]() {
         double dt = rewinder_.getTimestampNext() - rewinder_.getTimestampCurr();
+        // if we attempt to divide by 0 (due to possibly insufficient sampling rate of the logger), then skip this one;
+        // however, this sample will still be included in the final result
+        if (dt <= 0.0) {
+          return;
+        }
         double dtheta = rewinder_.getRobotNext().getVelocityTheta() - rewinder_.getRobotCurr().getVelocityTheta();
         hsm += (std::abs(dtheta) / dt);
       }
