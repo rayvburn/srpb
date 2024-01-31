@@ -16,6 +16,7 @@ import sys
 from string import ascii_uppercase
 from openpyxl import Workbook
 from pathlib import Path
+from srpb_metrics import SrpbMetrics
 from typing import List
 from typing import Dict
 
@@ -215,7 +216,7 @@ def increment_char(c: chr):
     return chr(ord(c) + 1)
 
 
-def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict, calc_fun='MEDIAN'):
+def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict):
     row_start = int(excel_sheet_utils.RESULT_INIT_ROW)
     col_header = str(excel_sheet_utils.RESULT_INIT_COL)
     ws[col_header + str(row_start)] = 'Planner'
@@ -229,6 +230,9 @@ def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict,
     results_example = results_total[planner_names[0]][0]
     for key in results_example.keys():
         metric_keys.append(str(key))
+
+    # helps to find an Excel filtering function
+    srpb_metrics = SrpbMetrics()
 
     # create compound representation (filtered) of raw data
     for planner in planner_names:
@@ -248,8 +252,9 @@ def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict,
             ws[col_header  + str(row_metric_start + m_index)] = metric
             ws[col_planner + str(row_start)] = planner
             ws[col_planner + str(row_start + 1)] = planner_trials
-            # filtering: put excel function here
-            ws[col_planner + str(row_metric_start + m_index)] = '=' + str(calc_fun) + '(' + str(cell_begin) + ':' + str(cell_end) + ')'
+            # filtering: put a string with an Excel function into the cell
+            excel_fun = srpb_metrics.get_excel_calc_fun(metric, str(cell_begin), str(cell_end))
+            ws[col_planner + str(row_metric_start + m_index)] = excel_fun
         # next planner
         col_planner = increment_char(col_planner)
 
@@ -297,7 +302,7 @@ for row in rows:
     ws.append(row)
 
 # make some calculations
-calculate_sheet(ws, planners, results, 'MEDIAN')
+calculate_sheet(ws, planners, results)
 
 # Prepare name of the output file
 output_filename = 'results' + '_' + Path(logs_dir).name
