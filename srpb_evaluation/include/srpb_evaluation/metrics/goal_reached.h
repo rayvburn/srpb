@@ -30,28 +30,33 @@ public:
 
   void printResults() const override {
     printf(
-      "Goal reached = %d [bool] (tolerance violations: position %d, orientation %d)\n",
+      "Goal reached = %d [bool] "
+      "(tolerance violations: position %d [offset %7.4f m], orientation %d [offset %7.4f rad])\n",
       static_cast<int>(!tolerance_xy_violated_ && !tolerance_yaw_violated_),
       static_cast<int>(tolerance_xy_violated_),
-      static_cast<int>(tolerance_yaw_violated_)
+      offset_xy_,
+      static_cast<int>(tolerance_yaw_violated_),
+      offset_yaw_
     );
   }
 
 protected:
   double tolerance_xy_;
   double tolerance_yaw_;
+  double offset_xy_;
+  double offset_yaw_;
   bool tolerance_xy_violated_;
   bool tolerance_yaw_violated_;
 
   void compute() override {
     rewinder_.setHandlerLastTimestamp(
       [&]() {
-        double dist_to_goal_xy = std::hypot(
+        offset_xy_ = std::hypot(
           rewinder_.getRobotCurr().getPositionX() - rewinder_.getRobotCurr().getGoalPositionX(),
           rewinder_.getRobotCurr().getPositionY() - rewinder_.getRobotCurr().getGoalPositionY()
         );
 
-        double dist_to_goal_yaw = std::abs(
+        offset_yaw_ = std::abs(
           angles::shortest_angular_distance(
             rewinder_.getRobotCurr().getOrientationYaw(),
             rewinder_.getRobotCurr().getGoalOrientationYaw()
@@ -59,8 +64,8 @@ protected:
         );
 
         // save results
-        tolerance_xy_violated_ = dist_to_goal_xy > tolerance_xy_;
-        tolerance_yaw_violated_ = std::abs(dist_to_goal_yaw) > std::abs(tolerance_yaw_);
+        tolerance_xy_violated_ = offset_xy_ > tolerance_xy_;
+        tolerance_yaw_violated_ = std::abs(offset_yaw_) > std::abs(tolerance_yaw_);
       }
     );
     rewinder_.perform();
