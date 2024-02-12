@@ -302,6 +302,8 @@ if __name__ == '__main__':
         log_entities['groups'].append(group)
 
     # create timestamps
+    last_timestamp_of_experiment = log_entities['robot'][-1].get_timestamp()
+    print(f"The last timestamp of the experiment is {last_timestamp_of_experiment}")
     timestamps = extract_timestamps(log_entities['robot'], timestamp_max)
     print(f"Prepared timestamps from {timestamps[0]} to {timestamps[-1]} with {len(timestamps)} entries")
 
