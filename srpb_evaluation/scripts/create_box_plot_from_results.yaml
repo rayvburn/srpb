@@ -1,0 +1,16 @@
+# (violin|box)
+plot_type: violin
+
+figure:
+  size_width: 4
+  size_height: 9
+  title: Title
+  xlabel: Samples
+  ylabel: Values
+  xaxis_grid: True
+  yaxis_grid: True
+
+labels:
+  # defines how the planners will be named according to their IDs
+  teb: TEB
+  dwa: DWA
