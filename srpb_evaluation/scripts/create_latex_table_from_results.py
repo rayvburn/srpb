@@ -80,7 +80,26 @@ def create_latex_table(
                 f"Available planners are: '{scenario_results.keys()}'. "
                 f"This might be intentional, returning NaN."
             )
-        return metric_val
+        # value will store the value of the metric (if able to parse correctly)
+        value = None
+        if isinstance(metric_val, float):
+            value = metric_val
+        elif isinstance(metric_val, list):
+            if not len(metric_val):
+                raise Exception(f"'{metric_id}' metric value for the planner '{planner_name}' is an empty list")
+            # arbitrarily selecting the first element in the list
+            value = metric_val[0]
+            # treat as a warning when the list is bigger than 1-element
+            if len(metric_val) > 1:
+                print(
+                    f"\033[93m"
+                    f"'{metric_id}' metric value for the planner '{planner_name}' is '{len(metric_val)}'-elem list, "
+                    f"arbitrarily selecting the first element '{value}'"
+                    "\033[0m"
+                )
+        else:
+            raise Exception(f"'{metric_id}' metric value for the planner '{planner_name}' is of unsupported type")
+        return value
 
 
     tex = str("")
