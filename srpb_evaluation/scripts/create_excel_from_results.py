@@ -10,10 +10,10 @@ sudo apt install python3-openpyxl
 import csv
 import excel_sheet_utils
 import glob
+import math
 import re
 import sys
 
-from string import ascii_uppercase
 from openpyxl import Workbook
 from pathlib import Path
 from srpb_metrics import SrpbMetrics
@@ -33,7 +33,7 @@ def get_log_dirs_planner(dir_path: str, planner_name: str, min_logs=3):
     dirnames_valid = []
     for dirname in dirnames:
         if re.search('ignore', dirname, re.IGNORECASE):
-            print(f'Ignoring a directory `{dirname}` from including to the overall `{planner_name}` planner results')
+            print(f'Ignoring a directory `{dirname}` from including in the overall `{planner_name}` planner results')
             continue
         dirnames_valid.append(dirname)
 
@@ -136,32 +136,14 @@ def cell_coords_to_sheet_cell_id(row: int, col: int):
     col_w_offset = col + 1
     cell_row = str(row_w_offset)
 
-    found_col = False
-    it_col = 0
-    cell_col = ''
-    for c in ascii_uppercase:
-        if it_col == col_w_offset:
-            cell_col = str(c)
-            found_col = True
-            break
-        it_col = it_col + 1
-    # repeat once again if required (doubling letters) - columns A - ZZ cover a sufficient number of cases
-    if not found_col:
-        # first letter of the cell address
-        for first in ascii_uppercase:
-            # second letter of the cell address
-            for second in ascii_uppercase:
-                # print(f'[cell_coords_to_sheet_cell_id] row {row}, col {col}, cell row {cell_row} | it col {it_col}, ADDR `{first}{second}`')
-                if it_col == col_w_offset:
-                    cell_col = str(first) + str(second)
-                    found_col = True
-                    break
-                it_col = it_col + 1
-            # break the outer loop if possible
-            if found_col:
-                break
-    if not found_col:
+    if not math.isfinite(row_w_offset) or not math.isfinite(col_w_offset):
         exit(f"Could not find a valid column ID for ({row}, {col}) configuration")
+
+    it_col = 0
+    cell_col = excel_sheet_utils.RESULT_RAW_INIT_COL
+    while it_col != col_w_offset:
+        cell_col = excel_sheet_utils.increment_column(cell_col)
+        it_col = it_col + 1
 
     # append row
     cell_id = str(cell_col) + str(cell_row)
@@ -281,6 +263,7 @@ if not len(sys.argv) == 2:
     planners = sys.argv[2:]
 else:
     planners = ['teb', 'dwa', 'trajectory', 'eband', 'hateb', 'cohan']
+    print(f'Using the default list of planners!')
 
 print(f'Investigated planners: {planners}')
 results = collect_results_planners(logs_dir, planners)
