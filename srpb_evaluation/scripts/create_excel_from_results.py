@@ -241,68 +241,68 @@ def calculate_sheet(wb: Workbook, planner_names: List[str], results_total: Dict)
         col_planner = increment_char(col_planner)
 
 
-########################################################
-# command line arguments
-if len(sys.argv) == 1:
-    print(f'Usage: ')
-    print(f'')
-    print(f'  python3 {sys.argv[0]}  <path to the main directory with SRPB logs>  <(OPTIONAL) space-separated planner names>')
-    print(f'')
-    print(f'  1. The main directory with logs should store the log files grouped into separate directories, ')
-    print(f'     each containing a robot, people and group data.')
-    print(f'  2. In order to detect which planners to include into results sheet, each name of a planner ')
-    print(f'     must be a part of log filenames.')
-    print(f'')
-    exit()
+if __name__ == "__main__":
+    # command line arguments
+    if len(sys.argv) == 1:
+        print(f'Usage: ')
+        print(f'')
+        print(f'  python3 {sys.argv[0]}  <path to the main directory with SRPB logs>  <(OPTIONAL) space-separated planner names>')
+        print(f'')
+        print(f'  1. The main directory with logs should store the log files grouped into separate directories, ')
+        print(f'     each containing a robot, people and group data.')
+        print(f'  2. In order to detect which planners to include into results sheet, each name of a planner ')
+        print(f'     must be a part of log filenames.')
+        print(f'')
+        exit()
 
-logs_dir = str(sys.argv[1])
-print(f'Name of directory with logs: {logs_dir}')
+    logs_dir = str(sys.argv[1])
+    print(f'Name of directory with logs: {logs_dir}')
 
-planners = []
-if not len(sys.argv) == 2:
-    planners = sys.argv[2:]
-else:
-    planners = ['teb', 'dwa', 'trajectory', 'eband', 'hateb', 'cohan']
-    print(f'Using the default list of planners!')
+    planners = []
+    if not len(sys.argv) == 2:
+        planners = sys.argv[2:]
+    else:
+        planners = ['teb', 'dwa', 'trajectory', 'eband', 'hateb', 'cohan']
+        print(f'Using the default list of planners!')
 
-print(f'Investigated planners: {planners}')
-results = collect_results_planners(logs_dir, planners)
+    print(f'Investigated planners: {planners}')
+    results = collect_results_planners(logs_dir, planners)
 
-###############################################
-# documentation at https://openpyxl.readthedocs.io/en/stable/index.html
-wb = Workbook()
+    ###############################################
+    # documentation at https://openpyxl.readthedocs.io/en/stable/index.html
+    wb = Workbook()
 
-# grab the active worksheet (workbook always creates an arbitrary sheet)
-ws_init = wb.active
-# create a sheet with a custom name
-ws = wb.create_sheet(title=excel_sheet_utils.SHEET_NAME)
-# delete the sheet initially created
-wb.remove_sheet(worksheet=ws_init)
+    # grab the active worksheet (workbook always creates an arbitrary sheet)
+    ws_init = wb.active
+    # create a sheet with a custom name
+    ws = wb.create_sheet(title=excel_sheet_utils.SHEET_NAME)
+    # delete the sheet initially created
+    wb.remove_sheet(worksheet=ws_init)
 
-# Prepare rows of data and append them to the sheet
-rows = prepare_sheet_rows(results)
-for row in rows:
-    ws.append(row)
+    # Prepare rows of data and append them to the sheet
+    rows = prepare_sheet_rows(results)
+    for row in rows:
+        ws.append(row)
 
-# make some calculations
-calculate_sheet(ws, planners, results)
+    # make some calculations
+    calculate_sheet(ws, planners, results)
 
-# Prepare name of the output file
-output_filename = 'results' + '_' + Path(logs_dir).name
-for planner in planners:
-    output_filename = output_filename + '_' + planner
-output_filename = output_filename.rstrip('_') + '.xlsx'
-output_path = Path(logs_dir).parent.absolute() / output_filename
+    # Prepare name of the output file
+    output_filename = 'results' + '_' + Path(logs_dir).name
+    for planner in planners:
+        output_filename = output_filename + '_' + planner
+    output_filename = output_filename.rstrip('_') + '.xlsx'
+    output_path = Path(logs_dir).parent.absolute() / output_filename
 
-# Save the file
-wb.save(str(output_path))
+    # Save the file
+    wb.save(str(output_path))
 
-print(f'Results saved in: {output_path}')
-print("")
-# When the sheet with the results is not opened and saved by the Excel or LibreOffice Calc, then reading a non-empty
-# cell will probably return None
-# Ref1: https://itecnote.com/tecnote/python-openpyxl-data_onlytrue-returning-none/
-# Ref2: https://groups.google.com/g/openpyxl-users/c/GbBOnOa8g7Y
-print(f'Consider opening the results file and saving it with Excel/LibreOffice Calc (without any modifications).')
-print(f'It will produce cached values based on formulas written (`openpyxl` library is not able to do so).')
-print(f'This is a necessary step when one wants to use the script that creates a LaTeX table from a spreadsheet')
+    print(f'Results saved in: {output_path}')
+    print("")
+    # When the sheet with the results is not opened and saved by the Excel or LibreOffice Calc, then reading a non-empty
+    # cell will probably return None
+    # Ref1: https://itecnote.com/tecnote/python-openpyxl-data_onlytrue-returning-none/
+    # Ref2: https://groups.google.com/g/openpyxl-users/c/GbBOnOa8g7Y
+    print(f'Consider opening the results file and saving it with Excel/LibreOffice Calc (without any modifications).')
+    print(f'It will produce cached values based on formulas written (`openpyxl` library is not able to do so).')
+    print(f'This is a necessary step when one wants to use the script that creates a LaTeX table from a spreadsheet')
