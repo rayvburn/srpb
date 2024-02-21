@@ -1,5 +1,6 @@
 from openpyxl import load_workbook
 from openpyxl import Workbook
+from openpyxl.worksheet import Worksheet
 from pathlib import Path
 from typing import Dict
 from typing import List
@@ -41,6 +42,34 @@ def increment_column(col: str):
             return col[:i] + increment_char(col[i]) + 'A' * (len(col) - i - 1)
 
 
+def increment_row(row: int):
+    """
+    Increments integer stored as string
+    """
+    return str(int(row) + 1)
+
+
+def make_sheet_cell(row: int, col: str):
+    """
+    Creates col-row tuple to access cell in a sheet
+    """
+    return str(col + row)
+
+
+def get_sheet_val(sheet: Worksheet, row: int, col: str):
+    """
+    Retrieves a value of sheet's cell
+    """
+    return sheet[make_sheet_cell(col=col, row=row)].value
+
+
+def is_sheet_cell_empty(sheet: Worksheet, row: int, col: str):
+    """
+    Checks if certain cell in the sheet is empty
+    """
+    return get_sheet_val(sheet=sheet, row=row, col=col) == None
+
+
 def read_data_from_excel(wb: Workbook, sheet_name: str, col_init: str, row_init: int) -> Dict[str, Dict[str, float]]:
     """
     Reads the spreadsheet following the convention introduced in `create_excel_from_results.calculate_sheet` script
@@ -52,15 +81,6 @@ def read_data_from_excel(wb: Workbook, sheet_name: str, col_init: str, row_init:
 
     sheet = wb[sheet_name]
     col_metric_ids = col_init
-
-    # lambda that creates col-row tuple to access cell in a sheet
-    make_sheet_cell = lambda row, col : str(col + row)
-    # lambda that increments integer stored as string
-    increment_row = lambda row : str(int(row) + 1)
-    # lambda that retrieves value of sheet's cell
-    get_sheet_val = lambda sheet, row, col : sheet[make_sheet_cell(col=col, row=row)].value
-    # lambda that checks if certain cell in the sheet is empty
-    sheet_cell_empty = lambda sheet, row, col : get_sheet_val(sheet=sheet, row=row, col=col) == None
 
     # local database with planners' metrics, actually:
     # Dict[str, Dict[str, List[float]]]
@@ -74,14 +94,14 @@ def read_data_from_excel(wb: Workbook, sheet_name: str, col_init: str, row_init:
     # to iterate over metrics
     row_iter = increment_row(row_init)
     # iterate over planners (names)
-    while not sheet_cell_empty(sheet=sheet, row=row_init, col=col_iter):
+    while not is_sheet_cell_empty(sheet=sheet, row=row_init, col=col_iter):
         # save planner name for later use in database
         planner_name = str(get_sheet_val(sheet=sheet, row=row_init, col=col_iter))
         # print(f"Checking sheet at {make_sheet_cell(col=col_iter, row=row_init)} for planner {planner_name}")
         # got a valid planner name - iterate over saved metrics
         metric_names = []
         metric_values = []
-        while not sheet_cell_empty(sheet=sheet, row=row_iter, col=col_metric_ids):
+        while not is_sheet_cell_empty(sheet=sheet, row=row_iter, col=col_metric_ids):
             # obtain sheet values
             metric_name = get_sheet_val(sheet=sheet, row=row_iter, col=col_metric_ids)
             metric_value = get_sheet_val(sheet=sheet, row=row_iter, col=col_iter)
