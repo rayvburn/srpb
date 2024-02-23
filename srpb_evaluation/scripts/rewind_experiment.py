@@ -153,9 +153,15 @@ def main(
         norm=mpl.colors.Normalize(vmin=timestamps[0], vmax=timestamps[-1]),
         orientation='vertical'
     )
+    font_cfg = {
+        'family': visuals['legend']['fontfamily'],
+        'size': visuals['legend']['fontsize'],
+    }
+    colorbar.set_label('Seconds', fontdict=font_cfg)
     # https://stackoverflow.com/a/67438742
-    colorbar.ax.tick_params(labelsize=visuals['legend']['fontsize'])
-    colorbar.set_label('Seconds', fontsize=visuals['legend']['fontsize'])
+    colorbar.ax.tick_params(labelsize=font_cfg['size'])
+    # Update tick label font family
+    colorbar.ax.set_yticklabels(colorbar.ax.get_yticklabels(), fontdict=font_cfg)
 
     # Save the auxiliary figure
     tim_scale_filename = vis_name + '_timing' + '.pdf'
@@ -209,6 +215,7 @@ if __name__ == '__main__':
     visuals['legend']['width'] = config['vis']['legend']['width']
     visuals['legend']['height'] = config['vis']['legend']['height']
     visuals['legend']['fontsize'] = config['vis']['legend']['fontsize']
+    visuals['legend']['fontfamily'] = config['vis']['legend']['fontfamily']
 
     log_file_robot = log_file_basename + '_robot.txt'
     log_file_people = log_file_basename + '_people.txt'

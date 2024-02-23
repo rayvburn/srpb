@@ -39,3 +39,5 @@ vis:
         width: 0.25
         height: 5
         fontsize: 17
+        # (cursive|fantasy|monospace|sans|sans serif|sans-serif|serif)
+        fontfamily: serif
