@@ -135,8 +135,8 @@ def main(
     ax.get_yaxis().set_visible(False)
 
     # save figure with the experiment data
-    output_filename = vis_name + '.pdf'
-    fig.savefig(output_filename, bbox_inches='tight', pad_inches=0)
+    output_filename = vis_name + '.' + str(visuals['figure']['extension'])
+    fig.savefig(output_filename, bbox_inches='tight', pad_inches=0, dpi=visuals['figure']['dpi'])
     print(f"Logged experiment data saved to `{output_filename}` file")
 
     # blocking call until window with the plot is closed
@@ -164,8 +164,8 @@ def main(
     colorbar.ax.set_yticklabels(colorbar.ax.get_yticklabels(), fontdict=font_cfg)
 
     # Save the auxiliary figure
-    tim_scale_filename = vis_name + '_timing' + '.pdf'
-    fig_tim_scale.savefig(tim_scale_filename, bbox_inches='tight', pad_inches=0)
+    tim_scale_filename = vis_name + '_timing' + '.' + str(visuals['figure']['extension'])
+    fig_tim_scale.savefig(tim_scale_filename, bbox_inches='tight', pad_inches=0, dpi=visuals['figure']['dpi'])
     print(f"Figure with colorized passage of time saved to `{tim_scale_filename}` file")
 
     # show the timing legend figure
@@ -206,7 +206,9 @@ if __name__ == '__main__':
     timestamp_max = config['log']['max_timestamp']
 
     # load visual configuration
-    visuals = {'people': {}, 'groups': {}, 'legend': {}}
+    visuals = {'figure': {}, 'people': {}, 'groups': {}, 'legend': {}}
+    visuals['figure']['extension'] = config['vis']['figure']['extension']
+    visuals['figure']['dpi'] = config['vis']['figure']['dpi']
     visuals['people']['ec'] = config['vis']['people']['edge_color']
     visuals['people']['radius'] = config['vis']['people']['radius']
     visuals['groups']['edge_alpha'] = config['vis']['groups']['edge_alpha']

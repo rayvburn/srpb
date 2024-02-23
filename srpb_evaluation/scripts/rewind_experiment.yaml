@@ -26,6 +26,10 @@ map:
     # map coordinates (x and y) of additional points to be drawn (list of 2-element lists)
     additional_pts: []
 vis:
+    figure:
+        # (pdf|png|jpeg) affects the format of the output figures
+        extension: png
+        dpi: 100
     people:
         # full RGBA
         edge_color: [0.23, 0.23, 0.23, 0.10]
