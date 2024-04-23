@@ -113,6 +113,7 @@ if __name__ == "__main__":
     else:
         raise Exception(f"Unknown plot_type")
 
+    # NOTE: converts to "LaTeX-style" if a string (or its part) is written as "$a^x$"
     ax.set_title(cfg['figure']['title'])
     ax.xaxis.grid(cfg['figure']['xaxis_grid'])
     ax.yaxis.grid(cfg['figure']['yaxis_grid'])
