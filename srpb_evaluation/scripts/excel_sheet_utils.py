@@ -15,6 +15,9 @@ RESULT_RAW_INIT_ROW = '1'
 RESULT_INIT_COL = 'A'
 RESULT_INIT_ROW = '50'
 
+# Must be non-float and cannot be None, as that would break detection of that special case
+FAILED_TRIAL_METRIC_VALUE = '#FAIL#'
+
 
 def increment_column(col: str):
     """
@@ -118,13 +121,20 @@ def read_data_from_excel(wb: Workbook, sheet_name: str, col_init: str, row_init:
             try:
                 metric_value = float(metric_value)
             except ValueError:
-                # try to proceed to the next metric
-                row_iter = increment_row(row_iter)
-                print(
-                    f"Could not convert '{metric_value}' into float, proceeding to the next row '{row_iter}'"
-                    f" in column '{col_iter}'"
-                )
-                continue
+                # EDGE CASE detection: when iterating through the spreadsheet on which `remove_failed_trials_from_excel.py`
+                # has been called, it may happen that metric is indicated as invalid - set it to None
+                if not metric_value == FAILED_TRIAL_METRIC_VALUE:
+                    # try to proceed to the next metric (this is the normal operation)
+                    row_iter = increment_row(row_iter)
+                    print(
+                        f"Could not convert '{metric_value}' into float, proceeding to the next row '{row_iter}'"
+                        f" in column '{col_iter}'"
+                    )
+                    continue
+                else:
+                    # convert failure indicator to None and proceed normally (FAILED_TRIAL_METRIC_VALUE is used for
+                    # distinguishing failed trial cells from out-of-range cells)
+                    metric_value = None
             # collect
             metric_names.append(metric_name)
             metric_values.append(metric_value)

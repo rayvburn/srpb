@@ -66,7 +66,8 @@ def remove_trial_if_unsuccessful(
     # iterate over rows to remove all metrics in a given column (related to a given trial)
     while not is_sheet_cell_empty(ws, row_it, metric_cond_col):
         cell = make_sheet_cell(row_it, metric_cond_col)
-        ws[cell] = None
+        # NOTE: the cell is filled with a special value stored under the constant
+        ws[cell] = excel_sheet_utils.FAILED_TRIAL_METRIC_VALUE
         row_it = increment_row(row_it)
 
 
