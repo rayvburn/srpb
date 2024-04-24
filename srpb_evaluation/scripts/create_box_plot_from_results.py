@@ -29,8 +29,13 @@ if __name__ == "__main__":
     # Ref: https://stackoverflow.com/a/32763023
     cli = argparse.ArgumentParser()
     # positional arguments
-    cli.add_argument("input", type=str, help="Path to the SRPB results sheet")
     cli.add_argument("output", type=str, help="Path to the .pdf file with the plot to save")
+    cli.add_argument(
+        "--input",
+        nargs="*",
+        type=str,
+        help="Path(s) to the SRPB results sheet(s). Their contents should be orthogonal - different planners in each"
+    )
     cli.add_argument("--config", type=str, help="Path to the plot configuration file")
     cli.add_argument("--metric", type=str, help="ID of the metric")
     # optional arguments
@@ -54,7 +59,7 @@ if __name__ == "__main__":
     # parse the command line
     args = cli.parse_args()
 
-    sheet_path = args.input
+    sheet_paths = args.input
     config_path = args.config
     metric = args.metric
     output_path = args.output
@@ -64,8 +69,13 @@ if __name__ == "__main__":
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
-    # load data from the spreadsheet (either only filtered data - bar plot, or all data for statistical presentation)
-    raw_data = excel_sheet_utils.load_raw_data_from_excel(sheet_path)
+    # load data from the spreadsheet(s) (all data for statistical presentation)
+    raw_data = {}
+    for sheet_path in sheet_paths:
+        raw_data_single_sheet = excel_sheet_utils.load_raw_data_from_excel(sheet_path)
+        # NOTE: this is probably not an optimal solution; ref: https://stackoverflow.com/a/26853961
+        raw_data_so_far = raw_data
+        raw_data = {**raw_data_so_far, **raw_data_single_sheet}
 
     # use all included in the input sheet
     if planners_raw == None or not len(planners_raw):
