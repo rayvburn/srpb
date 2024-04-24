@@ -2,8 +2,8 @@
 plot_type: violin
 
 figure:
-  size_width: 4
-  size_height: 9
+  size_width: 9
+  size_height: 4
   title: Title
   xlabel: Samples
   ylabel: Values

@@ -108,7 +108,7 @@ if __name__ == "__main__":
     if cfg['figure']['size_width'] == None or cfg['figure']['size_height'] == None:
         fig, ax = plt.subplots()
     else:
-        fig, ax = plt.subplots(figsize=(cfg['figure']['size_height'], cfg['figure']['size_width']))
+        fig, ax = plt.subplots(figsize=(cfg['figure']['size_width'], cfg['figure']['size_height']))
 
     if cfg['plot_type'] == "violin":
         ax.violinplot(
