@@ -164,11 +164,14 @@ def create_bar_plot(dataset: Dict, plot_cfg: Dict) -> plt.Figure:
 def create_remapped_dataset(data_orig: dict, names_orig_select: dict, remappings: dict):
     # remap the original IDs (names)
     data_remapped_keys = {}
-    for name_orig in names_orig_select:#data_orig.keys():
+    for name_orig in names_orig_select:
         label = remappings.get(name_orig)
-        # check if found; if not - do not change the name; also, if the remapped value already exists, do not overwrite
+        # check if found; also, if the remapped value already exists, do not overwrite
         if not label == None and not label in data_orig.keys():
             data_remapped_keys[label] = data_orig[name_orig]
+        elif label == None:
+            # if key was not found amid the remappings - do not change the original name
+            data_remapped_keys[name_orig] = data_orig[name_orig]
     return data_remapped_keys
 
 
@@ -176,9 +179,14 @@ if __name__ == "__main__":
     # API is similar to the `create_box_plot_from_results` script
     # Ref: https://stackoverflow.com/a/32763023
     cli = argparse.ArgumentParser()
-    # positional arguments
-    cli.add_argument("input", type=str, help="Path to the SRPB results sheet")
+    # positional argument
     cli.add_argument("output", type=str, help="Path to the .pdf file with the plot to save")
+    cli.add_argument(
+        "--input",
+        nargs="*",
+        type=str,
+        help="Path(s) to the SRPB results sheet(s). Their contents should be orthogonal - different planners in each"
+    )
     cli.add_argument("--config", type=str, help="Path to the plot configuration file")
     cli.add_argument("--metric", type=str, help="ID of the metric")
     # optional arguments
@@ -193,7 +201,7 @@ if __name__ == "__main__":
     # parse the command line
     args = cli.parse_args()
 
-    sheet_path = args.input
+    sheet_paths = args.input
     config_path = args.config
     metric = args.metric
     output_path = args.output
@@ -206,8 +214,14 @@ if __name__ == "__main__":
     # this list will always be of size 1 (this is just a hack to pass it to `filter_inner_keys`)
     metric_name = [str(metric)]
 
-    # load data from the spreadsheet
-    data_loaded = excel_sheet_utils.load_data_from_excel(sheet_path)
+    # load data from the spreadsheet(s)
+    data_loaded = {}
+    for sheet_path in sheet_paths:
+        data_single_sheet = excel_sheet_utils.load_data_from_excel(sheet_path)
+        # NOTE: this is probably not an optimal solution; ref: https://stackoverflow.com/a/26853961
+        data_loaded_so_far = data_loaded
+        data_loaded = {**data_loaded_so_far, **data_single_sheet}
+
     data_selected = filter_inner_keys(data_loaded, metric_name)
 
     # use all included in the input sheet
