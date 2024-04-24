@@ -6,9 +6,14 @@ figure:
   size_height: 4
   title: Title
   xlabel: Samples
+  # in degrees
+  xlabels_rotation: 0
   ylabel: Values
   xaxis_grid: True
   yaxis_grid: True
+  fontsize: 12
+  # (cursive|fantasy|monospace|sans|sans serif|sans-serif|serif)
+  fontfamily: serif
 
 labels:
   # defines how the planners will be named according to their IDs

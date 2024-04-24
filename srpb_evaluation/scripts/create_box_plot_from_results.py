@@ -131,14 +131,20 @@ if __name__ == "__main__":
     else:
         raise Exception(f"Unknown plot_type")
 
+    font_cfg = {
+        'family': cfg['figure']['fontfamily'],
+        'size': cfg['figure']['fontsize'],
+    }
     # NOTE: converts to "LaTeX-style" if a string (or its part) is written as "$a^x$"
-    ax.set_title(cfg['figure']['title'])
+    ax.set_title(cfg['figure']['title'], fontdict=font_cfg)
     ax.xaxis.grid(cfg['figure']['xaxis_grid'])
     ax.yaxis.grid(cfg['figure']['yaxis_grid'])
-    ax.set_xlabel(cfg['figure']['xlabel'])
-    ax.set_ylabel(cfg['figure']['ylabel'])
+    ax.set_xlabel(cfg['figure']['xlabel'], fontdict=font_cfg)
+    ax.set_ylabel(cfg['figure']['ylabel'], fontdict=font_cfg)
     ax.set_xticks(range(1, len(data) + 1))
-    ax.set_xticklabels(planners)
+    ax.set_xticklabels(planners, fontdict=font_cfg)
+    # x labels rotation
+    ax.tick_params(axis='x', rotation=cfg['figure']['xlabels_rotation'])
     plt.show()
 
     # save the figure
