@@ -77,6 +77,7 @@ if __name__ == "__main__":
 
     #
     # Structure of data per individual metric:
+    # (the assumption of each list with an equal length applies when the dataset is perfectly clean)
     #
     # data = [
     #     # -> ..., <subsequent values of a certain metric>, ...,
@@ -91,7 +92,14 @@ if __name__ == "__main__":
     # prepare the loaded data according to the example above
     data = []
     for planner in planners_raw:
-        data.append(raw_data[planner][metric])
+        # delete Nones - method is robust against the failed trials
+        data_planner_metric_clean = []
+        for i, metric_value in enumerate(raw_data[planner][metric]):
+            if metric_value == None:
+                print(f"[{i+1}] Planner '{planner}', metric '{metric}' equals '{metric_value}', skipping...")
+                continue
+            data_planner_metric_clean.append(metric_value)
+        data.append(data_planner_metric_clean)
 
     # remap the original IDs (names) of the planners
     planners = remap_names(planners_raw, cfg['labels'])
