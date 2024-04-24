@@ -145,7 +145,7 @@ def create_bar_plot(dataset: Dict, plot_cfg: Dict) -> plt.Figure:
     # Ref: https://stackoverflow.com/a/47893553
     idx = np.asarray([i * width for i in range(len(planner_ids))])
     ax.set_xticks(idx)
-    ax.set_xticklabels(list(planner_ids), fontsize=font_cfg_legend['size'])
+    ax.set_xticklabels(list(planner_ids), fontdict=font_cfg_legend)
     ax.tick_params(axis='y', labelsize=font_cfg_legend['size'])
 
     # x labels rotation
