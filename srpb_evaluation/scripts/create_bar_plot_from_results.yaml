@@ -1,4 +1,6 @@
 figure:
+  size_width: 9
+  size_height: 4
   # one may want to embed mathematical typesetting inside to any label, use "$s^2$" then
   title: Metric name
   xlabel: Planner

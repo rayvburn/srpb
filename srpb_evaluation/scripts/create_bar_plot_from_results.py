@@ -104,7 +104,12 @@ def create_bar_plot(dataset: Dict, plot_cfg: Dict) -> plt.Figure:
     if not len(plot_cfg['figure']['bar_color']):
         plot_cfg['figure']['bar_color'] = None
 
-    fig, ax = plt.subplots()
+    # Based on the example: https://matplotlib.org/stable/gallery/statistics/boxplot_vs_violin.html
+    if plot_cfg['figure']['size_width'] == None or plot_cfg['figure']['size_height'] == None:
+        fig, ax = plt.subplots()
+    else:
+        fig, ax = plt.subplots(figsize=(plot_cfg['figure']['size_width'], plot_cfg['figure']['size_height']))
+
     for attribute, measurement in metric_values.items():
         offset = width * multiplier
         rects = ax.bar(
