@@ -1,0 +1,30 @@
+figure:
+  # one may want to embed mathematical typesetting inside to any label, use "$s^2$" then
+  title: Metric name
+  xlabel: Planner
+  # in degrees
+  xlabels_rotation: 0
+  ylabel: Metric value
+  ylim_min: 0.0
+  ylim_max_value_multiplier: 1.1
+  bar_width: 0.5
+  bar_height_labels: True
+  bar_height_label_format: "{:.1f}"
+  bar_edgecolor: black
+  bar_edgewidth: 0.7
+  # set a valid value so all bars will have the same color; leave empty <""> for default setup
+  bar_color: "#1f77b4"
+
+legend:
+  # when enabling, it's wise to force a default "bar_color"
+  enable: False
+  loc: "upper left"
+  ncol: 3
+  fontsize: 12
+  fontfamily: serif
+
+labels:
+  # defines how the planners will be named according to their IDs
+  teb: TEB
+  dwa: DWA
+  trajectory: Traj. Rollout
