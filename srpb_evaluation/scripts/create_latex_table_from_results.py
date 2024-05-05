@@ -302,7 +302,12 @@ if __name__ == "__main__":
 
     cmd_json = json.loads(args.input)
     for key in cmd_json.keys():
-        inputs.append({'name': str(key), 'path': Path(cmd_json[key])})
+        # (multiple) spreadsheet path(s) is(are) given as a string(s) (separated with a comma)
+        paths = cmd_json[key].split(",")
+        paths_pathlib = [Path(path.strip("'")) for path in paths]
+        # collect a single input
+        inputs.append({'name': str(key), 'path': paths_pathlib})
+
     print("\tScript inputs:")
     print(*inputs, sep='\n')
 
@@ -310,9 +315,13 @@ if __name__ == "__main__":
     results_total = []
 
     # loop for processing Excel sheets for all input files
-    for input_file in inputs:
-        scenario_results = load_data_from_excel(input_file['path'])
-        results_total.append({'name': input_file['name'], 'results': scenario_results})
+    for input in inputs:
+        # aggregated results (possibly from multiple files)
+        scenario_results = {}
+        for file in input['path']:
+            scenario_results_partial = load_data_from_excel(file)
+            scenario_results.update(scenario_results_partial)
+        results_total.append({'name': input['name'], 'results': scenario_results})
 
     # generates a string representing LaTeX command that can be directly included and used in a LaTeX document
     results_table = create_latex_table(results_total, metric_names, planner_names)
