@@ -179,7 +179,7 @@ def create_latex_table(
         # ID of the metric and its unit
         # whether to put the unit in a new line or not (when there are too few rows)
         if scenarios_num > 2:
-            metric_name_and_unit = f"{metrics_map[metric_id]['tex_name']} \\ {metrics_map[metric_id]['tex_unit']}"
+            metric_name_and_unit = f"{metrics_map[metric_id]['tex_name']} \\\\ {metrics_map[metric_id]['tex_unit']}"
         else:
             metric_name_and_unit = f"{metrics_map[metric_id]['tex_name']} {metrics_map[metric_id]['tex_unit']}"
         tex += (r"						" + str(metric_name_and_unit) + "\r\n")
