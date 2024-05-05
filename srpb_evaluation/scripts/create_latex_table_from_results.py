@@ -130,7 +130,15 @@ def create_latex_table(
     tex += (r"			% NOTE1: arg to parbox defines how high the text will start" + "\r\n")
     tex += (r"			% NOTE2: \cline{2-8} is a partial horizontal line, ref: https://tex.stackexchange.com/a/8555" + "\r\n")
     tex += (r"			\begin{tabular}" + "\r\n")
-    tex += (r"			{||c||c||c|c|c|c|c|c||}" + "\r\n")
+
+    # Prepare column for metric identifiers and units and for scenario identifiers
+    tex += (r"			{||c||c||")
+    # centered columns according to the number of planners
+    for _ in range(planners_num):
+        tex += (r"c|")
+    # double vertical border and line end
+    tex += (r"|}" + "\r\n")
+
     tex += (r"				\hline" + "\r\n")
     tex += (r"				% =============================== header" + "\r\n")
     tex += (r"				\multicolumn{2}{|c|}{ % spreads across metric and scenario ID" + "\r\n")
@@ -146,11 +154,12 @@ def create_latex_table(
 
     # header columns of planners - assuming that all results have the same planner entries
     for planner_name in planner_names:
+        planner_name_latex_safe = planner_name.replace("_", "\_")
         tex += (r"				& \rotatebox[origin=c]{90}{" + "\r\n")
         tex += (r"					\parbox[c]{\benchresultspheaderheight}{" + "\r\n")
         tex += (r"						\centering" + "\r\n")
         # enter a name of the planner
-        tex += (r"						\emph{" + str(planner_name) + r"}" + "\r\n")
+        tex += (r"						\emph{" + str(planner_name_latex_safe) + r"}" + "\r\n")
         tex += (r"					}" + "\r\n")
         tex += (r"				}" + "\r\n")
 
