@@ -204,6 +204,11 @@ def create_latex_table(
             metric_values_among_planners = []
             for planner_name in planner_names:
                 metric_val = get_metric_value_for_planner(results[scenario_num]['results'], planner_name, metric_id)
+                # there might be incorrect data:
+                # * 'nan' will break the min/max selection (nan will be returned)
+                # * 'None' cannot be compared with floats
+                if math.isnan(metric_val):
+                    continue
                 metric_values_among_planners.append(metric_val)
 
             # select the best metric - the one with the smallest or largest value (excluding NaNs)
