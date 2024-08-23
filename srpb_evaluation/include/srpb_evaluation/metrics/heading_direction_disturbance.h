@@ -115,7 +115,14 @@ protected:
           person_fov_
         );
         // normalize cost
-        heading.normalize(robot_circumradius_, robot_max_speed_);
+        if (!heading.normalize(robot_circumradius_, robot_max_speed_)) {
+          printf(
+            "During calculation of the `HeadingDirectionDisturbance` metric, scales had to be clipped for person '%s' "
+            "at t=%.4f. Your data might be corrupted!",
+            rewinder_.getPersonCurr().getName().c_str(),
+            rewinder_.getTimestampCurr()
+          );
+        }
 
         timed_disturbance.second.push_back(heading.getScale());
       }
