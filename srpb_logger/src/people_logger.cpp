@@ -255,14 +255,14 @@ std::pair<bool, people_msgs_utils::Group> PeopleLogger::groupFromString(const st
 
   if (vals1.empty()) {
     // return a dummy group without any IDs of tracked people
-    return {false, people_msgs_utils::EMPTY_GROUP};
+    return {false, people_msgs_utils::Group()};
   }
 
   // 5 static entries and `group` must contain at least 2 IDs
   if (vals1.size() < 7) {
     std::cout << "\x1B[31mFound corrupted data of a group:\r\n\t" << str << "\x1B[0m" << std::endl;
     // return a dummy group
-    return {false, people_msgs_utils::EMPTY_GROUP};
+    return {false, people_msgs_utils::Group()};
   }
 
   std::string name = vals1.at(0);
