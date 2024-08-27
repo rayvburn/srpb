@@ -21,7 +21,7 @@ from typing import List
 from typing import Dict
 
 
-def get_log_dirs_planner(dir_path: str, planner_name: str, min_logs=3):
+def get_log_dirs_planner(dir_path: str, planner_name: str, min_logs=1):
     dirnames_underscore = glob.glob(dir_path + '/' + '*_' + planner_name + '*')
     dirnames_dash = glob.glob(dir_path + '/' + '*-' + planner_name + '*')
     dirnames = dirnames_underscore
