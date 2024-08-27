@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
   double goal_tolerance_yaw = 0.2;
 
   // oscillation threshold values
-  double osc_vel_lin_x_threshold = 0.05;
+  double osc_vel_lin_xy_threshold = 0.05;
   double osc_vel_x_threshold = 0.05;
   double osc_vel_y_threshold = 0.05;
   double osc_vel_ang_z_threshold = 0.15;
