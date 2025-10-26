@@ -184,8 +184,9 @@ def recompute_group_cog(group: Group, people_set: List[Person], people_hide: Lis
     for person in valid_people_this_group:
         new_cog_x += person.get_x()
         new_cog_y += person.get_y()
-    new_cog_x /= len(valid_people_this_group)
-    new_cog_y /= len(valid_people_this_group)
+    if valid_people_this_group:
+        new_cog_x /= len(valid_people_this_group)
+        new_cog_y /= len(valid_people_this_group)
     new_cog_z = 0.0
 
     # collect valid member IDs
