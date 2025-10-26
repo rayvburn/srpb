@@ -211,6 +211,9 @@ def create_latex_table(
                     continue
                 metric_values_among_planners.append(metric_val)
 
+            if not len(metric_values_among_planners):
+                raise Exception(f"Expected '{metric_id}' metric value but none of the planners have one assigned. Results are: {results[scenario_num]['results']}")
+
             # select the best metric - the one with the smallest or largest value (excluding NaNs)
             if srpb_metrics.is_minimum_best(metric_id):
                 metric_best_val = min(metric_values_among_planners)
