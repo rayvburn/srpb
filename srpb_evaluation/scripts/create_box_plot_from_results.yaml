@@ -17,5 +17,10 @@ figure:
 
 labels:
   # defines how the planners will be named according to their IDs
+  humap: HuMAP
+  cohan: CoHAN
+  hateb: HaTEB
   teb: TEB
   dwa: DWA
+  trajectory: Trajectory Rollout
+  eband: EBand
