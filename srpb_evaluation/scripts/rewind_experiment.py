@@ -135,8 +135,8 @@ def main(
     ax.get_yaxis().set_visible(False)
 
     # save figure with the experiment data
-    output_filename = vis_name + '.pdf'
-    fig.savefig(output_filename, bbox_inches='tight', pad_inches=0)
+    output_filename = vis_name + '.' + str(visuals['figure']['extension'])
+    fig.savefig(output_filename, bbox_inches='tight', pad_inches=0, dpi=visuals['figure']['dpi'])
     print(f"Logged experiment data saved to `{output_filename}` file")
 
     # blocking call until window with the plot is closed
@@ -153,13 +153,19 @@ def main(
         norm=mpl.colors.Normalize(vmin=timestamps[0], vmax=timestamps[-1]),
         orientation='vertical'
     )
+    font_cfg = {
+        'family': visuals['legend']['fontfamily'],
+        'size': visuals['legend']['fontsize'],
+    }
+    colorbar.set_label('Seconds', fontdict=font_cfg)
     # https://stackoverflow.com/a/67438742
-    colorbar.ax.tick_params(labelsize=visuals['legend']['fontsize'])
-    colorbar.set_label('Seconds', fontsize=visuals['legend']['fontsize'])
+    colorbar.ax.tick_params(labelsize=font_cfg['size'])
+    # Update tick label font family
+    colorbar.ax.set_yticklabels(colorbar.ax.get_yticklabels(), fontdict=font_cfg)
 
     # Save the auxiliary figure
-    tim_scale_filename = vis_name + '_timing' + '.pdf'
-    fig_tim_scale.savefig(tim_scale_filename, bbox_inches='tight', pad_inches=0)
+    tim_scale_filename = vis_name + '_timing' + '.' + str(visuals['figure']['extension'])
+    fig_tim_scale.savefig(tim_scale_filename, bbox_inches='tight', pad_inches=0, dpi=visuals['figure']['dpi'])
     print(f"Figure with colorized passage of time saved to `{tim_scale_filename}` file")
 
     # show the timing legend figure
@@ -200,7 +206,9 @@ if __name__ == '__main__':
     timestamp_max = config['log']['max_timestamp']
 
     # load visual configuration
-    visuals = {'people': {}, 'groups': {}, 'legend': {}}
+    visuals = {'figure': {}, 'people': {}, 'groups': {}, 'legend': {}}
+    visuals['figure']['extension'] = config['vis']['figure']['extension']
+    visuals['figure']['dpi'] = config['vis']['figure']['dpi']
     visuals['people']['ec'] = config['vis']['people']['edge_color']
     visuals['people']['radius'] = config['vis']['people']['radius']
     visuals['groups']['edge_alpha'] = config['vis']['groups']['edge_alpha']
@@ -209,6 +217,7 @@ if __name__ == '__main__':
     visuals['legend']['width'] = config['vis']['legend']['width']
     visuals['legend']['height'] = config['vis']['legend']['height']
     visuals['legend']['fontsize'] = config['vis']['legend']['fontsize']
+    visuals['legend']['fontfamily'] = config['vis']['legend']['fontfamily']
 
     log_file_robot = log_file_basename + '_robot.txt'
     log_file_people = log_file_basename + '_people.txt'
@@ -302,6 +311,8 @@ if __name__ == '__main__':
         log_entities['groups'].append(group)
 
     # create timestamps
+    last_timestamp_of_experiment = log_entities['robot'][-1].get_timestamp()
+    print(f"The last timestamp of the experiment is {last_timestamp_of_experiment}")
     timestamps = extract_timestamps(log_entities['robot'], timestamp_max)
     print(f"Prepared timestamps from {timestamps[0]} to {timestamps[-1]} with {len(timestamps)} entries")
 

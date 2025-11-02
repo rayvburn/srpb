@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srpb_evaluation/metric_gaussian.h"
+#include "srpb_evaluation/metric_statistics.h"
 
 #include <social_nav_utils/formation_space_intrusion.h>
 
@@ -8,7 +8,7 @@ namespace srpb {
 namespace evaluation {
 
 /// Similar to personal space intrusion but related to the group space
-class FormationSpaceIntrusion: public MetricGaussian {
+class FormationSpaceIntrusion: public MetricStatistics {
 public:
   FormationSpaceIntrusion(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
@@ -17,9 +17,13 @@ public:
     double group_space_threshold,
     bool max_method = true
   ):
-    MetricGaussian(robot_data, people_data, groups_data),
+    MetricStatistics(robot_data, people_data, groups_data),
     group_space_threshold_(group_space_threshold),
-    max_method_(max_method)
+    max_method_(max_method),
+    intrusion_min_(0.0),
+    intrusion_max_(0.0),
+    intrusion_total_(0.0),
+    violations_percentage_(0.0)
   {
     if (people_data.empty() || groups_data.empty()) {
       return;
@@ -118,12 +122,13 @@ protected:
 
     rewinder_.perform();
 
+    // Gaussian is computed as a "cost"; hence, "violation_above_threshold" is hard-coded to true
     std::tie(
       intrusion_min_,
       intrusion_max_,
       intrusion_total_,
       violations_percentage_
-    ) = MetricGaussian::calculateGaussianStatistics(timed_gaussians, group_space_threshold_, max_method_);
+    ) = MetricStatistics::calculateStatistics(timed_gaussians, group_space_threshold_, true, max_method_);
   }
 };
 

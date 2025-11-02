@@ -1,6 +1,7 @@
 #pragma once
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 
 #include <tf2/utils.h>
 
@@ -24,21 +25,31 @@ public:
         const geometry_msgs::PoseWithCovarianceStamped& robot_pose,
         const geometry_msgs::PoseWithCovarianceStamped& robot_vel,
         const geometry_msgs::PoseStamped& goal_pose,
+        const geometry_msgs::TwistStamped& cmd_vel,
         double obstacle_distance,
         double exec_time
-    ): RobotData(robot_pose.pose, robot_vel.pose, goal_pose.pose, obstacle_distance, exec_time) {}
+    ): RobotData(
+        robot_pose.pose,
+        robot_vel.pose,
+        goal_pose.pose,
+        cmd_vel.twist,
+        obstacle_distance,
+        exec_time
+    ) {}
 
     /// Full constructor for the RobotLogger
     RobotData(
         const geometry_msgs::PoseWithCovariance& robot_pose,
         const geometry_msgs::PoseWithCovariance& robot_vel,
         const geometry_msgs::Pose& goal_pose,
+        const geometry_msgs::Twist& cmd_vel,
         double obstacle_distance,
         double exec_time
     ):
         pose_(robot_pose),
         vel_(robot_vel),
         goal_(goal_pose),
+        command_(cmd_vel),
         obstacle_distance_(obstacle_distance),
         local_plan_exec_time_(exec_time),
         partial_(false)
@@ -47,17 +58,38 @@ public:
     /// Partial constructor for the `move_base` node
     RobotData(
         const geometry_msgs::PoseStamped& goal_pose,
+        const geometry_msgs::TwistStamped& cmd_vel,
         double obstacle_distance,
         double exec_time
-    ): RobotData(goal_pose.pose, obstacle_distance, exec_time) {}
+    ): RobotData(
+        goal_pose.pose,
+        cmd_vel.twist,
+        obstacle_distance,
+        exec_time
+    ) {}
+
+    /// Partial constructor for the `move_base` node
+    RobotData(
+        const geometry_msgs::PoseStamped& goal_pose,
+        const geometry_msgs::Twist& cmd_vel,
+        double obstacle_distance,
+        double exec_time
+    ): RobotData(
+        goal_pose.pose,
+        cmd_vel,
+        obstacle_distance,
+        exec_time
+    ) {}
 
     /// Partial constructor for the `move_base` node
     RobotData(
         const geometry_msgs::Pose& goal_pose,
+        const geometry_msgs::Twist& cmd_vel,
         double obstacle_distance,
         double exec_time
     ):
         goal_(goal_pose),
+        command_(cmd_vel),
         obstacle_distance_(obstacle_distance),
         local_plan_exec_time_(exec_time),
         partial_(true)
@@ -71,6 +103,10 @@ public:
         pose_.pose.orientation.w = NAN;
         pose_.covariance.fill(NAN);
         vel_ = pose_;
+    }
+
+    inline geometry_msgs::PoseWithCovariance getPoseWithCovariance() const {
+        return pose_;
     }
 
     inline geometry_msgs::Pose getPose() const {
@@ -126,6 +162,10 @@ public:
 
     inline double getCovariancePoseYawYaw() const {
         return pose_.covariance.at(COV_YAWYAW_INDEX);
+    }
+
+    inline geometry_msgs::PoseWithCovariance getVelocityWithCovariance() const {
+        return vel_;
     }
 
     inline geometry_msgs::Pose getVelocity() const {
@@ -195,6 +235,34 @@ public:
         return tf2::getYaw(goal_.orientation);
     }
 
+    inline geometry_msgs::Twist getVelocityCommand() const {
+        return command_;
+    }
+
+    inline double getVelocityCommandLinearX() const {
+        return command_.linear.x;
+    }
+
+    inline double getVelocityCommandLinearY() const {
+        return command_.linear.y;
+    }
+
+    inline double getVelocityCommandLinearZ() const {
+        return command_.linear.z;
+    }
+
+    inline double getVelocityCommandAngularX() const {
+        return command_.angular.x;
+    }
+
+    inline double getVelocityCommandAngularY() const {
+        return command_.angular.y;
+    }
+
+    inline double getVelocityCommandAngularZ() const {
+        return command_.angular.z;
+    }
+
     inline double getDistToObstacle() const {
         return obstacle_distance_;
     }
@@ -213,6 +281,7 @@ protected:
     geometry_msgs::PoseWithCovariance pose_;
     geometry_msgs::PoseWithCovariance vel_;
     geometry_msgs::Pose goal_;
+    geometry_msgs::Twist command_;
     double obstacle_distance_;
     double local_plan_exec_time_;
 

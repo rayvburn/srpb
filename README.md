@@ -35,9 +35,18 @@ rosinstall -n . srpb/srpb/srpb.rosinstall
 
 ## Usage
 
+### Setup
+
 A log file is saved once the goal is reached by the `srpb_move_base` node. Renewing the goal pose before reaching the previous one does not cause the files to be divided into parts.
 
-TBD...
+### Typical workflow
+
+If one intends to collect a bunch of logs, this is the correct workflow:
+
+* instead of running the typical `move_base`, run the `srpb_move_base` node that aggregates the `srpb_logger` modules,
+* after each trial, run the `scripts/copy_logs.sh` to copy the logs related to the newest trial into a separate directory,
+* if one wishes to be extra safe, one might want to evaluate the newest logs at this point with `scripts/evaluate_from_dir.sh <PATH TO THE DIR WITH LOGS COPIED INTO>` OR (typically) once all trials were completed, run the `scripts/evaluate_all_dirs.sh <PATH TO THE MAIN DIR WITH LOGS GROUPED INTO DIRS>`,
+* now an Excel sheet can be created with `python3 create_excel_from_results.py` script.
 
 ## Acknowledgments
 

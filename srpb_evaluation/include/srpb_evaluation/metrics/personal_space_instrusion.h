@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srpb_evaluation/metric_gaussian.h"
+#include "srpb_evaluation/metric_statistics.h"
 
 #include <social_nav_utils/personal_space_intrusion.h>
 
@@ -29,7 +29,7 @@ namespace evaluation {
  * “To Approach Humans?”: A Unified Framework for Approaching Pose Prediction and Socially Aware Robot Navigation
  * They called it `Social Individual Index`. Their method lacks normalization in terms of path duration.
  */
-class PersonalSpaceIntrusion: public MetricGaussian {
+class PersonalSpaceIntrusion: public MetricStatistics {
 public:
   PersonalSpaceIntrusion(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
@@ -37,9 +37,13 @@ public:
     double personal_space_threshold,
     bool max_method = true
   ):
-    MetricGaussian(robot_data, people_data),
+    MetricStatistics(robot_data, people_data),
     personal_space_threshold_(personal_space_threshold),
-    max_method_(max_method)
+    max_method_(max_method),
+    intrusion_min_(0.0),
+    intrusion_max_(0.0),
+    intrusion_total_(0.0),
+    violations_percentage_(0.0)
   {
     if (people_data.empty()) {
       return;
@@ -142,12 +146,13 @@ protected:
     );
     rewinder_.perform();
 
+    // Gaussian is computed as a "cost"; hence, "violation_above_threshold" is hard-coded to true
     std::tie(
       intrusion_min_,
       intrusion_max_,
       intrusion_total_,
       violations_percentage_
-    ) = MetricGaussian::calculateGaussianStatistics(timed_gaussians, personal_space_threshold_, max_method_);
+    ) = MetricStatistics::calculateStatistics(timed_gaussians, personal_space_threshold_, true, max_method_);
   }
 };
 

@@ -10,6 +10,7 @@ const logger::RobotData DUMMY_ROBOT(
     geometry_msgs::PoseWithCovarianceStamped(),
     geometry_msgs::PoseWithCovarianceStamped(),
     geometry_msgs::PoseStamped(),
+    geometry_msgs::TwistStamped(),
     0.5,
     0.1
 );
@@ -26,7 +27,7 @@ people_msgs_utils::Person createPerson(const std::string& name) {
         "123"
     );
 }
-const people_msgs_utils::Group DUMMY_GROUP = people_msgs_utils::EMPTY_GROUP;
+const people_msgs_utils::Group DUMMY_GROUP = people_msgs_utils::Group();
 
 /*
  * Mocking references:

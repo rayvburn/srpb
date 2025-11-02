@@ -1,0 +1,26 @@
+# (violin|box)
+plot_type: violin
+
+figure:
+  size_width: 9
+  size_height: 4
+  title: Title
+  xlabel: Samples
+  # in degrees
+  xlabels_rotation: 0
+  ylabel: Values
+  xaxis_grid: True
+  yaxis_grid: True
+  fontsize: 12
+  # (cursive|fantasy|monospace|sans|sans serif|sans-serif|serif)
+  fontfamily: serif
+
+labels:
+  # defines how the planners will be named according to their IDs
+  humap: HuMAP
+  cohan: CoHAN
+  hateb: HaTEB
+  teb: TEB
+  dwa: DWA
+  trajectory: Trajectory Rollout
+  eband: EBand

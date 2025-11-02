@@ -12,11 +12,30 @@ void RobotLogger::init(ros::NodeHandle& nh) {
     BenchmarkLogger::init(nh);
     log_filename_ = BenchmarkLogger::appendToFilename(log_filename_, "robot");
 
+    // by default, latching is disabled = async updates are allowed
+    latched_.store(false);
     localization_sub_ = nh.subscribe<nav_msgs::Odometry>(
         "/odom",
         1,
         boost::bind(&RobotLogger::localizationCB, this, _1)
     );
+
+    // obtain the name of the topic to retrieve the computation times of the external local planner (not a navstack
+    // plugin); if empty, computation times obtained via the @ref update call will be used (default)
+    external_comp_time_.store(NAN);
+    std::string computation_time_topic("");
+    int computation_time_array_idx = -1;
+    nh.param("srpb/external_computation_times_topic", computation_time_topic, computation_time_topic);
+    nh.param("srpb/external_computation_times_array_index", computation_time_array_idx, computation_time_array_idx);
+
+    if (!computation_time_topic.empty() && computation_time_array_idx >= 0) {
+        external_comp_time_array_index_ = static_cast<size_t>(computation_time_array_idx);
+        external_comp_times_sub_ = nh.subscribe<std_msgs::Float64MultiArray>(
+            computation_time_topic,
+            10,
+            boost::bind(&RobotLogger::externalComputationTimesCB, this, _1)
+        );
+    }
 }
 
 void RobotLogger::start() {
@@ -50,16 +69,35 @@ void RobotLogger::update(double timestamp, const RobotData& robot) {
             robot_pose_,
             robot_vel_,
             robot.getGoal(),
+            robot.getVelocityCommand(),
             robot.getDistToObstacle(),
             robot.getLocalPlanningTime()
         );
     }
+    // modify local planning time, if required and valid data was received
+    if (!std::isnan(external_comp_time_.load())) {
+        robot_data = RobotData(
+            robot_data.getPoseWithCovariance(),
+            robot_data.getVelocityWithCovariance(),
+            robot_data.getGoal(),
+            robot_data.getVelocityCommand(),
+            robot_data.getDistToObstacle(),
+            external_comp_time_.load()
+        );
+    }
+
+    // (enable the asynchronous updates of pose and velocity
+    latched_.store(false);
 
     std::stringstream ss;
     ss.setf(std::ios::fixed);
     ss << std::setw(9) << std::setprecision(4) << timestamp << " ";
     ss << RobotLogger::robotToString(robot_data) << std::endl;
     log_file_ << ss.str();
+}
+
+void RobotLogger::latch() {
+    latched_.store(true);
 }
 
 void RobotLogger::finish() {
@@ -90,20 +128,24 @@ std::string RobotLogger::robotToString(const RobotData& robot) {
     /* 18 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalPositionX() << " ";
     /* 19 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalPositionY() << " ";
     /* 20 */ ss << std::setw(9) << std::setprecision(4) << robot.getGoalOrientationYaw() << " ";
-    /* 21 */ ss << std::setw(9) << std::setprecision(4) << robot.getDistToObstacle() << " ";
-    /* 22 */ ss << std::setw(9) << std::setprecision(4) << robot.getLocalPlanningTime();
+    /* 21 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityCommandLinearX() << " ";
+    /* 22 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityCommandLinearY() << " ";
+    /* 23 */ ss << std::setw(9) << std::setprecision(4) << robot.getVelocityCommandAngularZ() << " ";
+    /* 24 */ ss << std::setw(9) << std::setprecision(4) << robot.getDistToObstacle() << " ";
+    /* 25 */ ss << std::setw(9) << std::setprecision(4) << robot.getLocalPlanningTime();
     return ss.str();
 }
 
 std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) {
     auto vals = people_msgs_utils::parseString<double>(str, " ");
-    if (vals.size() != 23) {
+    if (vals.size() != 26) {
         std::cout << "\x1B[31mFound corrupted data of a robot:\r\n\t" << str << "\x1B[0m" << std::endl;
         // dummy robot data
         auto dummy_robot = RobotData(
             geometry_msgs::PoseWithCovariance(),
             geometry_msgs::PoseWithCovariance(),
             geometry_msgs::Pose(),
+            geometry_msgs::Twist(),
             0.0,
             0.0
         );
@@ -158,14 +200,24 @@ std::pair<bool, RobotData> RobotLogger::robotFromString(const std::string& str) 
     goal.orientation.z = quat.getZ();
     goal.orientation.w = quat.getW();
 
-    double obst_dist = vals.at(21);
-    double exec_time = vals.at(22);
+    geometry_msgs::Twist cmd_vel;
+    cmd_vel.linear.x = vals.at(21);
+    cmd_vel.linear.y = vals.at(22);
+    cmd_vel.angular.z = vals.at(23);
 
-    auto robot = RobotData(pose, vel, goal, obst_dist, exec_time);
+    double obst_dist = vals.at(24);
+    double exec_time = vals.at(25);
+
+    auto robot = RobotData(pose, vel, goal, cmd_vel, obst_dist, exec_time);
     return {true, robot};
 }
 
 void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {
+    // check if any updates should be accepted
+    if (latched_.load()) {
+        return;
+    }
+
     std::lock_guard<std::mutex> l(cb_mutex_);
     // pose should be transformed to the logger's frame
     robot_pose_ = transformPose(msg->pose, msg->header.frame_id).pose;
@@ -185,6 +237,23 @@ void RobotLogger::localizationCB(const nav_msgs::OdometryConstPtr& msg) {
     vel.covariance = msg->twist.covariance;
     // save velocity
     robot_vel_ = vel;
+}
+
+void RobotLogger::externalComputationTimesCB(const std_msgs::Float64MultiArrayConstPtr& msg) {
+    size_t required_elems = external_comp_time_array_index_ + 1;
+    // verify that sufficient number of elements is available
+    if (msg->data.size() < required_elems) {
+        std::cout <<
+            "\x1B[31m" <<
+            "[ SRPB] RobotLogger did not receive a proper multi array at the " <<
+            "`" << external_comp_times_sub_.getTopic().c_str() << "` topic. " <<
+            "Got " << msg->data.size() << " data elements, whereas at least " <<
+            required_elems << " are required" <<
+            "\x1B[0m" <<
+        std::endl;
+        return;
+    }
+    external_comp_time_.store(static_cast<double>(msg->data.at(external_comp_time_array_index_)));
 }
 
 } // namespace srpb

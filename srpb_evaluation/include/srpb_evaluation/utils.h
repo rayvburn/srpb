@@ -22,6 +22,7 @@
 #include "srpb_evaluation/metrics/motion_efficiency.h"
 #include "srpb_evaluation/metrics/obstacle_safety.h"
 #include "srpb_evaluation/metrics/oscillations.h"
+#include "srpb_evaluation/metrics/passing_speed_discomfort.h"
 #include "srpb_evaluation/metrics/path_linear_length.h"
 #include "srpb_evaluation/metrics/personal_space_instrusion.h"
 #include "srpb_evaluation/metrics/velocity_smoothness.h"
@@ -61,7 +62,8 @@ void createResultsFile(
     const InplaceRotations& inplace_rotations,
     const PersonalSpaceIntrusion& personal_space_intrusion,
     const FormationSpaceIntrusion& formation_space_intrusion,
-    const HeadingDirectionDisturbance& heading_direction_disturbance
+    const HeadingDirectionDisturbance& heading_direction_disturbance,
+    const PassingSpeedDiscomfort& passing_speed_discomfort
 );
 
 /**

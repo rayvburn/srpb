@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srpb_evaluation/metric_gaussian.h"
+#include "srpb_evaluation/metric_statistics.h"
 
 #include <social_nav_utils/heading_direction_disturbance.h>
 
@@ -8,7 +8,7 @@ namespace srpb {
 namespace evaluation {
 
 /// Related to velocity and direction of the robot movement towards person
-class HeadingDirectionDisturbance: public MetricGaussian {
+class HeadingDirectionDisturbance: public MetricStatistics {
 public:
   HeadingDirectionDisturbance(
     const std::vector<std::pair<double, logger::RobotData>>& robot_data,
@@ -20,13 +20,17 @@ public:
     double robot_max_speed = social_nav_utils::HeadingDirectionDisturbance::MAX_SPEED_DEFAULT,
     bool max_method = true
   ):
-    MetricGaussian(robot_data, people_data),
+    MetricStatistics(robot_data, people_data),
     disturbance_threshold_(disturbance_threshold),
     person_occupancy_radius_(person_occupancy_radius),
     person_fov_(person_fov),
     robot_circumradius_(robot_circumradius),
     robot_max_speed_(robot_max_speed),
-    max_method_(max_method)
+    max_method_(max_method),
+    disturbance_min_(0.0),
+    disturbance_max_(0.0),
+    disturbance_total_(0.0),
+    violations_percentage_(0.0)
   {
     if (people_data.empty()) {
       return;
@@ -111,7 +115,14 @@ protected:
           person_fov_
         );
         // normalize cost
-        heading.normalize(robot_circumradius_, robot_max_speed_);
+        if (!heading.normalize(robot_circumradius_, robot_max_speed_)) {
+          printf(
+            "During calculation of the `HeadingDirectionDisturbance` metric, scales had to be clipped for person '%s' "
+            "at t=%.4f. Your data might be corrupted!",
+            rewinder_.getPersonCurr().getName().c_str(),
+            rewinder_.getTimestampCurr()
+          );
+        }
 
         timed_disturbance.second.push_back(heading.getScale());
       }
@@ -127,12 +138,13 @@ protected:
     );
     rewinder_.perform();
 
+    // Gaussian is computed as a "cost"; hence, "violation_above_threshold" is hard-coded to true
     std::tie(
       disturbance_min_,
       disturbance_max_,
       disturbance_total_,
       violations_percentage_
-    ) = MetricGaussian::calculateGaussianStatistics(timed_disturbances, disturbance_threshold_, max_method_);
+    ) = MetricStatistics::calculateStatistics(timed_disturbances, disturbance_threshold_, true, max_method_);
   }
 };
 

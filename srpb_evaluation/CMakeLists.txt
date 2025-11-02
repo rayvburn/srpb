@@ -43,7 +43,7 @@ include_directories(
 add_library(${PROJECT_NAME}_lib
     # libs
     include/${PROJECT_NAME}/metric.h
-    include/${PROJECT_NAME}/metric_gaussian.h
+    include/${PROJECT_NAME}/metric_statistics.h
     include/${PROJECT_NAME}/rewinder.h
     include/${PROJECT_NAME}/utils.h
     # specific metrics
@@ -63,7 +63,7 @@ add_library(${PROJECT_NAME}_lib
     include/${PROJECT_NAME}/metrics/personal_space_instrusion.h
     include/${PROJECT_NAME}/metrics/velocity_smoothness.h
     # sources
-    src/metric_gaussian.cpp
+    src/metric_statistics.cpp
     src/rewinder.cpp
     src/utils.cpp
 )
@@ -95,8 +95,8 @@ if (CATKIN_ENABLE_TESTING)
     if(TARGET test_utils)
         target_link_libraries(test_utils ${PROJECT_NAME}_lib)
     endif()
-    catkin_add_gtest(test_metric_gaussian test/test_metric_gaussian.cpp)
-    if(TARGET test_metric_gaussian)
-        target_link_libraries(test_metric_gaussian ${PROJECT_NAME}_lib)
+    catkin_add_gtest(test_metric_statistics test/test_metric_statistics.cpp)
+    if(TARGET test_metric_statistics)
+        target_link_libraries(test_metric_statistics ${PROJECT_NAME}_lib)
     endif()
 endif()
